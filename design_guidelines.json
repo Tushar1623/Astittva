@@ -1,0 +1,144 @@
+{
+  "theme": "dark",
+  "archetype": "5 (Luxury)",
+  "colors": {
+    "background": "#1B1B1B",
+    "foreground": "#F8F5F1",
+    "primary": "#B87333",
+    "secondary": "#C68E6D",
+    "accent": "#C68E6D",
+    "muted": "#2A2A2A",
+    "muted_foreground": "#A0A0A0",
+    "border": "#B87333",
+    "card": "#1B1B1B",
+    "card_foreground": "#F8F5F1",
+    "overlay": "rgba(27, 27, 27, 0.7)"
+  },
+  "typography": {
+    "headings": {
+      "fontFamily": "Poppins, sans-serif",
+      "weights": ["300", "400", "500", "600"],
+      "styles": {
+        "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tight font-light",
+        "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight font-light",
+        "h3": "text-xl sm:text-2xl font-normal",
+        "h4": "text-lg sm:text-xl font-normal",
+        "overline": "text-xs tracking-[0.2em] uppercase font-medium text-copper"
+      }
+    },
+    "body": {
+      "fontFamily": "Inter, sans-serif",
+      "weights": ["300", "400"],
+      "styles": {
+        "base": "text-base leading-relaxed text-[#F8F5F1]/80",
+        "small": "text-sm text-[#F8F5F1]/60"
+      }
+    }
+  },
+  "spacing_and_layout": {
+    "generous_padding": "py-24 sm:py-32",
+    "section_gap": "gap-16 sm:gap-24",
+    "grid_modes": {
+      "marketing": "grid-cols-1 md:grid-cols-12 gap-8",
+      "dashboard": "grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6"
+    },
+    "container": "max-w-7xl mx-auto px-6 lg:px-8",
+    "card_padding": "p-8 md:p-12"
+  },
+  "surfaces_and_borders": {
+    "cards": "bg-[#1B1B1B]/50 border border-[#B87333]/20 backdrop-blur-sm",
+    "glassmorphism": "bg-[#1B1B1B]/60 backdrop-blur-xl border-b border-[#B87333]/10",
+    "buttons": {
+      "primary": "bg-[#B87333] text-[#1B1B1B] hover:bg-[#C68E6D] transition-colors duration-300 font-medium px-8 py-4",
+      "outline": "border border-[#B87333]/50 text-[#B87333] hover:bg-[#B87333]/10 transition-colors duration-300 font-medium px-8 py-4"
+    }
+  },
+  "motion_and_interaction": {
+    "hover_state": "hover:scale-[1.02] transition-transform duration-300 ease-out",
+    "framer_motion_defaults": {
+      "initial": { "opacity": 0, "y": 20 },
+      "animate": { "opacity": 1, "y": 0 },
+      "transition": { "duration": 0.6, "ease": [0.22, 1, 0.36, 1] }
+    }
+  },
+  "components": {
+    "Header": "Sticky, z-50, Glassmorphism. Logo left, Nav center, CTA right.",
+    "Hero": "Full viewport height. Background image with rgba(27,27,27,0.5) overlay. Center aligned text for maximum impact.",
+    "Section": "Use Py-32 for vertical rhythm. Start with an Overline, then H2, then Body text.",
+    "PropertyCard": "Image top (aspect-[4/3]), content bottom. Hover effect on image (slow scale). 1px border of copper/20.",
+    "Footer": "Darker background or subtle top border. Large Typography for brand name. Minimal links."
+  },
+  "media": {
+    "logo": [
+      {
+        "url": "https://customer-assets.emergentagent.com/job_50ac1e2c-4ee3-4d48-ad5e-fd37063ae3c0/artifacts/13645h8f_Astittva%20group%20logo.jpeg",
+        "category": "logo",
+        "description": "Astitva Group Logo"
+      }
+    ],
+    "hero": [
+      {
+        "url": "https://static.prod-images.emergentagent.com/jobs/50ac1e2c-4ee3-4d48-ad5e-fd37063ae3c0/images/83d94db40af9de6336b3e860cbe48776d920746426d4db276be43a271d057f6b.png",
+        "category": "hero",
+        "description": "Biswa Bangla Gate at twilight - For Homepage Hero Section"
+      }
+    ],
+    "backgrounds": [
+      {
+        "url": "https://static.prod-images.emergentagent.com/jobs/50ac1e2c-4ee3-4d48-ad5e-fd37063ae3c0/images/1f5da7f44ad5aab6c1f6ab3c12df3ec89723084c1042e95749a6b4658dcffcc6.png",
+        "category": "background",
+        "description": "Copper and charcoal abstract texture - For Lead Gen or Why Astitva section background"
+      }
+    ],
+    "locations": [
+      {
+        "url": "https://images.pexels.com/photos/33612641/pexels-photo-33612641.jpeg",
+        "category": "location",
+        "description": "Kolkata Cityscape Evening"
+      },
+      {
+        "url": "https://images.pexels.com/photos/36613128/pexels-photo-36613128.jpeg",
+        "category": "location",
+        "description": "Kolkata Bridge Night"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1673284770688-fbf3a21b4016?crop=entropy&cs=srgb&fm=jpg",
+        "category": "location",
+        "description": "City skyline at night"
+      }
+    ],
+    "projects": [
+      {
+        "url": "https://images.pexels.com/photos/24805054/pexels-photo-24805054.jpeg",
+        "category": "project",
+        "description": "Modern luxury villa exterior evening"
+      },
+      {
+        "url": "https://images.pexels.com/photos/31817157/pexels-photo-31817157.jpeg",
+        "category": "project",
+        "description": "Elegant villa with infinity pool"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1757439402268-1da284675170?crop=entropy&cs=srgb&fm=jpg",
+        "category": "project",
+        "description": "Luxury villa illuminated pool"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1767950470198-c9cd97f8ed87?crop=entropy&cs=srgb&fm=jpg",
+        "category": "project",
+        "description": "Modern house at dusk"
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Configure tailwind.config.js to include Poppins (headings) and Inter (body) fonts.",
+    "Add custom colors to Tailwind config: charcoal (#1B1B1B), copper (#B87333), rose-gold (#C68E6D), and warm-ivory (#F8F5F1).",
+    "Implement Framer Motion for elegant scroll animations, particularly on 'Why Astitva' and 'Featured Projects' sections. Keep it subtle and cinematic.",
+    "For the hero section, ensure the overlay is max `bg-[#1B1B1B]/50` to let the Biswa Bangla Gate shine through.",
+    "Do not use generic Shadcn cards for marketing sections; build custom HTML/Tailwind structures with 1px `border-[#B87333]/20` for a premium feel.",
+    "Implement the 'Future Expansion Roadmap' using a visual timeline or dynamic step layout rather than just text.",
+    "Ensure the Admin panel dashboard uses Shadcn components styled to match the dark luxury aesthetic (1px borders, subtle hover effects).",
+    "Add `data-testid` attributes to all interactive elements (e.g., `data-testid=\"explore-properties-btn\"`).",
+    "Avoid bright generic startup colors completely. Stick strictly to the defined Charcoal/Copper/Rose-Gold/Ivory palette."
+  ]
+}

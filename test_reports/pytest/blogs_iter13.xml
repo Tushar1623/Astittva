@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="12" time="12.327" timestamp="2026-08-08T10:13:23.253297+00:00" hostname="agent-env-47ae8a7d-f2ae-4ce6-be39-0229474c96e0"><testcase classname="backend.tests.test_blogs" name="test_public_list_blogs" time="1.675" /><testcase classname="backend.tests.test_blogs" name="test_public_get_seeded_blog" time="0.323"><failure message="AssertionError: {&quot;detail&quot;:&quot;Blog not found&quot;}&#10;assert 404 == 200&#10; +  where 404 = &lt;Response [404]&gt;.status_code">def test_public_get_seeded_blog():
+        r = requests.get(f"{API}/blogs/kolkata-real-estate-2026-outlook")
+&gt;       assert r.status_code == 200, r.text
+E       AssertionError: {"detail":"Blog not found"}
+E       assert 404 == 200
+E        +  where 404 = &lt;Response [404]&gt;.status_code
+
+backend/tests/test_blogs.py:56: AssertionError</failure></testcase><testcase classname="backend.tests.test_blogs" name="test_public_get_nonexistent" time="0.326" /><testcase classname="backend.tests.test_blogs" name="test_admin_create_blog" time="0.794" /><testcase classname="backend.tests.test_blogs" name="test_admin_list_includes_drafts" time="0.563" /><testcase classname="backend.tests.test_blogs" name="test_admin_get_detail" time="0.587" /><testcase classname="backend.tests.test_blogs" name="test_admin_update_blog" time="1.029" /><testcase classname="backend.tests.test_blogs" name="test_admin_publish_blog" time="1.402" /><testcase classname="backend.tests.test_blogs" name="test_public_sees_published" time="0.892" /><testcase classname="backend.tests.test_blogs" name="test_admin_delete_blog" time="1.126" /><testcase classname="backend.tests.test_blogs" name="test_slug_uniqueness" time="1.821" /><testcase classname="backend.tests.test_blogs" name="test_sitemap_includes_blogs" time="1.696"><failure message="assert '&lt;loc&gt;https://astittva.in/blogs/kolkata-real-estate-2026-outlook&lt;/loc&gt;' in '&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;\n&lt;urlset xmlns=&quot;http://www.sitemaps.org/schemas/sitemap/0.9&quot;&gt;\n  &lt;url&gt;&lt;loc&gt;htt...ata-luxury&lt;/loc&gt;&lt;lastmod&gt;2026-08-08&lt;/lastmod&gt;&lt;changefreq&gt;monthly&lt;/changefreq&gt;&lt;priority&gt;0.7&lt;/priority&gt;&lt;/url&gt;\n&lt;/urlset&gt;'">def test_sitemap_includes_blogs():
+        r = requests.get(f"{API}/sitemap.xml")
+        assert r.status_code == 200
+        body = r.text
+        assert "&lt;loc&gt;https://astittva.in/blogs&lt;/loc&gt;" in body
+&gt;       assert "&lt;loc&gt;https://astittva.in/blogs/kolkata-real-estate-2026-outlook&lt;/loc&gt;" in body
+E       assert '&lt;loc&gt;https://astittva.in/blogs/kolkata-real-estate-2026-outlook&lt;/loc&gt;' in '&lt;?xml version="1.0" encoding="UTF-8"?&gt;\n&lt;urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"&gt;\n  &lt;url&gt;&lt;loc&gt;htt...ata-luxury&lt;/loc&gt;&lt;lastmod&gt;2026-08-08&lt;/lastmod&gt;&lt;changefreq&gt;monthly&lt;/changefreq&gt;&lt;priority&gt;0.7&lt;/priority&gt;&lt;/url&gt;\n&lt;/urlset&gt;'
+
+backend/tests/test_blogs.py:169: AssertionError</failure></testcase></testsuite></testsuites>

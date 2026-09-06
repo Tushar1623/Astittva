@@ -1,0 +1,18 @@
+{
+  "summary": "Verified spelling fix 'Moris' -> 'Morias' on /aramya/index.html at both locations (Behind the Township developer card and Contact sidebar). Ran full regression: nav links, CTA, form, WhatsApp/phone floats, footer intact. Contact form submission still returns 201 from POST /api/leads with success card shown. Mobile 375px layout renders correctly. Page-wide regex /\\bmoris\\b/ returns no matches; 'morias' count = 2.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/test_reports/aramya_behind_township.png", "/app/test_reports/aramya_contact.png", "/app/test_reports/aramya_mobile_developer.png"],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (not tested per request)", "frontend": "100%"},
+  "seed_data_creation": "One test lead created via form (QA Morias Test / 9812345600) as part of regression check; CRM response id 6a782f6a939f8f8648612657.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Spelling fix iteration. Aramya standalone page at /aramya/index.html — developer name correctly reads 'Morias Infrastructure Pvt Ltd' in both section.developer .name (line 1067) and section#contact .v (line 1124). Form pipeline (POST /api/leads -> Astittva CRM) still returns 201. Selectors: #propForm #name, #propForm #contact, #propForm #detail, button[type='submit'], #success-msg."
+}

@@ -1,0 +1,45 @@
+{
+  "summary": "XSS hardening pass verified end-to-end. DOMPurify sanitisation via /app/frontend/src/lib/sanitize.js works on both the public blog detail page ([data-testid=blog-body]) and the admin form Preview panel ([data-testid=blog-body-preview]). All 4 XSS/regression payloads posted through /api/admin/blogs render safely. MI page still fetches live news (12 cards, mi-last-updated visible). Aramya lead submission still returns 201. Env-configurable test credentials (ADMIN_TEST_EMAIL/ADMIN_TEST_PASSWORD) honoured by pytest suite (10/12 pass; 2 pre-existing seed-data failures unrelated to this iteration).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/blogs/kolkata-real-estate-2026-outlook", "issue": "Returns 404 in this environment — seeded blog not present. Pre-existing, not related to XSS iteration. test_public_get_seeded_blog + test_sitemap_includes_blogs fail as a result."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "xss_verification_results": {
+    "test_1_script_stripped": "PASS — payload '<script>window.__hackFlag=1;alert(1)</script>' produced 0 alerts, blog-body script query returned null, window.__hackFlag undefined, h2/p/p all rendered.",
+    "test_2_event_handler_stripped": "PASS — <img onerror=...> rendered with onerror attribute null, window.__xss undefined.",
+    "test_3_target_blank_rel": "PASS — <a target=_blank> auto-got rel='noopener noreferrer'.",
+    "test_4_legit_html_regression": "PASS — h2/p/strong/em/a/ul/li/blockquote all preserved (screenshot confirms Section heading, Body bold italic link, Item 1/2, Quote all render).",
+    "test_5_admin_preview_sanitises": "PASS — Preview panel [data-testid=blog-body-preview] rendered '<p>Hello</p>' only, script element stripped, 0 alerts fired.",
+    "test_7_mi_regression": "PASS — mi-news-grid children=12, mi-last-updated visible ('32m ago').",
+    "test_8_aramya_lead_regression": "PASS — POST /api/leads returned 201 with ok=true and id, CRM status=pending.",
+    "test_credentials_env_override": "PASS — pytest run with ADMIN_TEST_EMAIL/ADMIN_TEST_PASSWORD exported; 10/12 passed (2 unrelated seed failures)."
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_blogs.py",
+    "/app/backend/tests/test_aramya_leads.py",
+    "/app/test_reports/pytest/blogs_iter13.xml"
+  ],
+  "action_items": [
+    "Optional: seed the 'kolkata-real-estate-2026-outlook' blog on backend startup so the two pre-existing tests (test_public_get_seeded_blog, test_sitemap_includes_blogs) pass in every environment. Not related to this iteration."
+  ],
+  "critical_code_review_comments": [
+    "sanitize.js configuration is tight and correct — ALLOWED_TAGS covers editorial vocabulary; addHook forces rel=noopener noreferrer on any target=_blank. Note the hook is registered at module import time (side-effect on the global DOMPurify instance) — acceptable for a single-page CRA app, but worth being aware of in unit-test contexts.",
+    "ALLOWED_TAGS currently omits <table>/<thead>/<tbody>/<tr>/<td>/<th>. If editors ever paste tabular data (e.g. price comparison tables), they will be stripped silently. Consider expanding if that's a real use case.",
+    "Body content is stored raw in Mongo (as documented). Any future non-browser renderer (RSS/email) must apply its own sanitiser — good that this is called out in comments."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "83% (10/12; 2 pre-existing seed failures)", "frontend": "100% (all 8 XSS + regression checks pass)"},
+  "test_credentials": "admin@astitva.com / Astitva@2026 (env-overridable via ADMIN_TEST_EMAIL/ADMIN_TEST_PASSWORD)",
+  "seed_data_creation": "Created 4 blogs via /api/admin/blogs during XSS payload tests, ALL deleted at end of run. Also created 2 Aramya leads (regression) that persist in Mongo (TEST_ prefix on first_name).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "DOMPurify + sanitize.js working correctly on both public blog detail and admin preview. The 2 failing backend tests (test_public_get_seeded_blog, test_sitemap_includes_blogs) are pre-existing — they depend on a seeded blog with slug 'kolkata-real-estate-2026-outlook' which is not present in this environment. They also failed in previous iterations. Actual admin form testids: 'blog-title-input', 'blog-body-input', 'toggle-preview', 'blog-body-preview' (not what the review-request spec's 'blog-form-body' etc. names suggested — but the review-request-critical testid 'blog-body-preview' IS present and correct).",
+  "rca of the issue": "N/A — no bugs found in this iteration."
+}

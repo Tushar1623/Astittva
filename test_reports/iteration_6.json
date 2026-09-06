@@ -1,0 +1,38 @@
+{
+  "summary": "Comprehensive testing of Market Intelligence redesign on Astittva. Backend: /api/news/all returns 100 articles (>=50 requirement met), /api/news/trending returns 12; multi-tag classification verified (15 articles have 2+ categories); country distribution: India=72, UK=6, UAE=6, Singapore=6, USA=6, Global=4. Frontend: page renders correctly; all 13 filters (ALL, KOLKATA, WEST BENGAL, INDIA, GLOBAL, INFRASTRUCTURE, RESIDENTIAL, COMMERCIAL, LUXURY, POLICY, INVESTMENT, ECONOMY, TECHNOLOGY) return non-empty results; news cards display geo/category tags + impact badge; console debug logs ([MI] ...) emit as designed. The 'No articles match the current filter' empty state bug is FIXED — no filter showed an empty state.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_market_intelligence.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "MarketIntelligencePage.jsx (586 lines) is approaching the 700-line threshold — consider splitting NewsCard, SkeletonCard, NewsGrid, FILTERS constant and the SNAPSHOTS/MARKETS/ROADMAP constants into separate files for maintainability.",
+    "Fallback cascade logic in `view` useMemo is well-structured but the fallback banner never triggered during testing because every one of the 13 filters had direct matches in the current dataset (smallest were Policy=2, Technology=2). The cascade code path is therefore validated only by code review, not runtime. Suggest unit-testing the fallback logic with a mocked empty-result scenario.",
+    "Skeleton loader (data-testid='mi-news-skeleton') only appears during first uncached fetch. In CI/E2E tests with warm cache, skeleton is invisible — that's acceptable but worth documenting.",
+    "news_service.classify(): the city detection breaks on first regex match, so a title mentioning both Mumbai and Delhi will only tag Mumbai. Multi-city tagging could be added if needed (consistent with the multi-category approach).",
+    "Backend has no rate-limit / max-payload guard on /api/news/all (returns up to 100). Acceptable for now but worth noting if traffic grows.",
+    "Country filter 'Global' semantic differs between backend (returned country value 'Global' for global topic) and frontend (treats 'Global' as 'not India and not —', i.e. everything foreign). The current behavior is correct for UX (lumping UAE/UK/Singapore/USA under Global=28 articles), but the dual meaning of the string 'Global' (a literal country code AND a UX bucket) is mildly confusing in the code."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_market_intelligence.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "100%"
+  },
+  "test_credentials": "Not required — Market Intelligence is a public page.",
+  "seed_data_creation": "None — Google News RSS provides live data; existing news_cache was populated by previous fetch.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Market Intelligence backend (news_service.py) and frontend (MarketIntelligencePage.jsx) are fully working. Backend /api/news/all returns 100 multi-tagged articles; all 13 frontend filters render news cards. Use /app/backend/tests/test_market_intelligence.py for regression. Filter buttons follow data-testid pattern 'filter-{key}' where key is 'all', 'geo:Kolkata', 'country:India', 'cat:Infrastructure', etc. The fallback banner (data-testid='mi-fallback-banner') is wired up but did not trigger at test time because all filters had direct matches; logic verified by code review.",
+  "rca_of_the_issue": "Original empty-state bug RCA: previous classifier did single-tag matching (early break) and missing Economy/Technology topics meant filters like Economy/Technology had zero articles → frontend showed 'No articles match the current filter'. Fix in news_service.py: (1) multi-tag classification (every matching pattern adds a category), (2) added economy & technology topic queries to TOPICS, (3) rolling archive _merge_articles never wipes cache on empty fetch, (4) MarketIntelligencePage useMemo now cascades related-cat → India → Global → all with fallback banner. Verified end-to-end: all 13 filters return >=2 cards; no empty state observed."
+}

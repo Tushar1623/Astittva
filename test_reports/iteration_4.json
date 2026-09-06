@@ -1,0 +1,53 @@
+{
+  "summary": "v4 polish regression + new Market Intelligence classified feed validation. Backend: 56/56 pytest pass (43 prior + 13 new — 2 endpoint tests for /api/news/all & /api/news/trending classification + 11 classify() heuristic unit tests). Frontend: MI page renders new filter-bar (11 chips), 12 classified news cards (CITY/COUNTRY/CATEGORY + impact pills), 'Why It Matters' shown only on HIGH impact, Infrastructure filter narrows to 9 cards (all tagged Infrastructure). Markets We Track shows all 5 country cards (India/UAE/Singapore/UK/USA) with flags. Market Opportunities shows 6 cards (New Town, Rajarhat, Dubai, Bengaluru, Singapore, London) with Horizon/Risk/Upside. Header & Footer have ASTITVA wordmark only (no 'LUXURY REAL ESTATE' tagline). SEO meta present (title, description, keywords, og:title). No mobile horizontal overflow at 390/375. Filter bar scrolls horizontally on mobile (sw=1294 cw=375). News grid is single-column at 390 (342px). Body bg #050505, primary button #C68642.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "news_service.classify() runs per article on every fetch — fine for current volume but consider precomputing/caching classification fields with the cached article doc so a heuristic rule change can be replayed without re-fetching RSS.",
+    "fetch_all_classified caps at 48 items but only takes 3 per topic from 22 topics → max ~66 before dedup; consider exposing per-topic cap via query param for richer feeds.",
+    "MarketIntelligencePage.jsx does live SEO via document.title + meta manipulation in useEffect — fine for SPA but consider react-helmet-async for cleanup on route change so MI title doesn't persist on back-navigation in some browsers.",
+    "Filter logic uses key parsing like 'cat:Infrastructure' on the client — works but a small enum/lookup table would be more robust against future label changes.",
+    "AmbientGlow is a fixed-position decorative div but lacks aria-hidden='true'; minor a11y polish.",
+    "/api/news/all is heavy on first hit (fans out to 22 RSS feeds in parallel). Add a soft TTL guard / loading state so frontend doesn't sit on a long pending request if RSS is throttled."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (added 2 endpoint tests for /api/news/all + classification on trending, and 11 TestClassifyHeuristic unit tests)"
+  ],
+  "success_rate": {"backend": "100% (56/56)", "frontend": "100% (all v4 flows verified)"},
+  "test_credentials": "admin@astitva.com / Astitva@2026 (from /app/memory/test_credentials.md) — works.",
+  "seed_data_creation": "None for v4 — all TEST_* leads/properties/users created by pytest fixtures are cleaned up by their own teardown logic.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend pytest is now 56 tests in /app/backend/tests/backend_test.py. New TestClassifyHeuristic class imports news_service.classify directly via sys.path injection so it runs anywhere. /api/news/all is the new unified classified feed (fans out to 22 Google News RSS topics; first call ~10-15s, then 6h Mongo cache). Each article includes city/country/category/impact/why_it_matters. why_it_matters is non-empty ONLY when impact=='High'. Frontend MI page testids: filter-bar, filter-all, filter-geo:Kolkata, filter-geo:West Bengal, filter-country:India, filter-country:Global, filter-cat:{Infrastructure|Residential|Commercial Real Estate|Luxury Property|Policy|Investment}, mi-news-grid, news-card-{idx}, markets-we-track, market-opportunities. NOTE: card tag labels use CSS text-transform:uppercase so when asserting with playwright innerText use .toLowerCase() comparison (innerText returns transformed text). Markets We Track contains 'United Kingdom' / 'United States' not 'UK' / 'USA' as full label (flag emoji + full name). Market Opportunities cards label rows as HORIZON / UPSIDE / and country+risk badges; 'Location'/'Asset' aren't literal labels but implicit headings (location is the card title, asset is the subline).",
+  "verified_data_testids": [
+    "filter-bar (11 chips inside)",
+    "filter-all, filter-geo:Kolkata, filter-geo:West Bengal, filter-country:India, filter-country:Global",
+    "filter-cat:Infrastructure, filter-cat:Residential, filter-cat:Commercial Real Estate, filter-cat:Luxury Property, filter-cat:Policy, filter-cat:Investment",
+    "mi-news-grid (12 cards initially, narrows on filter click)",
+    "news-card-{0..N} (each shows CATEGORY badge + HIGH/MEDIUM/LOW IMPACT pill + city/country + Why It Matters when High)",
+    "markets-we-track (5 country cards: India 🇮🇳, UAE 🇦🇪, Singapore 🇸🇬, United Kingdom 🇬🇧, United States 🇺🇸)",
+    "market-opportunities (6 cards: New Town, Rajarhat, Dubai, Bengaluru, Singapore, London — with Horizon / Upside / Risk badges)"
+  ],
+  "verified_brand": {
+    "body_bg": "#050505",
+    "primary_btn": "#C68642",
+    "header_tagline": "ABSENT (ASTITVA wordmark only) — confirmed on / and /market-intelligence",
+    "footer_tagline": "ABSENT (ASTITVA wordmark only)",
+    "ambient_glow": "fixed-position layered div present on / and /market-intelligence (2 fixed z-index divs detected on home)",
+    "seo_meta": "title='Market Intelligence · Kolkata Real Estate News & Investment Insights · Astitva'; meta description (158 chars), og:title='Market Intelligence · Astitva' — all present"
+  },
+  "mobile_checks": {
+    "390x844": "home overflow=0px, MI overflow=0px, filter-bar scrollWidth=1294 (scrollable), mi-news-grid columns='342px' (single column)",
+    "375x812": "home overflow=0px"
+  },
+  "rca_of_the_issue": "N/A — all v4 features verified working."
+}

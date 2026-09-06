@@ -1,0 +1,30 @@
+{
+  "summary": "Performance optimization pass (iteration 11) validated. Backend: 7 pytest tests PASSED, 1 SKIPPED (no /api/files/* uploaded assets exist for a live Cache-Control check, but the header block is verified present in server.py at line 1050). GZip active on /api/blogs, /api/properties, /api/news/all. WebP hero pair biswa_bangla_gate.webp = 127KB (<200KB target) and -mobile.webp is served correctly (<60KB). All 5 hero WebP + mobile-WebP pairs exist under /images/luxe/. /api/blogs TTFB well under 1500ms. Frontend: Home renders <picture> for every hero slide, currentSrc on desktop ends with '.webp' (biswa_bangla_gate.webp) and on 375x812 viewport currentSrc ends with '-mobile.webp'. Preload links present with correct media queries. Cinematic carousel advances (slide 0 -> slide 1 within 5.5s, caption 'Rabindra Setu · Howrah Bridge' rendered). Zero JS pageerrors across /, /properties, /market-intelligence, /blogs, /about, /contact, /aramya-greens, /admin/login. Cold-load / does NOT ship any Admin chunk in performance.getEntriesByType('resource'); after navigating to /admin/login the src_pages_admin_AdminLoginPage_jsx.chunk.js IS loaded on-demand — code splitting confirmed. Admin login (admin@astitva.com / Astitva@2026) succeeds and lands on /admin dashboard. /admin/blogs table renders 1 row (existing seed). Public /blogs list renders 3 card anchors. Zero visual/functional regressions observed.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_performance.py",
+    "/app/test_reports/pytest/performance_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "LuxImage sets loading='lazy' by default but the hero <picture> in CinematicHero forces loading='eager' on every slide (not just slide 0/1). Slides 2-4 aren't the LCP element and could safely be loading='lazy' — small nit, no measurable impact since they're preloaded in JS anyway.",
+    "index.html preload link for the mobile hero uses fetchpriority='high' + media='(max-width: 768px)'. Browsers currently honour only one of the two preloads, which is intended — good.",
+    "Cache-Control test was skipped because no property in /api/properties currently references an /api/files/* upload (all images point to /images/luxe/*). The code path at server.py:1050 is verified correct via source read; recommend seeding at least one uploaded asset in future so the header can be asserted programmatically end-to-end.",
+    "server.py is now ~1227 lines. GZip + serve_file additions are clean; the earlier note about splitting into routers still stands but is not blocking."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_performance.py (new)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin@astitva.com / Astitva@2026",
+  "seed_data_creation": "None. No mutations to DB.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Perf pass verified. Programmatic markers used (no real Lighthouse). Note: /aramya-greens is served as-uploaded (no React chrome) — measuring document.body.innerText may return 0 due to iframe/deferred load; use page.title() or a specific selector instead. /admin/login shows short visible text (~51 chars) which is legitimate. Cache-Control on /api/files/* is verified in source (server.py line 1050) but couldn't be asserted live — no uploaded assets in DB.",
+  "rca of the issue": "N/A — no issues found."
+}

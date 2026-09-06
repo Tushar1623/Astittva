@@ -1,0 +1,14 @@
+{
+  "summary": "Verified removal of Market Snapshot section and end-to-end functionality of /market-intelligence. Backend /api/news/all returns 200 with count=100 and valid last_updated. /api/news/trending returns 200 with 12 articles. Frontend renders correctly: no market-snapshot element, no snapshot-card-* elements, no 'Market Snapshot' text or any of the 6 former card labels present. 12 news cards render, last-updated shows 'LAST UPDATED · 2H AGO', first card title ('India's first REIT index fund to launch in August...') matches the live /api/news/all feed. Section eyebrows read correctly: ASTITTVA INTELLIGENCE HUB, SECTION · 02 · LIVE INTELLIGENCE, · 03 · INVESTOR LENS, · 04 · CURATED FOR INVESTORS, · 05 · COVERAGE, SECTION · 06. All requested sections (intelligence-feed, investment-insights, market-opportunities, markets-we-track, expansion-tracker) render. Filters Kolkata (5 cards)→India (12)→All (12) work with no JS errors. 'Speak to an Astittva Advisor' CTA links to /contact. Only console messages are expected /api/auth/me 401s (pre-existing backlog).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Market Intelligence page is stable post Market-Snapshot removal. News feed live via /api/news/all (100 articles). Preview URL from REACT_APP_BACKEND_URL."
+}

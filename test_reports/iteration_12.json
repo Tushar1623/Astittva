@@ -1,0 +1,28 @@
+{
+  "summary": "Frontend-only responsiveness verification across 13 routes × 6 breakpoints (320/375/768/1024/1440/1920). ALL routes pass the no-horizontal-scroll check (documentElement.scrollWidth == clientWidth). Admin mobile drawer, sticky top bar, drawer open/close via menu-btn AND overlay/close-btn, auto-close on route navigation, single nav-admin-blogs testid, and desktop-static-sidebar all verified. Admin tables (admin-blogs-table, properties-table, leads-table) have overflow-x:auto wrapper with min-width. MI filter bar at 375px scrolls horizontally with no-scrollbar; at 1440 wraps to exactly 2 rows with all 13 chips visible. Hero picture serves -mobile.webp at 375. Contact form stacks 1-col on mobile, splits to 2-col on desktop. Aramya iframe fills 375x812 viewport exactly. MI news grid populated (12 items). Property/Blog grids use correct responsive column classes.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Header (mobile)", "issue": "data-testid mismatch — spec expects [data-testid='mobile-menu-btn'] but actual element is [data-testid='mobile-menu-toggle']. Button itself works (aria-label='Open menu', visible on <lg) but testid does not match the review-request contract.", "selector": "[data-testid='mobile-menu-toggle']", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_12.json"],
+  "action_items": [
+    "OPTIONAL: Rename data-testid on the public-site mobile hamburger from 'mobile-menu-toggle' to 'mobile-menu-btn' to match spec contract (or update spec). Button already renders and functions correctly."
+  ],
+  "critical_code_review_comments": [
+    "AdminLayout.jsx correctly uses a single <aside> that toggles fixed/translated on mobile vs static on lg — no duplicated data-testids confirmed (nav-admin-blogs count = 1).",
+    "MI filter uses overflow-x-auto sm:overflow-visible + no-scrollbar; verified working (scrollWidth=1545 at 375px, wraps to 2 rows at 1440).",
+    "Admin table wrappers correctly apply overflow-x:auto and min-w-[520px] on <table>."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (not tested per request)", "frontend": "~98%"},
+  "test_credentials": "admin@astitva.com / Astitva@2026 — login successful",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All 13 routes verified overflow-free at 6 breakpoints. Admin drawer flow verified end-to-end at 375px. Only cosmetic finding: mobile-menu-btn testid on public header is actually 'mobile-menu-toggle'. Aramya iframe measured only at outer document (as instructed). Public-site mobile nav opens on click and shows Home/Properties/Market Intelligence/Blogs/About/Contact.",
+  "rca of the issue": "Testid naming inconsistency between review-request contract ('mobile-menu-btn') and existing implementation ('mobile-menu-toggle'). No functional impact — button works, opens full-screen nav, all links visible. One-line fix: rename attribute in the mobile-header component or update spec."
+}

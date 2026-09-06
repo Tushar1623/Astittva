@@ -1,0 +1,28 @@
+{
+  "summary": "P0 retest of Aramya Greens contact form → POST /api/leads integration. All 4 scenarios PASS: (1) Empty submit → both #field-name and #field-contact receive .invalid class, ZERO network calls fired. (2) Valid submit → POST /api/leads returned 201, #propForm hidden (display:none), #success-msg visible with 'Inquiry Submitted' text. (3) #btnAgain → form redisplayed, success hidden, .invalid classes cleared. (4) Admin GET /api/admin/leads returned newest lead with source='aramya-greens' at 2026-08-01T07:16:04Z (matches our submission timestamp). NO console errors observed — the previously-reported 'Cannot read properties of undefined (reading trim)' is gone. Fix confirmed: scoping DOM lookups to propForm.querySelector() bypasses the section#contact vs input#contact id collision.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Aramya Greens contact section", "issues": ["Duplicate id='contact' on <section> and <input> is a latent HTML validation issue. JS fix works but rename input id (e.g., #contact-input) for hygiene."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_aramya_leads.py"],
+  "action_items": [
+    "OPTIONAL cleanup: rename input#contact to input#contact-input (or similar) in /app/frontend/public/aramya/index.html to eliminate the duplicate-id collision at source (currently mitigated by scoped querySelector).",
+    "OPTIONAL: /api/admin/leads projection returns name=None for all leads in the list — verify list_leads projection at server.py ~line 745 actually exposes 'name'. Currently only source/created_at populate. Not blocking for this P0 but worth checking."
+  ],
+  "critical_code_review_comments": [
+    "Duplicate DOM id on <section id='contact'> and <input id='contact'> is invalid HTML; JS is now defensively scoped but source-level rename is preferred.",
+    "Admin leads list projection appears to drop 'name' field (returns null) — inconsistency vs source which IS exposed."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100%"},
+  "test_credentials": "admin@astitva.com / Astitva@2026 (verified working)",
+  "seed_data_creation": "Created 1 test lead: source=aramya-greens, name=QA Aramya Buyer, contact=qa.aramya+retest@example.com,9812345670, detail='Retest — Block C, 4 cottah'. Persisted via /api/leads and visible in /api/admin/leads.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Aramya Greens form is fully functional after iteration 8 fix. Frame-locator tip: use input#name / input#contact (not just #contact) in playwright because <section id='contact'> collides with <input id='contact'> — strict-mode locator will fail. Iframe URL: /aramya/index.html inside https://.../aramya-greens page.",
+  "rca of the issue": "RCA (from prior iteration, retested here): submit handler used document.getElementById('contact'), which returned the <section> element (first in DOM) instead of the <input>, so accessing .value.trim() threw 'Cannot read properties of undefined (reading trim)'. Fix: switched to propForm.querySelector('#name'|'#contact'|'#detail') so lookups are scoped inside <form id='propForm'>, guaranteeing the input is returned. Retest confirms fix — form submits successfully, backend receives POST /api/leads → 201, lead visible in admin panel with source='aramya-greens', no console errors."
+}

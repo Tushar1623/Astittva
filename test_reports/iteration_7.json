@@ -1,0 +1,47 @@
+{
+  "summary": "Backend Aramya /api/leads integration is FULLY WORKING (5/5 tests pass, CRM webhook 200). But the frontend form is COMPLETELY BROKEN due to a duplicate DOM id — the submit handler throws before any code runs, so validation, submission and success-card flow never execute.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/admin/leads", "issue": "Projection/response does NOT expose first_name, last_name, project, form, phone_code fields. Admin UI cannot show Aramya-specific metadata (project=Aramya Greens, form=Site Visit Enquiry) although it IS correctly persisted in Mongo. Consider extending the projection & response mapper in server.py list_leads (~line 742-775)."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "aramya/index.html propForm submit handler", "issue": "CRITICAL: Duplicate id='contact' — both the wrapping <section id='contact'> (line 1079) and the input <input id='contact'> (line 1095) share the same id. document.getElementById('contact') returns the SECTION (first match in DOM), which has no .value property. Consequently the submit handler throws 'Cannot read properties of undefined (reading trim)' at line 1351 BEFORE validation runs. Symptoms: (a) submitting with empty fields never adds .invalid class, (b) submitting with valid data never fires POST /api/leads and never shows #success-msg. Reproduced console: 'PAGEERROR: Cannot read properties of undefined (reading trim)' fires on every submit attempt.", "selector": "#contact (duplicated on <section> and <input>)", "priority": "P0/CRITICAL"}
+    ],
+    "integration_issues": [
+      {"flow": "Aramya form → POST /api/leads", "issue": "Form NEVER hits the backend from the browser due to the duplicate-id JS crash above. Backend endpoint itself works (verified via direct requests). Frontend integration is broken end-to-end.", "affected_selectors": ["#propForm", "#contact", "#success-msg", "#field-name", "#field-contact"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_aramya_leads.py",
+    "/app/test_reports/pytest/aramya_results.xml"
+  ],
+  "action_items": [
+    "FIX (P0): In /app/frontend/public/aramya/index.html, resolve the duplicate id='contact' collision. Simplest fix: rename the input id (e.g. id='contact-input') and update all references in the JS handler (lines ~1351) and the surrounding label 'for' attribute. OR scope lookups to the form: change document.getElementById('name'|'contact'|'detail') to propForm.querySelector('#name'|'#contact'|'#detail'). Verify by resubmitting and confirming #success-msg appears + POST /api/leads is issued.",
+    "OPTIONAL: Extend /api/admin/leads projection + response mapper in server.py (~line 742-775) to include first_name, last_name, phone_code, project, property_location, preferred_date, form so admin dashboard can display Aramya-specific metadata."
+  ],
+  "critical_code_review_comments": [
+    "Duplicate DOM id on aramya/index.html is a classic footgun and single-handedly breaks the whole feature. Recommend a unique-id lint or CI check on public/*.html.",
+    "The propForm submit handler swallows the trim() TypeError in the outer .catch only AFTER fetch — the initial throw at line 1351 happens synchronously and is not caught. Consider wrapping the whole handler body in try/catch and calling showFormError() on unexpected failures so users see feedback instead of a silently non-functional button.",
+    "Contact parsing regex + fallback synthetic email logic is fine but relies on backend accepting EmailStr — good.",
+    "server.py list_leads projection is incomplete for the new fields — admin UI won't see the Aramya tags."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_aramya_leads.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "0%"},
+  "test_credentials": "admin@astitva.com / Astitva@2026 (verified working for /api/auth/login and /api/admin/leads)",
+  "seed_data_creation": "Created via /api/leads during tests: phone=9998887711 source=aramya-greens (persisted, crm_status=sent, http=200); plus two regression leads with source=homepage and source=site-visit.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend is proven working end-to-end (Mongo persistence + Azure CRM 200). After the main agent fixes the duplicate #contact id (or scopes DOM lookups inside propForm), the frontend playwright script in this iteration can be re-run — see the exact selectors and steps in the log. Key: watch the browser console for 'PAGEERROR: Cannot read properties of undefined (reading trim)' — if it appears, the fix is not applied. Preview URL: https://github-executor-3.preview.emergentagent.com/aramya-greens (iframe → src=/aramya/index.html).",
+  "rca_of_the_issue": {
+    "bug": "Aramya Greens contact form does nothing when Submit Inquiry is clicked.",
+    "reproduction": "1) Open https://github-executor-3.preview.emergentagent.com/aramya-greens. 2) Scroll to 'Book Your Plot at Aramya Greens'. 3) Click Submit Inquiry with empty fields → nothing happens, no .invalid class added. 4) Fill all fields with valid data → click Submit → no network request to /api/leads, no success card, button stays as 'Submit Inquiry'. 5) DevTools console shows: 'Uncaught TypeError: Cannot read properties of undefined (reading trim)' inside the propForm submit listener.",
+    "root_cause": "In /app/frontend/public/aramya/index.html two elements share id='contact': <section id='contact' class='contact section-pad'> (line 1079) and <input id='contact'> (line 1095). document.getElementById('contact') returns the section (first in document order), which has no .value property. Line 1351 `document.getElementById('contact').value.trim()` therefore throws synchronously, aborting the entire submit handler before validation or fetch runs.",
+    "mitigation": "Either (a) rename the input to a unique id such as 'contact-input' and update the JS handler + the <label for> attribute, or (b) change the 3 lookups in the submit handler to use propForm.querySelector('#name'), propForm.querySelector('#contact'), propForm.querySelector('#detail') so they are scoped inside the form (an <input> child) rather than the ambiguously-named section. Option (b) is minimally invasive and preserves existing selectors."
+  }
+}
