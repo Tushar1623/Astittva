@@ -1,18 +1,13 @@
 import axios from "axios";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-// Use absolute baseURL only when REACT_APP_BACKEND_URL is set AND we're on the same host.
-// Otherwise fall back to "/api" so requests are same-origin via the platform ingress
-// — this avoids CORS issues when the app is opened through a preview URL different from
-// the one baked into the bundle.
+const RAW_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Ensure all API calls correctly reach the deployed backend
 function getBaseURL() {
-  if (typeof window === "undefined") return `${BACKEND_URL}/api`;
-  try {
-    const configured = new URL(BACKEND_URL);
-    if (configured.host === window.location.host) {
-      return `${BACKEND_URL}/api`;
-    }
-  } catch (_) {}
+  if (RAW_BACKEND_URL && RAW_BACKEND_URL.trim() !== "") {
+    const cleanUrl = RAW_BACKEND_URL.trim().replace(/\/+$/, "");
+    return cleanUrl.endsWith("/api") ? cleanUrl : `${cleanUrl}/api`;
+  }
   return "/api";
 }
 
@@ -21,7 +16,7 @@ export const API = getBaseURL();
 const api = axios.create({
   baseURL: API,
   withCredentials: true,
-  timeout: 15000, // 15s default — prevents stuck loading states on slow upstream
+  timeout: 30000, // 30s timeout handles Render free-tier cold starts
 });
 
 // Inject Bearer fallback from localStorage if present

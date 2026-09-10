@@ -166,6 +166,7 @@ export default function Footer() {
                 <li><Link to="/market-intelligence" className="hover:text-[#C78B47] transition">Market Intelligence</Link></li>
                 <li><Link to="/about" className="hover:text-[#C78B47] transition">About</Link></li>
                 <li><Link to="/contact" className="hover:text-[#C78B47] transition">Contact</Link></li>
+                <li><Link to="/admin/login" className="hover:text-[#C78B47] transition">Admin Portal</Link></li>
               </ul>
             </div>
 

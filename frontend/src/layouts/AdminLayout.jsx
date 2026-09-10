@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { LOGO_URL } from "@/lib/site";
 import {
@@ -11,6 +11,7 @@ import {
   BookOpen,
   Menu,
   X,
+  Globe,
 } from "lucide-react";
 
 export default function AdminLayout() {
@@ -156,6 +157,12 @@ export default function AdminLayout() {
               {user?.role}
             </div>
           </div>
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-ivory/60 hover:text-copper text-xs tracking-[0.2em] uppercase px-2 mb-3.5 transition"
+          >
+            <Globe className="w-4 h-4" /> Live Website
+          </Link>
           <button
             onClick={onLogout}
             data-testid="admin-logout"
