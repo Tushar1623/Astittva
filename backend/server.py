@@ -39,12 +39,16 @@ from crm_service import forward_lead
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("astitva")
 
-mongo_url = os.environ['MONGO_URL']
+mongo_url = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
+if not os.environ.get("MONGO_URL"):
+    logger.warning("MONGO_URL environment variable is not set; using fallback mongodb://localhost:27017")
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[os.environ.get("DB_NAME", "astitva_db")]
 
 JWT_ALGORITHM = "HS256"
-JWT_SECRET = os.environ['JWT_SECRET']
+JWT_SECRET = os.environ.get("JWT_SECRET", "astitva-secret-key-change-in-prod")
+if JWT_SECRET == "astitva-secret-key-change-in-prod":
+    logger.warning("JWT_SECRET environment variable is not set or using default value")
 ACCESS_EXPIRES_MIN = 60 * 12  # 12 hours for admin convenience
 REFRESH_EXPIRES_DAYS = 7
 
@@ -306,6 +310,14 @@ class BlogIn(BaseModel):
 # ---------------------------------------------------------------------------
 app = FastAPI(title="Astitva Real Estate API")
 api_router = APIRouter(prefix="/api")
+
+
+# ---------------------- Health Checks ----------------------
+@app.get("/")
+@app.get("/healthz")
+async def healthz():
+    """Service health check probe for Render, uptime monitors, and load balancers."""
+    return {"status": "ok", "service": "Astitva Real Estate API", "time": now_utc_iso()}
 
 
 # ---------------------- SEO ----------------------
@@ -1224,3 +1236,10 @@ async def on_startup():
 @app.on_event("shutdown")
 async def on_shutdown():
     client.close()
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    logger.info(f"Starting Astitva Backend server on port {port}")
+    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=False)
