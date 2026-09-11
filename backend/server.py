@@ -39,9 +39,9 @@ from crm_service import forward_lead
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("astitva")
 
-mongo_url = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
-if not os.environ.get("MONGO_URL"):
-    logger.warning("MONGO_URL environment variable is not set; using fallback mongodb://localhost:27017")
+mongo_url = os.environ.get("MONGODB_URI") or os.environ.get("MONGO_URL", "mongodb://localhost:27017")
+if not os.environ.get("MONGODB_URI") and not os.environ.get("MONGO_URL"):
+    logger.warning("Neither MONGODB_URI nor MONGO_URL environment variable is set; using fallback mongodb://localhost:27017")
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ.get("DB_NAME", "astitva_db")]
 

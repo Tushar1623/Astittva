@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(level
 logger = logging.getLogger("astitva")
 
 # MongoDB
-MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
+MONGO_URL = os.environ.get("MONGODB_URI") or os.environ.get("MONGO_URL", "mongodb://localhost:27017")
 DB_NAME = os.environ.get("DB_NAME", "astitva_db")
 client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]

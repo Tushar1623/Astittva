@@ -8,8 +8,8 @@
 # testing
 /coverage
 
-# production
-/build
+# production (tracked for Hostinger Git zero-configuration deployment)
+# /build
 
 # misc
 .DS_Store

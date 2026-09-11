@@ -1,0 +1,12 @@
+# Astittva Marketing — robots.txt
+# Allow all crawlers full access; block only the admin surface.
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/admin
+
+# Sitemap — generated dynamically by the backend, includes every published
+# property and every static page.
+Sitemap: https://astittva.in/api/sitemap.xml
