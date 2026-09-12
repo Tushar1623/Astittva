@@ -4,7 +4,7 @@ services:
   - type: web
     name: astittva-backend
     runtime: python
-    region: oregon # or frankfurt, singapore, ohio
+    region: singapore
     plan: free
     rootDir: backend
     buildCommand: pip install -r requirements.txt
