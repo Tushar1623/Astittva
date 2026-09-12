@@ -9,9 +9,14 @@
 const { MongoClient, createClient: _createClient } = require("mongodb");
 // Hostinger snippet compatibility
 const createClient = _createClient || ((uri, options) => new MongoClient(uri, options));
+const dns = require("dns");
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch {}
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
-require("dotenv").config({ path: path.join(__dirname, "backend", ".env") });
+require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
+require("dotenv").config({ path: path.join(__dirname, "..", "..", ".env") });
 
 const rawUri =
   process.env.MONGODB_URI ||

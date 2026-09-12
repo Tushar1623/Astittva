@@ -1,22 +1,16 @@
 {
-  "name": "astittva",
+  "name": "astittva-platform",
   "version": "1.0.0",
   "private": true,
-  "description": "Astittva Real Estate - Luxury real estate advisory platform",
-  "main": "server.js",
+  "description": "Astittva Real Estate platform monorepo orchestrator",
   "scripts": {
-    "start": "node server.js",
-    "build": "npm run build --prefix frontend",
-    "test": "node scripts/test_db_connection.js"
-  },
-  "dependencies": {
-    "bcryptjs": "^3.0.2",
-    "cookie-parser": "^1.4.7",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "jsonwebtoken": "^9.0.2",
-    "mongodb": "^6.0.0"
+    "start:frontend": "npm start --prefix frontend",
+    "build:frontend": "npm run build --prefix frontend",
+    "start:backend:node": "npm start --prefix backend/node",
+    "test:backend:node": "npm test --prefix backend/node",
+    "test:backend:node:api": "npm run test:api --prefix backend/node",
+    "start:backend:python": "python backend/server.py",
+    "optimize:images": "python frontend/scripts/optimize_images.py"
   },
   "engines": {
     "node": ">=18.0.0"

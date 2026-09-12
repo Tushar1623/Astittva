@@ -55,6 +55,7 @@ app.use(async (req, res, next) => {
     try {
       if (!getDb()) {
         await connectToDatabase();
+        await seedDefaultAdmin();
       }
     } catch (err) {
       return res.status(503).json({
@@ -915,6 +916,7 @@ app.get("/api/news/all", async (req, res) => {
 // Static Frontend Serving (React SPA)
 // ---------------------------------------------------------------------------
 const buildPaths = [
+  path.join(__dirname, "..", "..", "frontend", "build"),
   path.join(__dirname, "frontend", "build"),
   path.join(__dirname, "build"),
   path.join(__dirname, "public"),

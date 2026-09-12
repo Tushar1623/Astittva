@@ -1,4 +1,3 @@
-import "@/App.css";
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
@@ -11,9 +10,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import PublicLayout from "@/layouts/PublicLayout";
 import HomePage from "@/pages/HomePage";
 
-// Route-level code-splitting: everything below is loaded on demand so the
-// initial JS bundle for a first-time visitor landing on "/" stays lean.
-// Admin bundle (form editors, table pages) never ships to public visitors.
+// Route-level code-splitting: load public pages and admin pages on demand
 const PropertiesPage = lazy(() => import("@/pages/PropertiesPage"));
 const PropertyDetailPage = lazy(() => import("@/pages/PropertyDetailPage"));
 const AboutPage = lazy(() => import("@/pages/AboutPage"));
@@ -32,8 +29,6 @@ const AdminUsersPage = lazy(() => import("@/pages/admin/AdminUsersPage"));
 const AdminBlogsPage = lazy(() => import("@/pages/admin/AdminBlogsPage"));
 const AdminBlogFormPage = lazy(() => import("@/pages/admin/AdminBlogFormPage"));
 
-// Route-level fallback while the chunk downloads — deliberately minimal so it
-// doesn't cause a layout shift or a visual flash on fast connections.
 function RouteFallback() {
   return (
     <div
@@ -50,71 +45,70 @@ function RouteFallback() {
 
 function App() {
   return (
-    <div className="App">
+    <div className="App min-h-screen">
       <HelmetProvider>
         <BrowserRouter>
-        <AuthProvider>
-          <ScrollToTop />
-          <Suspense fallback={<RouteFallback />}>
-            <Routes>
-              {/* Public */}
-              <Route element={<PublicLayout />}>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/properties" element={<PropertiesPage />} />
-                <Route path="/properties/:id" element={<PropertyDetailPage />} />
-                <Route path="/market-intelligence" element={<MarketIntelligencePage />} />
-                <Route path="/blogs" element={<BlogsListPage />} />
-                <Route path="/blogs/:slug" element={<BlogDetailPage />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/contact" element={<ContactPage />} />
-              </Route>
+          <AuthProvider>
+            <ScrollToTop />
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
+                {/* Public routes */}
+                <Route element={<PublicLayout />}>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/properties" element={<PropertiesPage />} />
+                  <Route path="/properties/:id" element={<PropertyDetailPage />} />
+                  <Route path="/market-intelligence" element={<MarketIntelligencePage />} />
+                  <Route path="/blogs" element={<BlogsListPage />} />
+                  <Route path="/blogs/:slug" element={<BlogDetailPage />} />
+                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="/contact" element={<ContactPage />} />
+                </Route>
 
+                {/* Admin authentication */}
+                <Route path="/admin/login" element={<AdminLoginPage />} />
 
-              {/* Admin auth */}
-              <Route path="/admin/login" element={<AdminLoginPage />} />
-
-              {/* Admin protected */}
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute>
-                    <AdminLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<AdminDashboardPage />} />
-                <Route path="properties" element={<AdminPropertiesPage />} />
-                <Route path="properties/new" element={<AdminPropertyFormPage />} />
-                <Route path="properties/:id/edit" element={<AdminPropertyFormPage />} />
-                <Route path="leads" element={<AdminLeadsPage />} />
-                <Route path="blogs" element={<AdminBlogsPage />} />
-                <Route path="blogs/new" element={<AdminBlogFormPage />} />
-                <Route path="blogs/:id/edit" element={<AdminBlogFormPage />} />
+                {/* Admin protected console */}
                 <Route
-                  path="users"
+                  path="/admin"
                   element={
-                    <ProtectedRoute roles={["admin"]}>
-                      <AdminUsersPage />
+                    <ProtectedRoute>
+                      <AdminLayout />
                     </ProtectedRoute>
                   }
-                />
-              </Route>
-            </Routes>
-          </Suspense>
-          <Toaster
-            position="bottom-right"
-            theme="dark"
-            toastOptions={{
-              style: {
-                background: "#1B1B1B",
-                color: "#F8F5F1",
-                border: "1px solid rgba(184,115,51,0.4)",
-                borderRadius: "2px",
-              },
-            }}
-          />
-        </AuthProvider>
-      </BrowserRouter>
+                >
+                  <Route index element={<AdminDashboardPage />} />
+                  <Route path="properties" element={<AdminPropertiesPage />} />
+                  <Route path="properties/new" element={<AdminPropertyFormPage />} />
+                  <Route path="properties/:id/edit" element={<AdminPropertyFormPage />} />
+                  <Route path="leads" element={<AdminLeadsPage />} />
+                  <Route path="blogs" element={<AdminBlogsPage />} />
+                  <Route path="blogs/new" element={<AdminBlogFormPage />} />
+                  <Route path="blogs/:id/edit" element={<AdminBlogFormPage />} />
+                  <Route
+                    path="users"
+                    element={
+                      <ProtectedRoute roles={["admin"]}>
+                        <AdminUsersPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                </Route>
+              </Routes>
+            </Suspense>
+            <Toaster
+              position="bottom-right"
+              theme="dark"
+              toastOptions={{
+                style: {
+                  background: "#1B1B1B",
+                  color: "#F8F5F1",
+                  border: "1px solid rgba(184,115,51,0.4)",
+                  borderRadius: "2px",
+                },
+              }}
+            />
+          </AuthProvider>
+        </BrowserRouter>
       </HelmetProvider>
     </div>
   );

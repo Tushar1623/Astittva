@@ -15,7 +15,9 @@ import sys
 from pathlib import Path
 from PIL import Image
 
-ROOT = Path("/app/frontend/public/images")
+ROOT = Path(__file__).resolve().parent.parent / "public" / "images"
+if not ROOT.exists():
+    ROOT = Path("/app/frontend/public/images")
 DESKTOP_MAX_W = 1920
 MOBILE_MAX_W = 720
 DESKTOP_Q = 82
