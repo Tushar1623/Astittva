@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const RAW_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const RAW_BACKEND_URL =
+  process.env.REACT_APP_BACKEND_URL ||
+  "https://astittva-backend.onrender.com";
 
 // Ensure all API calls correctly reach the deployed backend
 function getBaseURL() {
