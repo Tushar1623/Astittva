@@ -15,7 +15,7 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.9
       - key: DB_NAME
-        value: astitva_db
+        value: astitva_realestate
       - key: MONGO_URL
         sync: false # Set your MongoDB Atlas URI: mongodb+srv://<user>:<password>@cluster0.xxxx.mongodb.net/?retryWrites=true&w=majority
       - key: JWT_SECRET
