@@ -18,6 +18,7 @@ const ContactPage = lazy(() => import("@/pages/ContactPage"));
 const MarketIntelligencePage = lazy(() => import("@/pages/MarketIntelligencePage"));
 const BlogsListPage = lazy(() => import("@/pages/BlogsListPage"));
 const BlogDetailPage = lazy(() => import("@/pages/BlogDetailPage"));
+const RidhiBhoomiPage = lazy(() => import("@/pages/RidhiBhoomiPage"));
 
 const AdminLoginPage = lazy(() => import("@/pages/admin/AdminLoginPage"));
 const AdminLayout = lazy(() => import("@/layouts/AdminLayout"));
@@ -43,19 +44,6 @@ function RouteFallback() {
   );
 }
 
-function RidhiBhoomiRedirect() {
-  useEffect(() => {
-    window.location.href = process.env.REACT_APP_RIDDHI_BHOOMI_URL || "/ridhi-bhoomi/";
-  }, []);
-  return (
-    <div className="w-full min-h-[60vh] flex items-center justify-center bg-[#FAF8F5]">
-      <span className="text-[11px] tracking-[0.3em] uppercase text-copper font-medium">
-        Redirecting to Ridhi Bhoomi…
-      </span>
-    </div>
-  );
-}
-
 function App() {
   return (
     <div className="App min-h-screen">
@@ -75,8 +63,8 @@ function App() {
                   <Route path="/blogs/:slug" element={<BlogDetailPage />} />
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/contact" element={<ContactPage />} />
-                  <Route path="/ridhi-bhoomi" element={<RidhiBhoomiRedirect />} />
-                  <Route path="/riddhi-bhumi" element={<RidhiBhoomiRedirect />} />
+                  <Route path="/ridhi-bhoomi" element={<RidhiBhoomiPage />} />
+                  <Route path="/riddhi-bhumi" element={<RidhiBhoomiPage />} />
                 </Route>
 
                 {/* Admin authentication */}
