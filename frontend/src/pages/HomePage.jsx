@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY } from "@/lib/site";
 import CinematicHero from "@/components/CinematicHero";
 import Seo from "@/components/Seo";
+import RiddhiBhumiSection from "@/components/RiddhiBhumiSection";
 
 const TEXTURE = "https://static.prod-images.emergentagent.com/jobs/50ac1e2c-4ee3-4d48-ad5e-fd37063ae3c0/images/1f5da7f44ad5aab6c1f6ab3c12df3ec89723084c1042e95749a6b4658dcffcc6.png";
 
@@ -215,6 +216,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ===================== FEATURED: RIDDHI BHOOMI ===================== */}
+      <RiddhiBhumiSection />
 
       {/* ===================== WHY ASTITTVA placeholder will follow ===================== */}
       <section data-testid="why-astitva-section" className="relative py-16 sm:py-24 overflow-hidden">
