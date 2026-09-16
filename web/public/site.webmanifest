@@ -1,0 +1,30 @@
+{
+  "name": "Astittva Marketing",
+  "short_name": "Astittva",
+  "description": "Astittva Marketing — Luxury Real Estate Advisory · Kolkata",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#3B0A11",
+  "theme_color": "#3B0A11",
+  "icons": [
+    {
+      "src": "/favicon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "purpose": "any"
+    }
+  ]
+}

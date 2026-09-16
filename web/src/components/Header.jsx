@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { LOGO_URL, BRAND_TAGLINE } from "@/lib/site";
+import { LOGO_URL } from "@/lib/site";
 
 const nav = [
   { to: "/", label: "Home" },
@@ -18,6 +18,8 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
+  // Ref to the toggle button so we can restore focus when the drawer closes
+  const toggleRef = useRef(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -25,13 +27,32 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Close drawer and restore focus to toggle on route change
   useEffect(() => { setOpen(false); }, [pathname]);
+
+  // Escape key closes the mobile drawer and restores focus (NAV-02)
+  useEffect(() => {
+    if (!open) return;
+    const handleKey = (e) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        toggleRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open]);
 
   useEffect(() => {
     if (open) document.body.classList.add("menu-open");
     else document.body.classList.remove("menu-open");
     return () => document.body.classList.remove("menu-open");
   }, [open]);
+
+  const closeMenu = () => {
+    setOpen(false);
+    toggleRef.current?.focus();
+  };
 
   return (
     <header
@@ -104,10 +125,13 @@ export default function Header() {
         </div>
 
         <button
+          ref={toggleRef}
           data-testid="mobile-menu-toggle"
           className="lg:hidden text-[#1C1C1C] relative w-10 h-10 flex items-center justify-center -mr-2"
           onClick={() => setOpen(!open)}
-          aria-label={open ? "Close menu" : "Open menu"}
+          aria-label={open ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={open}
+          aria-controls="mobile-nav-panel"
         >
           <AnimatePresence mode="wait" initial={false}>
             <motion.span
@@ -127,14 +151,21 @@ export default function Header() {
       <AnimatePresence>
         {open && (
           <motion.div
+            id="mobile-nav-panel"
             key="mobile-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             className="lg:hidden overflow-hidden bg-[#FAF8F5]/98 backdrop-blur-xl border-t border-[#E8DED2]"
           >
-            <nav className="px-6 py-7 flex flex-col">
+            <nav
+              aria-label="Mobile navigation"
+              className="px-6 py-7 flex flex-col"
+            >
               {nav.map((n, i) => (
                 <motion.div
                   key={n.to}
@@ -145,11 +176,13 @@ export default function Header() {
                   <NavLink
                     to={n.to}
                     data-testid={`mobile-nav-${n.label.toLowerCase().replace(/\s+/g, '-')}`}
+                    onClick={closeMenu}
                     className={({ isActive }) =>
                       `flex items-center justify-between py-4 text-[17px] font-serif-display tracking-[0.06em] border-b border-[#E8DED2] ${
                         isActive ? "text-copper" : "text-[#1C1C1C]"
                       }`
                     }
+                    aria-current={pathname === n.to ? "page" : undefined}
                   >
                     <span>{n.label}</span>
                     {n.isFeatured && (
@@ -166,8 +199,13 @@ export default function Header() {
                 transition={{ delay: 0.45, duration: 0.4 }}
                 className="mt-7"
               >
-                <Link to="/contact" data-testid="mobile-header-cta" className="btn-primary w-full">
-                  Book Consultation
+                <Link
+                  to="/contact"
+                  data-testid="mobile-header-cta"
+                  className="btn-primary w-full"
+                  onClick={closeMenu}
+                >
+                  Book a Consultation
                 </Link>
               </motion.div>
               <div className="mt-7 pt-5 border-t border-[#E8DED2] text-[10px] tracking-[0.4em] uppercase text-[#5F5F5F]">
