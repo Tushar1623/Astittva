@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { HelmetProvider } from "react-helmet-async";
@@ -43,6 +43,19 @@ function RouteFallback() {
   );
 }
 
+function RidhiBhoomiRedirect() {
+  useEffect(() => {
+    window.location.href = process.env.REACT_APP_RIDDHI_BHOOMI_URL || "http://localhost:5173";
+  }, []);
+  return (
+    <div className="w-full min-h-[60vh] flex items-center justify-center bg-[#FAF8F5]">
+      <span className="text-[11px] tracking-[0.3em] uppercase text-copper font-medium">
+        Redirecting to Ridhi Bhoomi…
+      </span>
+    </div>
+  );
+}
+
 function App() {
   return (
     <div className="App min-h-screen">
@@ -62,6 +75,8 @@ function App() {
                   <Route path="/blogs/:slug" element={<BlogDetailPage />} />
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/contact" element={<ContactPage />} />
+                  <Route path="/ridhi-bhoomi" element={<RidhiBhoomiRedirect />} />
+                  <Route path="/riddhi-bhumi" element={<RidhiBhoomiRedirect />} />
                 </Route>
 
                 {/* Admin authentication */}
