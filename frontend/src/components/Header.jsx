@@ -42,25 +42,23 @@ export default function Header() {
           : "bg-[#FAF8F5]/40 backdrop-blur-md"
       }`}
     >
-      <div className="max-w-[1440px] mx-auto px-5 sm:px-8 lg:px-16 flex items-center justify-between h-16 sm:h-20 md:h-24">
-        <Link to="/" data-testid="logo-link" className="flex items-center gap-3 sm:gap-4 group">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 flex items-center justify-between gap-4 xl:gap-8 h-16 sm:h-20 md:h-24">
+        <Link to="/" data-testid="logo-link" className="flex items-center gap-2.5 sm:gap-3.5 xl:gap-4 shrink-0 group">
           <img
             src={LOGO_URL}
             alt="Astittva Marketing"
-            className="h-11 w-11 sm:h-12 sm:w-12 lg:h-16 lg:w-16 object-contain"
+            className="h-10 w-10 sm:h-12 sm:w-12 xl:h-14 xl:w-14 object-contain shrink-0"
           />
-          <div className="leading-[1.05] border-l border-copper/25 pl-3 sm:pl-4">
-            {/* Unified stacked brand-signature lockup at every breakpoint —
-                like a couture house mark. ASTITTVA is the dominant typography,
-                MARKETING sits below as a refined subtitle. */}
+          <div className="leading-[1.05] border-l border-copper/25 pl-2.5 sm:pl-3.5">
+            {/* Unified stacked brand-signature lockup at every breakpoint */}
             <div
-              className="font-serif-display tracking-[0.16em] sm:tracking-[0.18em] lg:tracking-[0.2em] text-[18px] sm:text-[22px] lg:text-[28px] whitespace-nowrap"
+              className="font-serif-display tracking-[0.16em] sm:tracking-[0.18em] text-[18px] sm:text-[20px] xl:text-[24px] whitespace-nowrap"
               style={{ color: "#7A1228", fontWeight: 800 }}
             >
               ASTITTVA
             </div>
             <div
-              className="font-serif-display tracking-[0.42em] sm:tracking-[0.46em] lg:tracking-[0.5em] text-[8.5px] sm:text-[10px] lg:text-[11px] mt-[2px] sm:mt-[3px] whitespace-nowrap"
+              className="font-serif-display tracking-[0.42em] sm:tracking-[0.46em] text-[8.5px] sm:text-[9.5px] xl:text-[10.5px] mt-[2px] whitespace-nowrap"
               style={{ color: "#1C1C1C", fontWeight: 500 }}
             >
               MARKETING
@@ -68,15 +66,15 @@ export default function Header() {
           </div>
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-7 xl:gap-10">
+        <nav className="hidden lg:flex items-center justify-center gap-3.5 xl:gap-6 2xl:gap-8 min-w-0">
           {nav.map((n) => (
             <NavLink
               key={n.to}
               to={n.to}
               data-testid={`nav-${n.label.toLowerCase().replace(/\s+/g, '-')}`}
               className={({ isActive }) =>
-                `relative text-[10.5px] tracking-[0.26em] uppercase transition-colors duration-300 py-2 ${
-                  isActive ? "text-[#1C1C1C]" : n.isFeatured ? "text-copper font-medium hover:text-[#7A1228]" : "text-[#5F5F5F] hover:text-[#B87333]"
+                `relative text-[10px] xl:text-[10.5px] tracking-[0.18em] xl:tracking-[0.24em] uppercase transition-colors duration-300 py-1.5 whitespace-nowrap ${
+                  isActive ? "text-[#1C1C1C] font-medium" : n.isFeatured ? "text-copper font-medium hover:text-[#7A1228]" : "text-[#5F5F5F] hover:text-[#B87333]"
                 }`
               }
             >
@@ -85,7 +83,7 @@ export default function Header() {
                   <span className="inline-flex items-center gap-1.5">
                     {n.label}
                     {n.isFeatured && (
-                      <span className="text-[8px] tracking-[0.15em] px-1.5 py-0.5 rounded-full bg-copper/10 text-copper font-semibold border border-copper/30 uppercase">
+                      <span className="text-[7.5px] xl:text-[8px] tracking-[0.12em] px-1.5 py-0.5 rounded-full bg-copper/10 text-copper font-semibold border border-copper/30 uppercase shrink-0">
                         Township
                       </span>
                     )}
@@ -97,8 +95,13 @@ export default function Header() {
           ))}
         </nav>
 
-        <div className="hidden lg:block">
-          <Link to="/contact" data-testid="header-cta" className="btn-primary">
+        <div className="hidden lg:block shrink-0">
+          <Link
+            to="/contact"
+            data-testid="header-cta"
+            className="inline-flex items-center justify-center px-4 xl:px-6 py-2.5 xl:py-3 text-[10px] xl:text-[11px] tracking-[0.18em] uppercase font-medium text-white bg-[#B87333] hover:bg-[#C58A52] border border-[#B87333] transition-all duration-300 shadow-sm whitespace-nowrap"
+            style={{ letterSpacing: "0.18em" }}
+          >
             Book Consultation
           </Link>
         </div>

@@ -45,7 +45,7 @@ function RouteFallback() {
 
 function RidhiBhoomiRedirect() {
   useEffect(() => {
-    window.location.href = process.env.REACT_APP_RIDDHI_BHOOMI_URL || "http://localhost:5173";
+    window.location.href = process.env.REACT_APP_RIDDHI_BHOOMI_URL || "/ridhi-bhoomi/";
   }, []);
   return (
     <div className="w-full min-h-[60vh] flex items-center justify-center bg-[#FAF8F5]">

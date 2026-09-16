@@ -935,8 +935,8 @@ app.all(["/api/*", "/healthz/*"], (req, res) => {
   res.status(404).json({ detail: "Endpoint not found", path: req.path });
 });
 
-// Serve Ridhi Bhoomi build if available
-const ridhiBhoomiDistPath = path.join(__dirname, "..", "..", "ridhi bhoomi", "ridhi-bhoomi", "client", "dist");
+// Serve Ridhi Bhoomi build from workspace folder
+const ridhiBhoomiDistPath = path.join(__dirname, "..", "..", "ridhi bhoomi", "client", "dist");
 if (fs.existsSync(ridhiBhoomiDistPath) && fs.existsSync(path.join(ridhiBhoomiDistPath, "index.html"))) {
   console.log(`[Static] Serving Ridhi Bhoomi build from: ${ridhiBhoomiDistPath} at /ridhi-bhoomi`);
   app.use("/ridhi-bhoomi", express.static(ridhiBhoomiDistPath));

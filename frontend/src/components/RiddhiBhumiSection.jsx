@@ -10,8 +10,8 @@ import { ArrowRight, ExternalLink, MapPin, CheckCircle2, Trees, Compass, Shield 
  * Clicking on the card, headline, visual showcase, or CTAs redirects to the Riddhi Bhoomi website.
  */
 export default function RiddhiBhumiSection({
-  redirectUrl = process.env.REACT_APP_RIDDHI_BHOOMI_URL || "http://localhost:5173",
-  target = "_blank",
+  redirectUrl = process.env.REACT_APP_RIDDHI_BHOOMI_URL || "/ridhi-bhoomi/",
+  target = "_self",
 }) {
   const highlights = [
     {
