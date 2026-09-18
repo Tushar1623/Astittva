@@ -37,8 +37,30 @@ export function formatApiErrorDetail(detail) {
   return String(detail);
 }
 
+export function getGoogleDriveFileId(url) {
+  if (!url) return null;
+  const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (fileMatch) {
+    return fileMatch[1];
+  }
+  try {
+    const parsed = new URL(url);
+    if (
+      parsed.hostname === "drive.google.com" ||
+      parsed.hostname.endsWith(".drive.google.com")
+    ) {
+      return parsed.searchParams.get("id");
+    }
+  } catch {}
+  return null;
+}
+
 export function fileUrl(path) {
   if (!path) return "";
+  const driveId = getGoogleDriveFileId(path);
+  if (driveId) {
+    return `https://drive.google.com/thumbnail?id=${driveId}&sz=w2000`;
+  }
   if (path.startsWith("http")) return path;
   return `${API}/files/${path}`;
 }

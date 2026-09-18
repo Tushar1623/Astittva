@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import api, { fileUrl, formatApiErrorDetail } from "@/lib/api";
+import api, { fileUrl, formatApiErrorDetail, getGoogleDriveFileId } from "@/lib/api";
 import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -35,6 +35,7 @@ export default function AdminPropertyFormPage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [amenityInput, setAmenityInput] = useState("");
+  const [driveImageUrl, setDriveImageUrl] = useState("");
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -70,6 +71,24 @@ export default function AdminPropertyFormPage() {
 
   const removeImage = (path) => {
     setForm((f) => ({ ...f, images: f.images.filter((p) => p !== path) }));
+  };
+
+  const addDriveImage = () => {
+    const url = driveImageUrl.trim();
+    if (!url) {
+      toast.error("Paste a Google Drive image link");
+      return;
+    }
+    if (!getGoogleDriveFileId(url)) {
+      toast.error("Please enter a valid Google Drive link");
+      return;
+    }
+    setForm((f) => ({
+      ...f,
+      images: [...(f.images || []), url],
+    }));
+    setDriveImageUrl("");
+    toast.success("Drive image added");
   };
 
   const addAmenity = () => {
@@ -217,6 +236,45 @@ export default function AdminPropertyFormPage() {
             {uploading ? "Uploading..." : "Upload Images"}
             <input ref={fileInputRef} type="file" data-testid="form-image-upload" accept="image/*" multiple className="hidden" onChange={onFiles} />
           </label>
+
+          {/* Divider */}
+          <div className="flex items-center my-6">
+            <div className="flex-1 border-t border-copper/15" />
+            <span className="px-4 text-[10px] tracking-[0.25em] uppercase text-ivory/40">OR</span>
+            <div className="flex-1 border-t border-copper/15" />
+          </div>
+
+          {/* Google Drive Image Link */}
+          <div>
+            <label className="input-label">Google Drive Image Link</label>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="url"
+                data-testid="form-drive-image-url"
+                className="input-filled flex-1"
+                placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
+                value={driveImageUrl}
+                onChange={(e) => setDriveImageUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addDriveImage();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={addDriveImage}
+                data-testid="add-drive-image-button"
+                className="btn-outline shrink-0 inline-flex items-center justify-center gap-2"
+              >
+                + Add Drive Image
+              </button>
+            </div>
+            <p className="text-[11px] text-ivory/50 mt-2 font-light">
+              Drive file must be shared as &apos;Anyone with the link&apos;.
+            </p>
+          </div>
         </section>
 
         {/* Details */}
