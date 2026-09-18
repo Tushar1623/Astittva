@@ -32,15 +32,36 @@ export default function AdminPropertyFormPage() {
   const isEdit = Boolean(id);
   const [form, setForm] = useState(emptyProperty);
   const [loading, setLoading] = useState(isEdit);
+  const [loadError, setLoadError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [amenityInput, setAmenityInput] = useState("");
-  const [driveImageUrl, setDriveImageUrl] = useState("");
+  const [driveInputUrl, setDriveInputUrl] = useState("");
 
   useEffect(() => {
     if (isEdit) {
+      setLoading(true);
+      setLoadError(null);
+      // Try admin endpoint first; fall back to public property endpoint if needed
       api.get(`/admin/properties/${id}`)
-        .then(({ data }) => setForm({ ...data, starting_price: data.starting_price ?? "" }))
-        .catch(() => toast.error("Failed to load property"))
+        .catch(() => api.get(`/properties/${id}`))
+        .then(({ data }) => {
+          if (data && typeof data === "object") {
+            setForm({
+              ...emptyProperty,
+              ...data,
+              starting_price: data.starting_price ?? "",
+              images: Array.isArray(data.images) ? data.images : [],
+              amenities: Array.isArray(data.amenities) ? data.amenities : [],
+            });
+          } else {
+            throw new Error("Invalid data format received");
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load property:", err);
+          setLoadError("Failed to load property details. Please try again.");
+          toast.error("Failed to load property");
+        })
         .finally(() => setLoading(false));
     }
   }, [id, isEdit]);
@@ -48,11 +69,11 @@ export default function AdminPropertyFormPage() {
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const removeImage = (path) => {
-    setForm((f) => ({ ...f, images: f.images.filter((p) => p !== path) }));
+    setForm((f) => ({ ...f, images: (f.images || []).filter((p) => p !== path) }));
   };
 
   const addDriveImage = () => {
-    const url = driveImageUrl.trim();
+    const url = driveInputUrl.trim();
     if (!url) {
       toast.error("Paste a Google Drive image link");
       return;
@@ -65,7 +86,7 @@ export default function AdminPropertyFormPage() {
       ...f,
       images: [...(f.images || []), url],
     }));
-    setDriveImageUrl("");
+    setDriveInputUrl("");
     toast.success("Google Drive image added");
   };
 
@@ -100,7 +121,29 @@ export default function AdminPropertyFormPage() {
     }
   };
 
-  if (loading) return <div className="text-ivory/50 text-center py-16 tracking-[0.3em] uppercase text-xs">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="py-24 flex flex-col items-center justify-center space-y-4">
+        <div className="w-8 h-8 border-2 border-copper/30 border-t-copper rounded-full animate-spin" />
+        <div className="text-copper text-xs tracking-[0.3em] uppercase">Loading Property Details...</div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="py-24 text-center space-y-4">
+        <p className="text-rose-400 text-sm">{loadError}</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="btn-outline text-xs tracking-[0.2em] uppercase px-4 py-2"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div data-testid="admin-property-form">
@@ -238,8 +281,8 @@ export default function AdminPropertyFormPage() {
                 data-testid="form-drive-image-url"
                 className="input-filled flex-1"
                 placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
-                value={driveImageUrl}
-                onChange={(e) => setDriveImageUrl(e.target.value)}
+                value={driveInputUrl}
+                onChange={(e) => setDriveInputUrl(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();

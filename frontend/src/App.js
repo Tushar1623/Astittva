@@ -6,6 +6,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/context/AuthContext";
 import ScrollToTop from "@/components/ScrollToTop";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 import PublicLayout from "@/layouts/PublicLayout";
 import HomePage from "@/pages/HomePage";
@@ -51,53 +52,55 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <ScrollToTop />
-            <Suspense fallback={<RouteFallback />}>
-              <Routes>
-                {/* Public routes */}
-                <Route element={<PublicLayout />}>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/properties" element={<PropertiesPage />} />
-                  <Route path="/properties/:id" element={<PropertyDetailPage />} />
-                  <Route path="/market-intelligence" element={<MarketIntelligencePage />} />
-                  <Route path="/blogs" element={<BlogsListPage />} />
-                  <Route path="/blogs/:slug" element={<BlogDetailPage />} />
-                  <Route path="/about" element={<AboutPage />} />
-                  <Route path="/contact" element={<ContactPage />} />
-                  <Route path="/ridhi-bhoomi" element={<RidhiBhoomiPage />} />
-                  <Route path="/riddhi-bhumi" element={<RidhiBhoomiPage />} />
-                </Route>
+            <ErrorBoundary>
+              <Suspense fallback={<RouteFallback />}>
+                <Routes>
+                  {/* Public routes */}
+                  <Route element={<PublicLayout />}>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/properties" element={<PropertiesPage />} />
+                    <Route path="/properties/:id" element={<PropertyDetailPage />} />
+                    <Route path="/market-intelligence" element={<MarketIntelligencePage />} />
+                    <Route path="/blogs" element={<BlogsListPage />} />
+                    <Route path="/blogs/:slug" element={<BlogDetailPage />} />
+                    <Route path="/about" element={<AboutPage />} />
+                    <Route path="/contact" element={<ContactPage />} />
+                    <Route path="/ridhi-bhoomi" element={<RidhiBhoomiPage />} />
+                    <Route path="/riddhi-bhumi" element={<RidhiBhoomiPage />} />
+                  </Route>
 
-                {/* Admin authentication */}
-                <Route path="/admin/login" element={<AdminLoginPage />} />
+                  {/* Admin authentication */}
+                  <Route path="/admin/login" element={<AdminLoginPage />} />
 
-                {/* Admin protected console */}
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute>
-                      <AdminLayout />
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route index element={<AdminDashboardPage />} />
-                  <Route path="properties" element={<AdminPropertiesPage />} />
-                  <Route path="properties/new" element={<AdminPropertyFormPage />} />
-                  <Route path="properties/:id/edit" element={<AdminPropertyFormPage />} />
-                  <Route path="leads" element={<AdminLeadsPage />} />
-                  <Route path="blogs" element={<AdminBlogsPage />} />
-                  <Route path="blogs/new" element={<AdminBlogFormPage />} />
-                  <Route path="blogs/:id/edit" element={<AdminBlogFormPage />} />
+                  {/* Admin protected console */}
                   <Route
-                    path="users"
+                    path="/admin"
                     element={
-                      <ProtectedRoute roles={["admin"]}>
-                        <AdminUsersPage />
+                      <ProtectedRoute>
+                        <AdminLayout />
                       </ProtectedRoute>
                     }
-                  />
-                </Route>
-              </Routes>
-            </Suspense>
+                  >
+                    <Route index element={<AdminDashboardPage />} />
+                    <Route path="properties" element={<AdminPropertiesPage />} />
+                    <Route path="properties/new" element={<AdminPropertyFormPage />} />
+                    <Route path="properties/:id/edit" element={<AdminPropertyFormPage />} />
+                    <Route path="leads" element={<AdminLeadsPage />} />
+                    <Route path="blogs" element={<AdminBlogsPage />} />
+                    <Route path="blogs/new" element={<AdminBlogFormPage />} />
+                    <Route path="blogs/:id/edit" element={<AdminBlogFormPage />} />
+                    <Route
+                      path="users"
+                      element={
+                        <ProtectedRoute roles={["admin"]}>
+                          <AdminUsersPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Route>
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
             <Toaster
               position="bottom-right"
               theme="dark"
