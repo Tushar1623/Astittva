@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import api, { fileUrl, formatApiErrorDetail } from "@/lib/api";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
 import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
@@ -76,13 +76,24 @@ export default function AdminPropertiesPage() {
                 <tr key={p.id} className="border-t border-copper/10 hover:bg-charcoal-2/30">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
-                      {p.images?.[0] ? (
-                        <img loading="lazy" src={fileUrl(p.images[0])} alt="" className="w-12 h-12 object-cover border border-copper/20" />
-                      ) : (
-                        <div className="w-12 h-12 bg-charcoal-2 border border-copper/10 flex items-center justify-center text-copper/40 text-[10px] tracking-widest uppercase">
-                          N/A
-                        </div>
-                      )}
+                      {(() => {
+                        const driveImg = (p.images || []).find(isGoogleDriveImage);
+                        return driveImg ? (
+                          <img
+                            loading="lazy"
+                            src={driveImageUrl(driveImg)}
+                            alt=""
+                            className="w-12 h-12 object-cover border border-copper/20"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-charcoal-2 border border-copper/10 flex items-center justify-center text-copper/40 text-[10px] tracking-widest uppercase">
+                            N/A
+                          </div>
+                        );
+                      })()}
                       <div>
                         <div className="text-ivory font-display font-normal">{p.project_name}</div>
                         <div className="text-ivory/50 text-xs">{p.builder || "—"}</div>

@@ -1,7 +1,7 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import api, { fileUrl, formatApiErrorDetail, getGoogleDriveFileId } from "@/lib/api";
-import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
+import { ArrowLeft, X } from "lucide-react";
 import { toast } from "sonner";
 
 const emptyProperty = {
@@ -33,10 +33,8 @@ export default function AdminPropertyFormPage() {
   const [form, setForm] = useState(emptyProperty);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [amenityInput, setAmenityInput] = useState("");
   const [driveImageUrl, setDriveImageUrl] = useState("");
-  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (isEdit) {
@@ -49,26 +47,6 @@ export default function AdminPropertyFormPage() {
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-  const onFiles = async (e) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-    setUploading(true);
-    const newPaths = [];
-    for (const file of files) {
-      const fd = new FormData();
-      fd.append("file", file);
-      try {
-        const { data } = await api.post("/admin/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
-        newPaths.push(data.path);
-      } catch (err) {
-        toast.error(`Upload failed for ${file.name}: ${formatApiErrorDetail(err.response?.data?.detail)}`);
-      }
-    }
-    setForm((f) => ({ ...f, images: [...(f.images || []), ...newPaths] }));
-    setUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
   const removeImage = (path) => {
     setForm((f) => ({ ...f, images: f.images.filter((p) => p !== path) }));
   };
@@ -79,8 +57,8 @@ export default function AdminPropertyFormPage() {
       toast.error("Paste a Google Drive image link");
       return;
     }
-    if (!getGoogleDriveFileId(url)) {
-      toast.error("Please enter a valid Google Drive link");
+    if (!isGoogleDriveImage(url)) {
+      toast.error("Please enter a valid Google Drive image link");
       return;
     }
     setForm((f) => ({
@@ -88,7 +66,7 @@ export default function AdminPropertyFormPage() {
       images: [...(f.images || []), url],
     }));
     setDriveImageUrl("");
-    toast.success("Drive image added");
+    toast.success("Google Drive image added");
   };
 
   const addAmenity = () => {
@@ -216,35 +194,42 @@ export default function AdminPropertyFormPage() {
         {/* Images */}
         <section className="border border-copper/15 p-8">
           <h3 className="overline mb-6">Images</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
-            {form.images.map((path) => (
-              <div key={path} className="relative aspect-[4/3] group border border-copper/20">
-                <img loading="lazy" src={fileUrl(path)} alt="" className="w-full h-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => removeImage(path)}
-                  data-testid={`remove-image`}
-                  className="absolute top-1 right-1 w-7 h-7 bg-charcoal/90 border border-copper/40 flex items-center justify-center text-copper hover:bg-copper hover:text-charcoal"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-          <label className="btn-outline inline-flex cursor-pointer">
-            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-            {uploading ? "Uploading..." : "Upload Images"}
-            <input ref={fileInputRef} type="file" data-testid="form-image-upload" accept="image/*" multiple className="hidden" onChange={onFiles} />
-          </label>
+          {(() => {
+            const driveImages = (form.images || []).filter(isGoogleDriveImage);
+            return (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+                  {driveImages.map((path) => (
+                    <div key={path} className="relative aspect-[4/3] group border border-copper/20 bg-charcoal/30">
+                      <img
+                        loading="lazy"
+                        src={driveImageUrl(path)}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(path)}
+                        data-testid="remove-image"
+                        className="absolute top-1 right-1 w-7 h-7 bg-charcoal/90 border border-copper/40 flex items-center justify-center text-copper hover:bg-copper hover:text-charcoal transition"
+                        title="Remove image"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {driveImages.length === 0 && (
+                  <p className="text-xs text-ivory/40 mb-6 italic">No Google Drive images added yet.</p>
+                )}
+              </>
+            );
+          })()}
 
-          {/* Divider */}
-          <div className="flex items-center my-6">
-            <div className="flex-1 border-t border-copper/15" />
-            <span className="px-4 text-[10px] tracking-[0.25em] uppercase text-ivory/40">OR</span>
-            <div className="flex-1 border-t border-copper/15" />
-          </div>
-
-          {/* Google Drive Image Link */}
+          {/* Google Drive Image Link Input */}
           <div>
             <label className="input-label">Google Drive Image Link</label>
             <div className="flex flex-col sm:flex-row gap-3">
@@ -272,7 +257,7 @@ export default function AdminPropertyFormPage() {
               </button>
             </div>
             <p className="text-[11px] text-ivory/50 mt-2 font-light">
-              Drive file must be shared as &apos;Anyone with the link&apos;.
+              Before adding the image, open Google Drive → Share → General access → Anyone with the link → Viewer.
             </p>
           </div>
         </section>

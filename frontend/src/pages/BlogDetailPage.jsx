@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Calendar, ArrowLeft, ArrowUpRight } from "lucide-react";
-import api, { fileUrl } from "@/lib/api";
+import api, { isGoogleDriveImage, driveImageUrl } from "@/lib/api";
 import Seo from "@/components/Seo";
 import { sanitizeBlogHtml } from "@/lib/sanitize";
 
@@ -21,8 +21,9 @@ function formatDate(iso) {
 
 function blogImage(src) {
   if (!src) return "";
+  if (isGoogleDriveImage(src)) return driveImageUrl(src);
   if (src.startsWith("http")) return src;
-  return fileUrl(src);
+  return "";
 }
 
 export default function BlogDetailPage() {
@@ -171,6 +172,9 @@ export default function BlogDetailPage() {
               <img
                 src={img}
                 alt={blog.title}
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
                 className="w-full h-full object-cover"
               />
             </motion.div>

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MapPin, Building2, Calendar, BadgeCheck, Home, ArrowLeft, Phone, MessageCircle } from "lucide-react";
-import api, { fileUrl, formatApiErrorDetail } from "@/lib/api";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
 import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY } from "@/lib/site";
 import Seo from "@/components/Seo";
@@ -19,9 +19,8 @@ function PropertySeo({ property, id }) {
     `${property.area_sqft ? property.area_sqft + " sq ft · " : ""}` +
     `${property.availability || ""}. ` +
     `Schedule a private site visit with Astittva Marketing.`;
-  const image = property.images?.[0]
-    ? (property.images[0].startsWith("http") ? property.images[0] : `https://astittva.in/api/files/${property.images[0]}`)
-    : undefined;
+  const driveImg = (property.images || []).find(isGoogleDriveImage);
+  const image = driveImg ? driveImageUrl(driveImg) : undefined;
 
   const listingJsonLd = {
     "@context": "https://schema.org",
@@ -131,7 +130,7 @@ export default function PropertyDetailPage() {
     );
   }
 
-  const images = property.images?.length ? property.images : [];
+  const images = (property.images || []).filter(isGoogleDriveImage);
 
   return (
     <div data-testid="property-detail-page" className="pt-28 pb-24">
@@ -143,12 +142,23 @@ export default function PropertyDetailPage() {
 
         {/* Gallery */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-12">
-          <div className={`${images.length > 1 ? "lg:col-span-9" : "lg:col-span-12"} aspect-[16/10] overflow-hidden`}>
-            <img loading="lazy"
-              src={images[activeImg] ? fileUrl(images[activeImg]) : "/images/luxe/luxury_villa.jpg"}
-              alt={property.project_name}
-              className="w-full h-full object-cover"
-            />
+          <div className={`${images.length > 1 ? "lg:col-span-9" : "lg:col-span-12"} aspect-[16/10] overflow-hidden bg-charcoal-2/40 border border-copper/15`}>
+            {images.length > 0 && images[activeImg] ? (
+              <img
+                loading="lazy"
+                src={driveImageUrl(images[activeImg])}
+                alt={property.project_name}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-ivory/40 p-8 text-center bg-charcoal/50">
+                <span className="font-display text-lg tracking-widest uppercase text-copper/70 mb-2">No Image Available</span>
+                <span className="text-xs text-ivory/40">Images will be updated shortly</span>
+              </div>
+            )}
           </div>
           {images.length > 1 && (
             <div className="lg:col-span-3 grid grid-cols-4 lg:flex lg:flex-col gap-4 lg:h-full">
@@ -156,9 +166,17 @@ export default function PropertyDetailPage() {
                 <button
                   key={i}
                   onClick={() => setActiveImg(i)}
-                  className={`relative aspect-[4/3] lg:aspect-auto lg:flex-1 lg:min-h-0 overflow-hidden border ${activeImg === i ? "border-copper" : "border-copper/15"} transition`}
+                  className={`relative aspect-[4/3] lg:aspect-auto lg:flex-1 lg:min-h-0 overflow-hidden border ${activeImg === i ? "border-copper" : "border-copper/15"} transition bg-charcoal/30`}
                 >
-                  <img loading="lazy" src={fileUrl(img)} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                  <img
+                    loading="lazy"
+                    src={driveImageUrl(img)}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
                 </button>
               ))}
             </div>

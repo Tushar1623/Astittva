@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowUpRight, Calendar, BookOpen } from "lucide-react";
-import api, { fileUrl } from "@/lib/api";
+import api, { isGoogleDriveImage, driveImageUrl } from "@/lib/api";
 import Seo from "@/components/Seo";
 
 function formatDate(iso) {
@@ -20,8 +20,9 @@ function formatDate(iso) {
 
 function blogImage(src) {
   if (!src) return "";
+  if (isGoogleDriveImage(src)) return driveImageUrl(src);
   if (src.startsWith("http")) return src;
-  return fileUrl(src);
+  return "";
 }
 
 function BlogCard({ blog, idx }) {
@@ -46,6 +47,9 @@ function BlogCard({ blog, idx }) {
               loading="lazy"
               src={img}
               alt={blog.title}
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
               className="w-full h-full object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"
             />
           ) : (

@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, ShieldCheck, Sparkles, Building2, Compass, ChevronRight, MapPin, Globe2, Award, TrendingUp, BadgeCheck, Handshake, Briefcase, MessageCircle, Check } from "lucide-react";
-import api, { fileUrl, formatApiErrorDetail } from "@/lib/api";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
 import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY } from "@/lib/site";
 import CinematicHero from "@/components/CinematicHero";
@@ -345,11 +345,28 @@ export default function HomePage() {
                 >
                   <Link to={`/properties/${p.id}`}>
                     <div className="aspect-[4/3] overflow-hidden bg-[#FAF8F5]">
-                      <img loading="lazy"
-                        src={p.images?.[0] ? fileUrl(p.images[0]) : "/images/luxe/luxury_villa.jpg"}
-                        alt={p.project_name}
-                        className="w-full h-full object-cover transition-transform duration-[1.8s] ease-out group-hover:scale-105"
-                      />
+                      {(() => {
+                        const driveImg = (p.images || []).find(isGoogleDriveImage);
+                        return driveImg ? (
+                          <img
+                            loading="lazy"
+                            src={driveImageUrl(driveImg)}
+                            alt={p.project_name}
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = "/images/luxe/luxury_villa.jpg";
+                            }}
+                            className="w-full h-full object-cover transition-transform duration-[1.8s] ease-out group-hover:scale-105"
+                          />
+                        ) : (
+                          <img
+                            loading="lazy"
+                            src="/images/luxe/luxury_villa.jpg"
+                            alt={p.project_name}
+                            className="w-full h-full object-cover transition-transform duration-[1.8s] ease-out group-hover:scale-105"
+                          />
+                        );
+                      })()}
                     </div>
                     <div className="pt-8">
                       <div className="text-[#737373] text-[10px] tracking-[0.4em] uppercase mb-3 flex items-center gap-2">

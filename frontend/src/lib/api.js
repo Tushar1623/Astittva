@@ -38,31 +38,55 @@ export function formatApiErrorDetail(detail) {
 }
 
 export function getGoogleDriveFileId(url) {
-  if (!url) return null;
-  const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (fileMatch) {
-    return fileMatch[1];
-  }
+  if (!url || typeof url !== "string") return null;
+
   try {
+    const fileMatch = url.match(
+      /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/
+    );
+
+    if (fileMatch) {
+      return fileMatch[1];
+    }
+
     const parsed = new URL(url);
-    if (
-      parsed.hostname === "drive.google.com" ||
-      parsed.hostname.endsWith(".drive.google.com")
-    ) {
+
+    if (parsed.hostname === "drive.google.com") {
       return parsed.searchParams.get("id");
     }
   } catch {}
+
   return null;
+}
+
+export function isGoogleDriveImage(url) {
+  return Boolean(getGoogleDriveFileId(url));
+}
+
+export function driveImageUrl(url) {
+  const id = getGoogleDriveFileId(url);
+
+  if (!id) return "";
+
+  return `https://drive.google.com/thumbnail?id=${id}&sz=w2000`;
 }
 
 export function fileUrl(path) {
   if (!path) return "";
+
   const driveId = getGoogleDriveFileId(path);
+
   if (driveId) {
     return `https://drive.google.com/thumbnail?id=${driveId}&sz=w2000`;
   }
-  if (path.startsWith("http")) return path;
-  return `${API}/files/${path}`;
+
+  // Do NOT request legacy Astittva storage paths anymore.
+  if (!path.startsWith("http")) {
+    return "";
+  }
+
+  // Keep normal external http images only if required.
+  return path;
 }
 
 export default api;

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, MapPin, Filter, X, SlidersHorizontal } from "lucide-react";
-import api, { fileUrl } from "@/lib/api";
+import api, { isGoogleDriveImage, driveImageUrl } from "@/lib/api";
 import Seo from "@/components/Seo";
 
 // ---------- Filter option catalogues (per Astittva brand brief) ----------
@@ -307,12 +307,28 @@ export default function PropertiesPage() {
               >
                 <Link to={`/properties/${p.id}`}>
                   <div className="aspect-[4/3] overflow-hidden relative">
-                    <img
-                      loading="lazy"
-                      src={p.images?.[0] ? fileUrl(p.images[0]) : pickFallback(p.id)}
-                      alt={p.project_name}
-                      className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
-                    />
+                    {(() => {
+                      const driveImg = (p.images || []).find(isGoogleDriveImage);
+                      return driveImg ? (
+                        <img
+                          loading="lazy"
+                          src={driveImageUrl(driveImg)}
+                          alt={p.project_name}
+                          className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = pickFallback(p.id);
+                          }}
+                        />
+                      ) : (
+                        <img
+                          loading="lazy"
+                          src={pickFallback(p.id)}
+                          alt={p.project_name}
+                          className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
+                        />
+                      );
+                    })()}
                     {p.is_featured && (
                       <div className="absolute top-4 left-4 bg-copper text-charcoal text-[10px] tracking-[0.3em] uppercase px-3 py-1.5">
                         Featured

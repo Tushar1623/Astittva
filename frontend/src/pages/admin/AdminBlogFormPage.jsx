@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import api, { fileUrl, formatApiErrorDetail } from "@/lib/api";
-import { ArrowLeft, Upload, X, Loader2, Eye } from "lucide-react";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
+import { ArrowLeft, X, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { sanitizeBlogHtml } from "@/lib/sanitize";
 
@@ -29,8 +29,9 @@ function slugify(s) {
 
 function blogImage(src) {
   if (!src) return "";
+  if (isGoogleDriveImage(src)) return driveImageUrl(src);
   if (src.startsWith("http")) return src;
-  return fileUrl(src);
+  return "";
 }
 
 export default function AdminBlogFormPage() {
@@ -40,10 +41,9 @@ export default function AdminBlogFormPage() {
   const [form, setForm] = useState(empty);
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [driveImageUrlInput, setDriveImageUrlInput] = useState("");
   const [preview, setPreview] = useState(false);
   const [slugTouched, setSlugTouched] = useState(false);
-  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (isEdit) {
@@ -65,26 +65,19 @@ export default function AdminBlogFormPage() {
     if (!slugTouched) set("slug", slugify(v));
   };
 
-  const onFile = async (e) => {
-    const file = (e.target.files || [])[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const { data } = await api.post("/admin/upload", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      set("featured_image", data.path);
-      toast.success("Image uploaded");
-    } catch (err) {
-      toast.error(
-        `Upload failed: ${formatApiErrorDetail(err.response?.data?.detail)}`,
-      );
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+  const applyDriveImage = () => {
+    const url = driveImageUrlInput.trim();
+    if (!url) {
+      toast.error("Paste a Google Drive image link");
+      return;
     }
+    if (!isGoogleDriveImage(url)) {
+      toast.error("Please enter a valid Google Drive image link");
+      return;
+    }
+    set("featured_image", url);
+    setDriveImageUrlInput("");
+    toast.success("Google Drive image set");
   };
 
   const removeImage = () => set("featured_image", "");
@@ -308,12 +301,16 @@ export default function AdminBlogFormPage() {
                   src={imgSrc}
                   alt="Featured"
                   className="w-full aspect-[16/10] object-cover border border-copper/20"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
                 />
                 <button
                   type="button"
                   onClick={removeImage}
                   data-testid="remove-featured-image"
                   className="absolute top-2 right-2 bg-black/60 text-white p-1.5 hover:bg-red-500/80 transition"
+                  title="Remove image"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -323,31 +320,37 @@ export default function AdminBlogFormPage() {
                 No image
               </div>
             )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={onFile}
-              className="hidden"
-              data-testid="featured-image-input"
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="btn-outline w-full"
-              data-testid="upload-featured-image-btn"
-            >
-              {uploading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Uploading…
-                </>
-              ) : (
-                <>
-                  <Upload className="w-4 h-4" /> {imgSrc ? "Replace Image" : "Upload Image"}
-                </>
-              )}
-            </button>
+
+            <div>
+              <label className="input-label">Google Drive Image Link</label>
+              <div className="space-y-2">
+                <input
+                  type="url"
+                  data-testid="blog-drive-image-input"
+                  className="input-filled text-xs"
+                  placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
+                  value={driveImageUrlInput}
+                  onChange={(e) => setDriveImageUrlInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      applyDriveImage();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={applyDriveImage}
+                  data-testid="use-drive-image-btn"
+                  className="btn-outline w-full text-xs py-2"
+                >
+                  Use Drive Image
+                </button>
+              </div>
+              <p className="text-[10px] text-ivory/50 mt-2 font-light">
+                Before adding the image, open Google Drive → Share → General access → Anyone with the link → Viewer.
+              </p>
+            </div>
           </div>
 
           <div className="space-y-3">
