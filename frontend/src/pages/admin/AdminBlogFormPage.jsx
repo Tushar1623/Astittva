@@ -41,6 +41,8 @@ export default function AdminBlogFormPage() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [driveUrl, setDriveUrl] = useState("");
+  const [importingDrive, setImportingDrive] = useState(false);
   const [preview, setPreview] = useState(false);
   const [slugTouched, setSlugTouched] = useState(false);
   const fileInputRef = useRef(null);
@@ -88,6 +90,28 @@ export default function AdminBlogFormPage() {
   };
 
   const removeImage = () => set("featured_image", "");
+
+  const addDriveBlogImage = async () => {
+    const url = driveUrl.trim();
+    if (!url) {
+      toast.error("Paste a Google Drive image link");
+      return;
+    }
+    setImportingDrive(true);
+    try {
+      const { data } = await api.post("/admin/import-drive-image", { url });
+      set("featured_image", data.path);
+      setDriveUrl("");
+      toast.success("Drive image imported as featured image");
+    } catch (err) {
+      toast.error(
+        formatApiErrorDetail(err.response?.data?.detail) ||
+          "Drive image import failed"
+      );
+    } finally {
+      setImportingDrive(false);
+    }
+  };
 
   const submit = async (e, overrideStatus) => {
     e.preventDefault();
@@ -348,6 +372,49 @@ export default function AdminBlogFormPage() {
                 </>
               )}
             </button>
+
+            <div className="pt-3 border-t border-copper/15">
+              <div className="text-center text-[10px] tracking-[0.3em] text-ivory/40 mb-3 uppercase">
+                OR
+              </div>
+              <label className="input-label">
+                Google Drive Link
+              </label>
+              <div className="space-y-2">
+                <input
+                  type="url"
+                  data-testid="drive-blog-image-input"
+                  className="input-filled w-full text-xs"
+                  placeholder="https://drive.google.com/file/d/..."
+                  value={driveUrl}
+                  onChange={(e) => setDriveUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addDriveBlogImage();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  data-testid="import-drive-blog-btn"
+                  className="btn-outline w-full text-xs"
+                  disabled={importingDrive}
+                  onClick={addDriveBlogImage}
+                >
+                  {importingDrive ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Importing...
+                    </>
+                  ) : (
+                    "+ Import From Drive"
+                  )}
+                </button>
+              </div>
+              <p className="text-[11px] text-ivory/40 mt-2">
+                Set to &ldquo;Anyone with the link&rdquo;.
+              </p>
+            </div>
           </div>
 
           <div className="space-y-3">

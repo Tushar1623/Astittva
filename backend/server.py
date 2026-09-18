@@ -22,10 +22,11 @@ from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depend
 from fastapi.responses import StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorGridFSBucket
 from pydantic import BaseModel, Field, EmailStr, BeforeValidator, ConfigDict
 
 import io
+import httpx
 
 from news_service import (
     fetch_topic, fetch_group, fetch_all_classified, latest_fetched_at,
@@ -44,6 +45,7 @@ if not os.environ.get("MONGODB_URI") and not os.environ.get("MONGO_URL"):
     logger.warning("Neither MONGODB_URI nor MONGO_URL environment variable is set; using fallback mongodb://localhost:27017")
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ.get("DB_NAME", "astitva_db")]
+gridfs = AsyncIOMotorGridFSBucket(db)
 
 JWT_ALGORITHM = "HS256"
 JWT_SECRET = os.environ.get("JWT_SECRET", "astitva-secret-key-change-in-prod")
@@ -1043,14 +1045,126 @@ async def upload_image(file: UploadFile = File(...), user: dict = Depends(requir
     return {"path": stored_path}
 
 
+def extract_drive_file_id(url: str) -> Optional[str]:
+    clean_url = (url or "").strip()
+    patterns = [
+        r"/file/d/([a-zA-Z0-9_-]+)",
+        r"[?&]id=([a-zA-Z0-9_-]+)",
+        r"/d/([a-zA-Z0-9_-]+)",
+        r"drive\.google\.com/open\?id=([a-zA-Z0-9_-]+)",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, clean_url)
+        if match:
+            return match.group(1)
+    if re.match(r"^[a-zA-Z0-9_-]{20,50}$", clean_url):
+        return clean_url
+    return None
+
+
+class DriveImageIn(BaseModel):
+    url: str
+
+
+@api_router.post("/admin/import-drive-image")
+async def import_drive_image(
+    payload: DriveImageIn,
+    user: dict = Depends(require_staff),
+):
+    file_id = extract_drive_file_id(payload.url)
+    if not file_id:
+        raise HTTPException(status_code=400, detail="Invalid Google Drive link format")
+
+    download_urls = [
+        f"https://drive.google.com/uc?export=download&id={file_id}",
+        f"https://drive.google.com/thumbnail?id={file_id}&sz=w2500",
+        f"https://lh3.googleusercontent.com/d/{file_id}",
+    ]
+
+    image_data = None
+    resolved_content_type = "image/jpeg"
+
+    async with httpx.AsyncClient(follow_redirects=True, timeout=45.0) as client_http:
+        for dl_url in download_urls:
+            try:
+                resp = await client_http.get(
+                    dl_url,
+                    headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
+                )
+                if resp.status_code == 200:
+                    ct = resp.headers.get("content-type", "").split(";")[0].strip().lower()
+                    if ct.startswith("image/"):
+                        image_data = resp.content
+                        resolved_content_type = ct
+                        break
+                    if len(resp.content) > 10 and (
+                        resp.content.startswith(b"\xff\xd8\xff")
+                        or resp.content.startswith(b"\x89PNG\r\n\x1a\n")
+                        or (resp.content.startswith(b"RIFF") and b"WEBP" in resp.content[:16])
+                    ):
+                        image_data = resp.content
+                        if resp.content.startswith(b"\x89PNG"):
+                            resolved_content_type = "image/png"
+                        elif resp.content.startswith(b"RIFF"):
+                            resolved_content_type = "image/webp"
+                        else:
+                            resolved_content_type = "image/jpeg"
+                        break
+            except Exception as e:
+                logger.warning(f"Error trying download URL {dl_url}: {e}")
+
+    if not image_data:
+        raise HTTPException(
+            status_code=400,
+            detail="Unable to download image from Google Drive. Ensure the file sharing is set to 'Anyone with the link'.",
+        )
+
+    if len(image_data) > 15 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Image exceeds 15MB limit")
+
+    grid_file_id = await gridfs.upload_from_stream(
+        f"drive-{file_id}",
+        image_data,
+        metadata={
+            "content_type": resolved_content_type,
+            "uploaded_by": user["id"],
+            "source": "google-drive",
+            "source_file_id": file_id,
+            "created_at": now_utc_iso(),
+        },
+    )
+
+    return {"path": f"mongo/{grid_file_id}"}
+
+
 @api_router.get("/files/{path:path}")
 async def serve_file(path: str):
-    """Publicly serve property images (storage paths are unguessable UUIDs).
+    """Publicly serve property images (storage paths are unguessable UUIDs or GridFS IDs).
 
     Uploaded assets are content-addressed / immutable — we can serve them with
     an aggressive 30-day cache so browsers and any CDN in front of us don't
     re-fetch the same bytes on every page view.
     """
+    if path.startswith("mongo/"):
+        file_id = path.replace("mongo/", "", 1).strip()
+        try:
+            object_id = ObjectId(file_id)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid image ID")
+        try:
+            stream = await gridfs.open_download_stream(object_id)
+            data = await stream.read()
+            content_type = (stream.metadata or {}).get("content_type", "image/jpeg")
+            return StreamingResponse(
+                io.BytesIO(data),
+                media_type=content_type,
+                headers={
+                    "Cache-Control": "public, max-age=2592000, stale-while-revalidate=604800",
+                },
+            )
+        except Exception:
+            raise HTTPException(status_code=404, detail="Image not found in MongoDB GridFS")
+
     record = await db.files.find_one({"storage_path": path, "is_deleted": False})
     if not record:
         raise HTTPException(status_code=404, detail="File not found")

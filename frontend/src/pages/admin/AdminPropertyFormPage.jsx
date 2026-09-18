@@ -34,6 +34,8 @@ export default function AdminPropertyFormPage() {
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [driveUrl, setDriveUrl] = useState("");
+  const [importingDrive, setImportingDrive] = useState(false);
   const [amenityInput, setAmenityInput] = useState("");
   const fileInputRef = useRef(null);
 
@@ -69,7 +71,32 @@ export default function AdminPropertyFormPage() {
   };
 
   const removeImage = (path) => {
-    setForm((f) => ({ ...f, images: f.images.filter((p) => p !== path) }));
+    setForm((f) => ({ ...f, images: f.images.filter((img) => img !== path) }));
+  };
+
+  const addDriveImage = async () => {
+    const url = driveUrl.trim();
+    if (!url) {
+      toast.error("Paste a Google Drive image link");
+      return;
+    }
+    setImportingDrive(true);
+    try {
+      const { data } = await api.post("/admin/import-drive-image", { url });
+      setForm((f) => ({
+        ...f,
+        images: [...(f.images || []), data.path],
+      }));
+      setDriveUrl("");
+      toast.success("Drive image imported successfully");
+    } catch (err) {
+      toast.error(
+        formatApiErrorDetail(err.response?.data?.detail) ||
+          "Drive image import failed"
+      );
+    } finally {
+      setImportingDrive(false);
+    }
   };
 
   const addAmenity = () => {
@@ -217,6 +244,49 @@ export default function AdminPropertyFormPage() {
             {uploading ? "Uploading..." : "Upload Images"}
             <input ref={fileInputRef} type="file" data-testid="form-image-upload" accept="image/*" multiple className="hidden" onChange={onFiles} />
           </label>
+
+          <div className="mt-8 border-t border-copper/15 pt-6">
+            <div className="text-center text-xs tracking-[0.3em] text-ivory/40 mb-5 uppercase">
+              OR
+            </div>
+            <label className="input-label">
+              Google Drive Image Link
+            </label>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <input
+                type="url"
+                data-testid="drive-image-input"
+                className="input-filled flex-1"
+                placeholder="https://drive.google.com/file/d/.../view"
+                value={driveUrl}
+                onChange={(e) => setDriveUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addDriveImage();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                data-testid="import-drive-image-btn"
+                className="btn-outline whitespace-nowrap"
+                disabled={importingDrive}
+                onClick={addDriveImage}
+              >
+                {importingDrive ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Importing...
+                  </>
+                ) : (
+                  "+ Import From Drive"
+                )}
+              </button>
+            </div>
+            <p className="text-xs text-ivory/40 mt-3">
+              Google Drive sharing must be set to &ldquo;Anyone with the link&rdquo;.
+            </p>
+          </div>
         </section>
 
         {/* Details */}
