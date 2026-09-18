@@ -27,8 +27,13 @@ services:
       - key: ADMIN_NAME
         value: Astitva Admin
       - key: CORS_ORIGINS
-        value: "*" # Replace with your frontend domain once deployed (e.g. https://astittva.vercel.app)
+        value: "https://astittva.in,https://www.astittva.in,http://localhost:3000"
       - key: FRONTEND_URL
-        sync: false # Optional frontend URL
+        value: https://astittva.in
       - key: APP_NAME
         value: astitva-realestate
+      - key: RESET_ADMIN_PASSWORD_ON_START
+        value: "false"
+      - key: EMERGENT_LLM_KEY
+        sync: false # Optional: legacy Emergent object storage key
+

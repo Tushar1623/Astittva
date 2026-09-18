@@ -35,6 +35,8 @@ export default function AdminPropertyFormPage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [amenityInput, setAmenityInput] = useState("");
+  const [driveUrl, setDriveUrl] = useState("");
+  const [importingDrive, setImportingDrive] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -70,6 +72,27 @@ export default function AdminPropertyFormPage() {
 
   const removeImage = (path) => {
     setForm((f) => ({ ...f, images: f.images.filter((p) => p !== path) }));
+  };
+
+  const onImportDrive = async () => {
+    const url = driveUrl.trim();
+    if (!url) {
+      toast.error("Please enter a Google Drive link");
+      return;
+    }
+    setImportingDrive(true);
+    try {
+      const { data } = await api.post("/admin/import-drive-image", { url });
+      setForm((f) => ({ ...f, images: [...(f.images || []), data.path] }));
+      setDriveUrl("");
+      toast.success("Image imported from Google Drive");
+    } catch (err) {
+      toast.error(
+        formatApiErrorDetail(err.response?.data?.detail) || "Failed to import image from Google Drive",
+      );
+    } finally {
+      setImportingDrive(false);
+    }
   };
 
   const addAmenity = () => {
@@ -197,26 +220,71 @@ export default function AdminPropertyFormPage() {
         {/* Images */}
         <section className="border border-copper/15 p-8">
           <h3 className="overline mb-6">Images</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
             {form.images.map((path) => (
-              <div key={path} className="relative aspect-[4/3] group border border-copper/20">
-                <img loading="lazy" src={fileUrl(path)} alt="" className="w-full h-full object-cover" />
+              <div key={path} className="relative aspect-[4/3] group border border-copper/20 bg-charcoal-2/30">
+                <img
+                  loading="lazy"
+                  src={fileUrl(path)}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "/images/luxe/luxury_villa.jpg";
+                  }}
+                />
                 <button
                   type="button"
                   onClick={() => removeImage(path)}
-                  data-testid={`remove-image`}
-                  className="absolute top-1 right-1 w-7 h-7 bg-charcoal/90 border border-copper/40 flex items-center justify-center text-copper hover:bg-copper hover:text-charcoal"
+                  data-testid="remove-image"
+                  className="absolute top-1 right-1 w-7 h-7 bg-charcoal/90 border border-copper/40 flex items-center justify-center text-copper hover:bg-copper hover:text-charcoal transition"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
             ))}
           </div>
-          <label className="btn-outline inline-flex cursor-pointer">
-            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-            {uploading ? "Uploading..." : "Upload Images"}
-            <input ref={fileInputRef} type="file" data-testid="form-image-upload" accept="image/*" multiple className="hidden" onChange={onFiles} />
-          </label>
+
+          <div className="flex flex-col gap-6">
+            <div>
+              <label className="btn-outline inline-flex cursor-pointer">
+                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                {uploading ? "Uploading..." : "Upload Images"}
+                <input ref={fileInputRef} type="file" data-testid="form-image-upload" accept="image/*" multiple className="hidden" onChange={onFiles} />
+              </label>
+            </div>
+
+            <div className="border-t border-copper/15 pt-6">
+              <div className="text-[11px] tracking-[0.2em] uppercase text-copper mb-2 font-medium">
+                ---------------- OR ----------------
+              </div>
+              <label className="input-label mb-2 block">Google Drive Image Link</label>
+              <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
+                <input
+                  type="url"
+                  data-testid="form-drive-url"
+                  className="input-filled flex-1 text-sm"
+                  placeholder="https://drive.google.com/file/d/..."
+                  value={driveUrl}
+                  onChange={(e) => setDriveUrl(e.target.value)}
+                  disabled={importingDrive}
+                />
+                <button
+                  type="button"
+                  onClick={onImportDrive}
+                  disabled={importingDrive}
+                  data-testid="form-drive-import-btn"
+                  className="btn-outline whitespace-nowrap inline-flex items-center justify-center gap-2"
+                >
+                  {importingDrive ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {importingDrive ? "Importing..." : "Import From Drive"}
+                </button>
+              </div>
+              <p className="text-ivory/50 text-xs mt-2">
+                Drive file must be shared as &apos;Anyone with the link&apos;.
+              </p>
+            </div>
+          </div>
         </section>
 
         {/* Details */}
