@@ -14,7 +14,6 @@ import bcrypt
 import jwt
 import re
 import requests
-import httpx
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Annotated
 from bson import ObjectId
@@ -23,7 +22,7 @@ from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depend
 from fastapi.responses import StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorGridFSBucket
+from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr, BeforeValidator, ConfigDict
 
 import io
@@ -40,30 +39,11 @@ from crm_service import forward_lead
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("astitva")
 
-mongo_url = os.environ.get("MONGODB_URI") or os.environ.get("MONGO_URL")
-if not mongo_url:
-    logger.error("Neither MONGODB_URI nor MONGO_URL environment variable is set; using fallback mongodb://localhost:27017")
-    mongo_url = "mongodb://localhost:27017"
-else:
-    logger.info("MongoDB connection: configured")
-
-db_name = os.environ.get("DB_NAME", "astitva_realestate")
-logger.info(f"Database selected: {db_name}")
-
+mongo_url = os.environ.get("MONGODB_URI") or os.environ.get("MONGO_URL", "mongodb://localhost:27017")
+if not os.environ.get("MONGODB_URI") and not os.environ.get("MONGO_URL"):
+    logger.warning("Neither MONGODB_URI nor MONGO_URL environment variable is set; using fallback mongodb://localhost:27017")
 client = AsyncIOMotorClient(mongo_url)
-db = client[db_name]
-gridfs_bucket = AsyncIOMotorGridFSBucket(db)
-
-
-def get_client_ip(request: Request) -> str:
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        first_ip = forwarded.split(",")[0].strip()
-        if first_ip:
-            return first_ip
-    if request.client and request.client.host:
-        return request.client.host
-    return "unknown"
+db = client[os.environ.get("DB_NAME", "astitva_db")]
 
 JWT_ALGORITHM = "HS256"
 JWT_SECRET = os.environ.get("JWT_SECRET", "astitva-secret-key-change-in-prod")
@@ -340,18 +320,6 @@ async def healthz():
     return {"status": "ok", "service": "Astitva Real Estate API", "time": now_utc_iso()}
 
 
-@app.get("/health/db")
-@api_router.get("/health/db")
-async def health_db():
-    """Verify database connectivity safely without exposing internal credentials."""
-    try:
-        await client.admin.command("ping")
-        return {"status": "ok", "database": "connected"}
-    except Exception as e:
-        logger.error(f"Database health check failed: {type(e).__name__}")
-        raise HTTPException(status_code=503, detail={"status": "error", "database": "disconnected"})
-
-
 # ---------------------- SEO ----------------------
 SITE_URL = "https://astittva.in"
 STATIC_SITEMAP_URLS = [
@@ -365,57 +333,50 @@ STATIC_SITEMAP_URLS = [
 
 @app.get("/api/sitemap.xml")
 async def sitemap_xml():
-    """Generate dynamic XML sitemap (cached for 1 hour by browsers/CDNs)."""
+    """Dynamic sitemap.xml — includes every published property + static pages."""
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     parts = ['<?xml version="1.0" encoding="UTF-8"?>',
              '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for path, changefreq, priority in STATIC_SITEMAP_URLS:
         parts.append(
-            f"<url><loc>{SITE_URL}{path}</loc>"
-            f"<changefreq>{changefreq}</changefreq>"
-            f"<priority>{priority}</priority></url>"
+            f"  <url><loc>{SITE_URL}{path}</loc><lastmod>{today}</lastmod>"
+            f"<changefreq>{changefreq}</changefreq><priority>{priority}</priority></url>"
         )
-    # Add published properties
+    # Dynamic published properties
     try:
-        props = await db.properties.find(
+        cursor = db.properties.find(
             {"status": "published"},
-            {"_id": 1, "updated_at": 1, "created_at": 1}
-        ).to_list(1000)
-        for p in props:
-            lastmod = p.get("updated_at") or p.get("created_at")
-            lastmod_str = ""
-            if lastmod:
-                try:
-                    lastmod_str = f"<lastmod>{lastmod[:10]}</lastmod>"
-                except Exception:
-                    pass
+            {"_id": 1, "updated_at": 1, "created_at": 1},
+        )
+        async for p in cursor:
+            pid = str(p["_id"])
+            lastmod = (p.get("updated_at") or p.get("created_at") or today)
+            if isinstance(lastmod, str) and "T" in lastmod:
+                lastmod = lastmod.split("T", 1)[0]
             parts.append(
-                f"<url><loc>{SITE_URL}/properties/{p['_id']}</loc>"
-                f"{lastmod_str}"
-                f"<changefreq>weekly</changefreq>"
+                f"  <url><loc>{SITE_URL}/properties/{pid}</loc>"
+                f"<lastmod>{lastmod}</lastmod><changefreq>weekly</changefreq>"
                 f"<priority>0.8</priority></url>"
             )
-    except Exception as e:
-        logging.getLogger("astitva.sitemap").exception("sitemap generation failed: %s", e)
-    # Add published blogs
-    try:
-        blogs = await db.blogs.find(
+        # Dynamic published blogs (SEO-friendly /blogs/<slug> URLs)
+        blog_cursor = db.blogs.find(
             {"status": "published"},
-            {"slug": 1, "updated_at": 1, "created_at": 1, "publish_date": 1}
-        ).to_list(500)
-        for b in blogs:
-            if not b.get("slug"):
+            {"slug": 1, "updated_at": 1, "publish_date": 1, "created_at": 1},
+        )
+        parts.append(
+            f"  <url><loc>{SITE_URL}/blogs</loc><lastmod>{today}</lastmod>"
+            f"<changefreq>weekly</changefreq><priority>0.7</priority></url>"
+        )
+        async for b in blog_cursor:
+            slug = b.get("slug")
+            if not slug:
                 continue
-            lastmod = b.get("updated_at") or b.get("publish_date") or b.get("created_at")
-            lastmod_str = ""
-            if lastmod:
-                try:
-                    lastmod_str = f"<lastmod>{lastmod[:10]}</lastmod>"
-                except Exception:
-                    pass
+            lastmod = (b.get("updated_at") or b.get("publish_date") or b.get("created_at") or today)
+            if isinstance(lastmod, str) and "T" in lastmod:
+                lastmod = lastmod.split("T", 1)[0]
             parts.append(
-                f"<url><loc>{SITE_URL}/blogs/{b['slug']}</loc>"
-                f"{lastmod_str}"
-                f"<changefreq>weekly</changefreq>"
+                f"  <url><loc>{SITE_URL}/blogs/{slug}</loc>"
+                f"<lastmod>{lastmod}</lastmod><changefreq>monthly</changefreq>"
                 f"<priority>0.7</priority></url>"
             )
     except Exception as e:
@@ -429,8 +390,7 @@ async def sitemap_xml():
 @api_router.post("/auth/login")
 async def login(payload: LoginIn, response: Response, request: Request):
     email = payload.email.lower().strip()
-    client_ip = get_client_ip(request)
-    identifier = f"{client_ip}:{email}"
+    identifier = f"{request.client.host if request.client else 'unknown'}:{email}"
 
     # Brute force check
     attempt = await db.login_attempts.find_one({"identifier": identifier})
@@ -1052,7 +1012,7 @@ async def delete_blog(blog_id: str, _user: dict = Depends(require_admin)):
     return {"ok": True}
 
 
-# ---------------------- File Upload & Image Serving ----------------------
+# ---------------------- File Upload ----------------------
 MIME_TYPES = {
     "jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png",
     "webp": "image/webp", "gif": "image/gif",
@@ -1064,183 +1024,39 @@ async def upload_image(file: UploadFile = File(...), user: dict = Depends(requir
     ext = (file.filename or "img.jpg").rsplit(".", 1)[-1].lower()
     if ext not in MIME_TYPES:
         raise HTTPException(status_code=400, detail="Unsupported file type")
+    path = f"{APP_NAME}/properties/{user['id']}/{uuid.uuid4()}.{ext}"
     data = await file.read()
     if len(data) > 10 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="File too large (max 10MB)")
     content_type = file.content_type or MIME_TYPES[ext]
-
-    # Store new uploads directly in MongoDB GridFS
-    filename = file.filename or f"{uuid.uuid4()}.{ext}"
-    file_id = await gridfs_bucket.upload_from_stream(
-        filename=filename,
-        source=data,
-        metadata={
-            "original_filename": file.filename,
-            "content_type": content_type,
-            "size": len(data),
-            "uploaded_by": user["id"],
-            "source": "direct-upload",
-            "created_at": now_utc_iso(),
-            "is_deleted": False,
-        },
-    )
-    stored_path = f"mongo/{file_id}"
-    return {"path": stored_path}
-
-
-class DriveImportIn(BaseModel):
-    url: str
-
-
-def extract_google_drive_file_id(url: str) -> Optional[str]:
-    """Extract Google Drive file ID from various link formats."""
-    patterns = [
-        r"drive\.google\.com/file/d/([a-zA-Z0-9_-]+)",
-        r"drive\.google\.com/open\?[^#]*\bid=([a-zA-Z0-9_-]+)",
-        r"drive\.google\.com/uc\?[^#]*\bid=([a-zA-Z0-9_-]+)",
-        r"drive\.google\.com/thumbnail\?[^#]*\bid=([a-zA-Z0-9_-]+)",
-        r"docs\.google\.com/[^/]+/d/([a-zA-Z0-9_-]+)",
-    ]
-    for pattern in patterns:
-        match = re.search(pattern, url)
-        if match:
-            return match.group(1)
-    return None
-
-
-@api_router.post("/admin/import-drive-image")
-async def import_drive_image(payload: DriveImportIn, user: dict = Depends(require_staff)):
-    url = (payload.url or "").strip()
-    file_id_str = extract_google_drive_file_id(url)
-    if not file_id_str:
-        raise HTTPException(status_code=400, detail="Invalid Google Drive URL. Please provide a valid Google Drive share link.")
-
-    download_urls = [
-        f"https://drive.google.com/uc?export=download&id={file_id_str}&confirm=t",
-        f"https://lh3.googleusercontent.com/d/{file_id_str}",
-        f"https://drive.google.com/thumbnail?id={file_id_str}&sz=w2560",
-    ]
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
-
-    image_data: Optional[bytes] = None
-    content_type: Optional[str] = None
-
-    async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as http_client:
-        for dl_url in download_urls:
-            try:
-                resp = await http_client.get(dl_url, headers=headers)
-                if resp.status_code == 200:
-                    resp_type = resp.headers.get("content-type", "").lower()
-                    if resp_type.startswith("image/") and len(resp.content) > 0:
-                        image_data = resp.content
-                        content_type = resp_type.split(";")[0].strip()
-                        break
-                    elif len(resp.content) > 4:
-                        prefix = resp.content[:12]
-                        if prefix.startswith(b"\xff\xd8\xff"):
-                            image_data = resp.content
-                            content_type = "image/jpeg"
-                            break
-                        elif prefix.startswith(b"\x89PNG\r\n\x1a\n"):
-                            image_data = resp.content
-                            content_type = "image/png"
-                            break
-                        elif prefix.startswith(b"RIFF") and b"WEBP" in prefix:
-                            image_data = resp.content
-                            content_type = "image/webp"
-                            break
-                        elif prefix.startswith(b"GIF87a") or prefix.startswith(b"GIF89a"):
-                            image_data = resp.content
-                            content_type = "image/gif"
-                            break
-            except Exception as req_err:
-                logger.warning(f"Drive download attempt failed for {dl_url}: {req_err}")
-                continue
-
-    if not image_data or not content_type:
-        raise HTTPException(
-            status_code=400,
-            detail="Could not download image from Google Drive. Ensure the file is shared as 'Anyone with the link' and is a valid image file.",
-        )
-
-    if len(image_data) > 10 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="File exceeds 10MB limit")
-
-    ext = "jpg"
-    for k, v in MIME_TYPES.items():
-        if v == content_type:
-            ext = k
-            break
-
-    file_id = await gridfs_bucket.upload_from_stream(
-        filename=f"drive_{file_id_str}.{ext}",
-        source=image_data,
-        metadata={
-            "content_type": content_type,
-            "size": len(image_data),
-            "uploaded_by": user["id"],
-            "source": "google-drive",
-            "source_file_id": file_id_str,
-            "created_at": now_utc_iso(),
-            "is_deleted": False,
-        },
-    )
-    stored_path = f"mongo/{file_id}"
-    logger.info(f"Imported Drive image {file_id_str} into GridFS: {stored_path}")
+    result = put_object(path, data, content_type)
+    stored_path = result["path"]
+    await db.files.insert_one({
+        "storage_path": stored_path,
+        "original_filename": file.filename,
+        "content_type": content_type,
+        "size": result.get("size", len(data)),
+        "uploaded_by": user["id"],
+        "is_deleted": False,
+        "created_at": now_utc_iso(),
+    })
     return {"path": stored_path}
 
 
 @api_router.get("/files/{path:path}")
 async def serve_file(path: str):
-    """Publicly serve property and blog images (supports both new GridFS and legacy storage)."""
-    # 1. New GridFS path: "mongo/<file_id>"
-    if path.startswith("mongo/"):
-        file_id_str = path[len("mongo/"):]
-        try:
-            oid = ObjectId(file_id_str)
-        except Exception:
-            raise HTTPException(status_code=404, detail="Invalid file ID")
+    """Publicly serve property images (storage paths are unguessable UUIDs).
 
-        try:
-            grid_out = await gridfs_bucket.open_download_stream(oid)
-        except Exception:
-            raise HTTPException(status_code=404, detail="File not found")
-
-        content_type = "image/jpeg"
-        if grid_out.metadata and "content_type" in grid_out.metadata:
-            content_type = grid_out.metadata["content_type"]
-        elif hasattr(grid_out, "content_type") and grid_out.content_type:
-            content_type = grid_out.content_type
-
-        data = await grid_out.read()
-        return Response(
-            content=data,
-            media_type=content_type,
-            headers={
-                "Cache-Control": "public, max-age=2592000, stale-while-revalidate=604800",
-            },
-        )
-
-    # 2. Legacy Emergent storage path
+    Uploaded assets are content-addressed / immutable — we can serve them with
+    an aggressive 30-day cache so browsers and any CDN in front of us don't
+    re-fetch the same bytes on every page view.
+    """
     record = await db.files.find_one({"storage_path": path, "is_deleted": False})
     if not record:
         raise HTTPException(status_code=404, detail="File not found")
-
-    try:
-        data, content_type = get_object(path)
-    except HTTPException as he:
-        # If legacy storage is unavailable (503) or missing (404), return clean 404
-        logger.warning(f"Legacy storage returned {he.status_code} for path {path}")
-        raise HTTPException(status_code=404, detail="Legacy file unavailable")
-    except Exception as e:
-        logger.warning(f"Legacy storage request failed for {path}: {e}")
-        raise HTTPException(status_code=404, detail="Legacy file unavailable")
-
-    return Response(
-        content=data,
+    data, content_type = get_object(path)
+    return StreamingResponse(
+        io.BytesIO(data),
         media_type=record.get("content_type", content_type),
         headers={
             "Cache-Control": "public, max-age=2592000, stale-while-revalidate=604800",
@@ -1346,32 +1162,32 @@ app.include_router(api_router)
 # Middleware
 # ---------------------------------------------------------------------------
 frontend_url = os.environ.get("FRONTEND_URL", "")
-cors_origins_env = os.environ.get("CORS_ORIGINS", "")
+allowed = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
+if frontend_url and frontend_url not in allowed:
+    allowed.append(frontend_url)
+# Always allow local dev
+for o in ["http://localhost:3000", "http://localhost:5173"]:
+    if o not in allowed:
+        allowed.append(o)
 
-allowed = [
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "https://astittva.in",
-    "https://www.astittva.in",
-]
-
-for o in cors_origins_env.split(","):
-    clean = o.strip()
-    if clean and clean != "*" and clean not in allowed:
-        allowed.append(clean)
-
-if frontend_url:
-    clean_fe = frontend_url.strip()
-    if clean_fe and clean_fe not in allowed:
-        allowed.append(clean_fe)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Wildcard with credentials is rejected by browsers. If "*" is in the configured list,
+# echo the request Origin back via regex (this satisfies credentialed requests from any origin).
+if "*" in allowed:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=".*",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # GZip every response ≥ 500 bytes (JSON payloads, sitemap.xml, blog bodies, …)
 # — typical 3-5× bandwidth reduction on API traffic. Runs after CORS so headers
@@ -1383,11 +1199,9 @@ app.add_middleware(GZipMiddleware, minimum_size=500, compresslevel=6)
 # Startup
 # ---------------------------------------------------------------------------
 async def seed_admin():
-    email = os.environ.get("ADMIN_EMAIL", "admin@astitva.com").lower().strip()
+    email = os.environ.get("ADMIN_EMAIL", "admin@astitva.com").lower()
     password = os.environ.get("ADMIN_PASSWORD", "Astitva@2026")
     name = os.environ.get("ADMIN_NAME", "Astitva Admin")
-    reset_on_start = os.environ.get("RESET_ADMIN_PASSWORD_ON_START", "false").lower() == "true"
-
     existing = await db.users.find_one({"email": email})
     if existing is None:
         await db.users.insert_one({
@@ -1397,26 +1211,16 @@ async def seed_admin():
             "role": "admin",
             "created_at": now_utc_iso(),
         })
-        logger.info(f"Seeded initial admin user: {email}")
+        logger.info(f"Seeded admin user: {email}")
     else:
-        if reset_on_start:
-            if not verify_password(password, existing["password_hash"]):
-                await db.users.update_one({"email": email}, {"$set": {"password_hash": hash_password(password)}})
-                logger.info(f"Admin password reset on start completed for: {email}")
-        else:
-            logger.info(f"Admin user verified: {email} (password preserved)")
+        if not verify_password(password, existing["password_hash"]):
+            await db.users.update_one({"email": email}, {"$set": {"password_hash": hash_password(password)}})
+            logger.info(f"Updated admin password: {email}")
 
 
 @app.on_event("startup")
 async def on_startup():
     try:
-        try:
-            await client.admin.command("ping")
-            logger.info("MongoDB connection successful")
-            logger.info(f"Database: {db_name}")
-        except Exception as ping_err:
-            logger.error(f"MongoDB ping failed on startup: {type(ping_err).__name__}")
-
         await db.users.create_index("email", unique=True)
         await db.properties.create_index([("status", 1), ("created_at", -1)])
         await db.properties.create_index("is_featured")

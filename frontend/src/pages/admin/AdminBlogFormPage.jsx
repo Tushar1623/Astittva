@@ -43,8 +43,6 @@ export default function AdminBlogFormPage() {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(false);
   const [slugTouched, setSlugTouched] = useState(false);
-  const [driveUrl, setDriveUrl] = useState("");
-  const [importingDrive, setImportingDrive] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -86,27 +84,6 @@ export default function AdminBlogFormPage() {
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
-
-  const onImportDrive = async () => {
-    const url = driveUrl.trim();
-    if (!url) {
-      toast.error("Please enter a Google Drive link");
-      return;
-    }
-    setImportingDrive(true);
-    try {
-      const { data } = await api.post("/admin/import-drive-image", { url });
-      set("featured_image", data.path);
-      setDriveUrl("");
-      toast.success("Featured image imported from Google Drive");
-    } catch (err) {
-      toast.error(
-        formatApiErrorDetail(err.response?.data?.detail) || "Failed to import image from Google Drive",
-      );
-    } finally {
-      setImportingDrive(false);
     }
   };
 
@@ -331,10 +308,6 @@ export default function AdminBlogFormPage() {
                   src={imgSrc}
                   alt="Featured"
                   className="w-full aspect-[16/10] object-cover border border-copper/20"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = "/images/luxe/luxury_villa.jpg";
-                  }}
                 />
                 <button
                   type="button"
@@ -375,42 +348,6 @@ export default function AdminBlogFormPage() {
                 </>
               )}
             </button>
-
-            <div className="border-t border-copper/15 pt-4 space-y-2">
-              <div className="text-[10px] tracking-[0.2em] uppercase text-copper font-medium text-center">
-                ---------------- OR ----------------
-              </div>
-              <label className="input-label text-xs">Google Drive Image Link</label>
-              <input
-                type="url"
-                data-testid="blog-drive-url-input"
-                className="input-filled w-full text-xs"
-                placeholder="https://drive.google.com/file/d/..."
-                value={driveUrl}
-                onChange={(e) => setDriveUrl(e.target.value)}
-                disabled={importingDrive}
-              />
-              <button
-                type="button"
-                onClick={onImportDrive}
-                disabled={importingDrive}
-                data-testid="blog-drive-import-btn"
-                className="btn-outline w-full text-xs inline-flex items-center justify-center gap-2"
-              >
-                {importingDrive ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Importing…
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-3.5 h-3.5" /> Import From Drive
-                  </>
-                )}
-              </button>
-              <p className="text-ivory/40 text-[11px] leading-tight">
-                Drive file must be shared as &apos;Anyone with the link&apos;.
-              </p>
-            </div>
           </div>
 
           <div className="space-y-3">
