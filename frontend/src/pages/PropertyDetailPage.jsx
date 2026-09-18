@@ -19,8 +19,9 @@ function PropertySeo({ property, id }) {
     `${property.area_sqft ? property.area_sqft + " sq ft · " : ""}` +
     `${property.availability || ""}. ` +
     `Schedule a private site visit with Astittva Marketing.`;
-  const rawImg = property.images?.[0] ? fileUrl(property.images[0]) : undefined;
-  const image = rawImg && rawImg.startsWith("/") ? `https://astittva-backend.onrender.com${rawImg}` : rawImg;
+  const image = property.images?.[0]
+    ? (property.images[0].startsWith("http") ? property.images[0] : `https://astittva.in/api/files/${property.images[0]}`)
+    : undefined;
 
   const listingJsonLd = {
     "@context": "https://schema.org",
@@ -146,10 +147,6 @@ export default function PropertyDetailPage() {
             <img loading="lazy"
               src={images[activeImg] ? fileUrl(images[activeImg]) : "/images/luxe/luxury_villa.jpg"}
               alt={property.project_name}
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                e.currentTarget.src = "/images/luxe/luxury_villa.jpg";
-              }}
               className="w-full h-full object-cover"
             />
           </div>
@@ -161,16 +158,7 @@ export default function PropertyDetailPage() {
                   onClick={() => setActiveImg(i)}
                   className={`relative aspect-[4/3] lg:aspect-auto lg:flex-1 lg:min-h-0 overflow-hidden border ${activeImg === i ? "border-copper" : "border-copper/15"} transition`}
                 >
-                  <img
-                    loading="lazy"
-                    src={fileUrl(img)}
-                    alt=""
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = "/images/luxe/luxury_villa.jpg";
-                    }}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
+                  <img loading="lazy" src={fileUrl(img)} alt="" className="absolute inset-0 w-full h-full object-cover" />
                 </button>
               ))}
             </div>

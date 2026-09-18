@@ -348,10 +348,6 @@ export default function HomePage() {
                       <img loading="lazy"
                         src={p.images?.[0] ? fileUrl(p.images[0]) : "/images/luxe/luxury_villa.jpg"}
                         alt={p.project_name}
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = "/images/luxe/luxury_villa.jpg";
-                        }}
                         className="w-full h-full object-cover transition-transform duration-[1.8s] ease-out group-hover:scale-105"
                       />
                     </div>

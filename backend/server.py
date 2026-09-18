@@ -22,7 +22,7 @@ from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depend
 from fastapi.responses import StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorGridFSBucket
+from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr, BeforeValidator, ConfigDict
 
 import io
@@ -43,8 +43,7 @@ mongo_url = os.environ.get("MONGODB_URI") or os.environ.get("MONGO_URL", "mongod
 if not os.environ.get("MONGODB_URI") and not os.environ.get("MONGO_URL"):
     logger.warning("Neither MONGODB_URI nor MONGO_URL environment variable is set; using fallback mongodb://localhost:27017")
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ.get("DB_NAME", "astitva_realestate")]
-fs_bucket = AsyncIOMotorGridFSBucket(db)
+db = client[os.environ.get("DB_NAME", "astitva_db")]
 
 JWT_ALGORITHM = "HS256"
 JWT_SECRET = os.environ.get("JWT_SECRET", "astitva-secret-key-change-in-prod")
@@ -1025,33 +1024,18 @@ async def upload_image(file: UploadFile = File(...), user: dict = Depends(requir
     ext = (file.filename or "img.jpg").rsplit(".", 1)[-1].lower()
     if ext not in MIME_TYPES:
         raise HTTPException(status_code=400, detail="Unsupported file type")
+    path = f"{APP_NAME}/properties/{user['id']}/{uuid.uuid4()}.{ext}"
     data = await file.read()
     if len(data) > 10 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="File too large (max 10MB)")
     content_type = file.content_type or MIME_TYPES[ext]
-
-    # Save into MongoDB GridFS (safe, self-contained, no external key dependency)
-    grid_in = fs_bucket.open_upload_stream(
-        filename=file.filename or f"upload_{uuid.uuid4().hex[:8]}.{ext}",
-        metadata={
-            "content_type": content_type,
-            "uploaded_by": user["id"],
-            "created_at": now_utc_iso(),
-            "size": len(data),
-        },
-    )
-    await grid_in.write(data)
-    await grid_in.close()
-
-    stored_path = f"mongo/{grid_in._id}"
-
-    # Also record in files collection for audit and metadata tracking
+    result = put_object(path, data, content_type)
+    stored_path = result["path"]
     await db.files.insert_one({
         "storage_path": stored_path,
-        "gridfs_id": grid_in._id,
         "original_filename": file.filename,
         "content_type": content_type,
-        "size": len(data),
+        "size": result.get("size", len(data)),
         "uploaded_by": user["id"],
         "is_deleted": False,
         "created_at": now_utc_iso(),
@@ -1061,34 +1045,12 @@ async def upload_image(file: UploadFile = File(...), user: dict = Depends(requir
 
 @api_router.get("/files/{path:path}")
 async def serve_file(path: str):
-    """Publicly serve property and blog images.
+    """Publicly serve property images (storage paths are unguessable UUIDs).
 
-    Supports:
-    1. 'mongo/<gridfs_id>': Streamed directly from MongoDB GridFS.
-    2. Legacy storage paths: Fallback to existing object storage if available.
+    Uploaded assets are content-addressed / immutable — we can serve them with
+    an aggressive 30-day cache so browsers and any CDN in front of us don't
+    re-fetch the same bytes on every page view.
     """
-    if path.startswith("mongo/"):
-        file_id_str = path.replace("mongo/", "").strip()
-        try:
-            gridfs_id = ObjectId(file_id_str)
-        except Exception:
-            raise HTTPException(status_code=404, detail="Invalid image ID")
-
-        try:
-            grid_out = await fs_bucket.open_download_stream(gridfs_id)
-            content_type = (grid_out.metadata or {}).get("content_type", "image/jpeg")
-            data = await grid_out.read()
-            return Response(
-                content=data,
-                media_type=content_type,
-                headers={
-                    "Cache-Control": "public, max-age=2592000, stale-while-revalidate=604800",
-                },
-            )
-        except Exception:
-            raise HTTPException(status_code=404, detail="Image not found in MongoDB GridFS")
-
-    # Fallback to legacy storage for historical images
     record = await db.files.find_one({"storage_path": path, "is_deleted": False})
     if not record:
         raise HTTPException(status_code=404, detail="File not found")
