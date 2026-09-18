@@ -913,6 +913,50 @@ app.get("/api/news/all", async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// File Serving & GridFS (Self-contained, no external key needed)
+// ---------------------------------------------------------------------------
+const { GridFSBucket } = require("mongodb");
+
+app.get("/api/files/*", async (req, res) => {
+  try {
+    const rawPath = req.params[0] || req.path.replace(/^\/api\/files\//, "");
+    if (rawPath.startsWith("mongo/")) {
+      const idStr = rawPath.replace(/^mongo\//, "").trim();
+      const db = getDb();
+      if (!db) return res.status(503).json({ detail: "Database unavailable" });
+
+      let gridfsId;
+      try {
+        gridfsId = new ObjectId(idStr);
+      } catch {
+        return res.status(404).json({ detail: "Invalid image ID" });
+      }
+
+      const bucket = new GridFSBucket(db);
+      const files = await bucket.find({ _id: gridfsId }).toArray();
+      if (!files.length) {
+        return res.status(404).json({ detail: "Image not found in MongoDB GridFS" });
+      }
+
+      const fileDoc = files[0];
+      const contentType = fileDoc.metadata?.content_type || "image/jpeg";
+      res.setHeader("Content-Type", contentType);
+      res.setHeader("Cache-Control", "public, max-age=2592000, stale-while-revalidate=604800");
+
+      const downloadStream = bucket.openDownloadStream(gridfsId);
+      downloadStream.on("error", () => {
+        if (!res.headersSent) res.status(404).json({ detail: "Error streaming image" });
+      });
+      return downloadStream.pipe(res);
+    }
+
+    return res.status(404).json({ detail: "Legacy storage image unavailable" });
+  } catch (err) {
+    return res.status(500).json({ detail: "Failed to serve file", error: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Static Frontend Serving (React SPA)
 // ---------------------------------------------------------------------------
 const buildPaths = [

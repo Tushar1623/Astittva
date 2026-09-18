@@ -50,6 +50,10 @@ export default function PropertyCard({
           loading="lazy"
           src={imageSrc}
           alt={p.project_name}
+          onError={(e) => {
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = pickPropertyFallback(p.id);
+          }}
           className="w-full h-full object-cover transition-transform duration-[1.8s] ease-out group-hover:scale-105"
         />
         {p.property_category && (
