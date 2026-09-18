@@ -11,7 +11,10 @@ import { ArrowRight, ExternalLink, MapPin, CheckCircle2, Trees, Compass, Shield 
  * Uses client-side React Router navigation for an instant, silky-smooth transition
  * with zero page reloads.
  */
-export default function RiddhiBhumiSection() {
+export default function RiddhiBhumiSection({
+  redirectUrl = process.env.REACT_APP_RIDDHI_BHOOMI_URL || "/ridhi-bhoomi",
+  target = "_self",
+}) {
   const highlights = [
     {
       icon: Compass,
@@ -174,9 +177,10 @@ export default function RiddhiBhumiSection() {
             </div>
 
             {/* CTAs */}
-            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
               <Link
-                to="/ridhi-bhoomi"
+                to={redirectUrl}
+                target={target}
                 data-testid="explore-riddhi-bhumi-btn"
                 className="group inline-flex items-center justify-center gap-3 px-8 py-4 text-[11px] tracking-[0.22em] uppercase font-medium text-white bg-[#1C1C1C] hover:bg-copper transition-all duration-300 border border-[#1C1C1C] hover:border-copper shadow-sm hover:shadow-md"
               >
@@ -185,11 +189,23 @@ export default function RiddhiBhumiSection() {
               </Link>
 
               <a
+                href="/ridhi-bhoomi/"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="riddhi-bhumi-direct-site-btn"
+                title="Open standalone Ridhi Bhoomi website directly in new tab"
+                className="inline-flex items-center justify-center gap-2 px-5 py-4 text-[11px] tracking-[0.18em] uppercase font-medium text-[#1C1C1C] bg-[#FAF8F5] hover:bg-copper/10 border border-[#E8DED2] hover:border-copper transition-all duration-300"
+              >
+                <span>Open Direct</span>
+                <ExternalLink className="w-3.5 h-3.5 text-copper" />
+              </a>
+
+              <a
                 href="#consultation"
                 data-testid="riddhi-bhumi-inquire-btn"
                 className="inline-flex items-center justify-center gap-2 px-6 py-4 text-[11px] tracking-[0.2em] uppercase font-medium text-[#1C1C1C] bg-white hover:bg-[#F5F1EC] border border-[#E8DED2] hover:border-[#1C1C1C] transition-all duration-300"
               >
-                <span>Book Advisory Visit</span>
+                <span>Book Visit</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </a>
             </div>

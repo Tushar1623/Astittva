@@ -11,8 +11,8 @@
     "test:backend:node:api": "npm run test:api --prefix backend/node",
     "start:backend:python": "python backend/server.py",
     "optimize:images": "python frontend/scripts/optimize_images.py",
-    "start:ridhi-bhoomi": "npm run dev --prefix \"ridhi bhoomi/client\"",
-    "build:ridhi-bhoomi": "npm run build --prefix \"ridhi bhoomi/client\""
+    "start:ridhi-bhoomi": "npm run dev --prefix \"frontend/ridhi bhoomi/client\"",
+    "build:ridhi-bhoomi": "npm run build --prefix \"frontend/ridhi bhoomi/client\""
   },
   "engines": {
     "node": ">=18.0.0"

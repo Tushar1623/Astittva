@@ -934,10 +934,28 @@ app.all(["/api/*", "/healthz/*"], (req, res) => {
 });
 
 // Serve Ridhi Bhoomi build if available
-const ridhiBhoomiDistPath = path.join(__dirname, "..", "ridhi bhoomi", "ridhi-bhoomi", "client", "dist");
-if (fs.existsSync(ridhiBhoomiDistPath) && fs.existsSync(path.join(ridhiBhoomiDistPath, "index.html"))) {
+const ridhiBhoomiCandidates = [
+  path.join(__dirname, "..", "frontend", "ridhi bhoomi", "client", "dist"),
+  path.join(__dirname, "..", "frontend", "public", "ridhi-bhoomi"),
+  path.join(__dirname, "..", "frontend", "build", "ridhi-bhoomi"),
+  path.join(__dirname, "frontend", "build", "ridhi-bhoomi"),
+  path.join(__dirname, "public", "ridhi-bhoomi"),
+  path.join(__dirname, "..", "ridhi bhoomi", "client", "dist"),
+  path.join(__dirname, "..", "ridhi bhoomi", "ridhi-bhoomi", "client", "dist"),
+];
+
+let ridhiBhoomiDistPath = null;
+for (const cand of ridhiBhoomiCandidates) {
+  if (fs.existsSync(cand) && fs.existsSync(path.join(cand, "index.html"))) {
+    ridhiBhoomiDistPath = cand;
+    break;
+  }
+}
+
+if (ridhiBhoomiDistPath) {
   console.log(`[Static] Serving Ridhi Bhoomi build from: ${ridhiBhoomiDistPath} at /ridhi-bhoomi`);
   app.use("/ridhi-bhoomi", express.static(ridhiBhoomiDistPath));
+  app.use("/riddhi-bhumi", express.static(ridhiBhoomiDistPath));
   app.get(["/ridhi-bhoomi", "/ridhi-bhoomi/*", "/riddhi-bhumi", "/riddhi-bhumi/*"], (req, res) => {
     res.sendFile(path.join(ridhiBhoomiDistPath, "index.html"));
   });

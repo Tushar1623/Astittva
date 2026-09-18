@@ -1,6 +1,18 @@
 RewriteEngine On
 RewriteBase /
 
+# Pass through existing files or directories
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Ridhi Bhoomi sub-routing: rewrite any non-file under /ridhi-bhoomi to its index.html
+RewriteCond %{REQUEST_URI} ^/ridhi-bhoomi/ [OR]
+RewriteCond %{REQUEST_URI} ^/riddhi-bhumi/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(ridhi-bhoomi|riddhi-bhumi)/.*$ /ridhi-bhoomi/index.html [L]
+
 RewriteRule ^index\.html$ - [L]
 
 RewriteCond %{REQUEST_FILENAME} !-f

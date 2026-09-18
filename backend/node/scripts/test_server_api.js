@@ -55,6 +55,18 @@ async function runTests() {
     const isClientHtml = clientHtml.includes("<!doctype html>") || clientHtml.includes("<html");
     console.log(`[PASS] GET /properties client route (status: ${clientRouteRes.status}, serves SPA: ${isClientHtml})`);
 
+    // 7. Static Ridhi Bhoomi root serving (GET /ridhi-bhoomi)
+    const ridhiRes = await fetch(`${baseUrl}/ridhi-bhoomi`);
+    const ridhiHtml = await ridhiRes.text();
+    const hasRidhi = ridhiHtml.toLowerCase().includes("ridhi bhoomi") || ridhiHtml.toLowerCase().includes("riddhi bhumi");
+    console.log(`[PASS] GET /ridhi-bhoomi (status: ${ridhiRes.status}, serves Ridhi Bhoomi: ${hasRidhi})`);
+
+    // 8. Static Ridhi Bhoomi deep routing fallback (GET /ridhi-bhoomi/master-plan)
+    const ridhiSubRes = await fetch(`${baseUrl}/ridhi-bhoomi/master-plan`);
+    const ridhiSubHtml = await ridhiSubRes.text();
+    const hasRidhiSub = ridhiSubHtml.toLowerCase().includes("ridhi bhoomi") || ridhiSubHtml.toLowerCase().includes("riddhi bhumi");
+    console.log(`[PASS] GET /ridhi-bhoomi/master-plan (status: ${ridhiSubRes.status}, serves Ridhi Bhoomi: ${hasRidhiSub})`);
+
     console.log("\n=== ALL SERVER VERIFICATION TESTS PASSED ===");
   } catch (err) {
     console.error("[FAIL] Test error:", err);

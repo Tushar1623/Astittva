@@ -15,8 +15,10 @@ export default function RidhiBhoomiPage() {
   const [loaded, setLoaded] = useState(false);
   const [searchParams] = useSearchParams();
   const tab = searchParams.get("tab");
+  const cleanTab = tab ? tab.replace(/^[#/]+/, "") : "";
 
-  const iframeSrc = tab ? `/ridhi-bhoomi/#${tab}` : "/ridhi-bhoomi/";
+  const iframeSrc = cleanTab ? `/ridhi-bhoomi/${cleanTab}` : "/ridhi-bhoomi/";
+  const standaloneHref = cleanTab ? `/ridhi-bhoomi/${cleanTab}` : "/ridhi-bhoomi/";
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -65,7 +67,7 @@ export default function RidhiBhoomiPage() {
           </a>
 
           <a
-            href="/ridhi-bhoomi/"
+            href={standaloneHref}
             target="_blank"
             rel="noopener noreferrer"
             data-testid="open-standalone-btn"
