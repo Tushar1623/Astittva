@@ -163,17 +163,8 @@ export default function Footer() {
               <ul className="space-y-3.5 text-[14px] text-[#F5EFE7]/90 font-normal">
                 <li><Link to="/" className="hover:text-[#C78B47] transition">Home</Link></li>
                 <li><Link to="/properties" className="hover:text-[#C78B47] transition">Properties</Link></li>
-                <li>
-                  <Link to="/ridhi-bhoomi" className="hover:text-[#C78B47] transition inline-flex items-center gap-1.5">
-                    <span>Ridhi Bhoomi</span>
-                    <span className="text-[8.5px] tracking-[0.15em] px-1.5 py-0.5 rounded-full bg-[#C78B47]/25 text-[#E5C68C] font-medium border border-[#C78B47]/40 uppercase">
-                      Township
-                    </span>
-                  </Link>
-                </li>
-                <li><Link to="/market-intelligence" className="hover:text-[#C78B47] transition">Market Intelligence</Link></li>
-                <li><Link to="/about" className="hover:text-[#C78B47] transition">About</Link></li>
-                <li><Link to="/contact" className="hover:text-[#C78B47] transition">Contact</Link></li>
+                <li><Link to="/news" className="hover:text-[#C78B47] transition">News</Link></li>
+                <li><Link to="/about" className="hover:text-[#C78B47] transition">About &amp; Contact</Link></li>
                 <li><Link to="/admin/login" className="hover:text-[#C78B47] transition">Admin Portal</Link></li>
               </ul>
             </div>

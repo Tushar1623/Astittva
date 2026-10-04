@@ -24,7 +24,7 @@ export const FEATURED_LOCATIONS = [
   {
     name: "New Town",
     tag: "Smart City Hub",
-    img: "/images/luxe/locations_newtown.jpg",
+    img: "/images/luxe/locations_newtown.webp",
     blurb: "India's first planned smart-city — IT corridors and rising luxury sky-residences.",
     starting: "₹1.2 Cr",
     category: "Luxury · Premium",
@@ -32,7 +32,7 @@ export const FEATURED_LOCATIONS = [
   {
     name: "Rajarhat",
     tag: "Investment Frontier",
-    img: "/images/luxe/locations_rajarhat.jpg",
+    img: "/images/luxe/locations_rajarhat.webp",
     blurb: "The fastest-appreciating corridor of Greater Kolkata, anchored by Eco Park & global IT.",
     starting: "₹35 L",
     category: "Premium · Plots",
@@ -40,7 +40,7 @@ export const FEATURED_LOCATIONS = [
   {
     name: "Kolkata",
     tag: "Cultural Capital",
-    img: "/images/luxe/locations_kolkata.jpg",
+    img: "/images/luxe/locations_kolkata.webp",
     blurb: "A legacy city reimagined — heritage, art, and a new wave of luxury residences.",
     starting: "₹4.5 Cr",
     category: "Heritage · Luxury",

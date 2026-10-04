@@ -933,34 +933,6 @@ app.all(["/api/*", "/healthz/*"], (req, res) => {
   res.status(404).json({ detail: "Endpoint not found", path: req.path });
 });
 
-// Serve Ridhi Bhoomi build if available
-const ridhiBhoomiCandidates = [
-  path.join(__dirname, "..", "frontend", "ridhi bhoomi", "client", "dist"),
-  path.join(__dirname, "..", "frontend", "public", "ridhi-bhoomi"),
-  path.join(__dirname, "..", "frontend", "build", "ridhi-bhoomi"),
-  path.join(__dirname, "frontend", "build", "ridhi-bhoomi"),
-  path.join(__dirname, "public", "ridhi-bhoomi"),
-  path.join(__dirname, "..", "ridhi bhoomi", "client", "dist"),
-  path.join(__dirname, "..", "ridhi bhoomi", "ridhi-bhoomi", "client", "dist"),
-];
-
-let ridhiBhoomiDistPath = null;
-for (const cand of ridhiBhoomiCandidates) {
-  if (fs.existsSync(cand) && fs.existsSync(path.join(cand, "index.html"))) {
-    ridhiBhoomiDistPath = cand;
-    break;
-  }
-}
-
-if (ridhiBhoomiDistPath) {
-  console.log(`[Static] Serving Ridhi Bhoomi build from: ${ridhiBhoomiDistPath} at /ridhi-bhoomi`);
-  app.use("/ridhi-bhoomi", express.static(ridhiBhoomiDistPath));
-  app.use("/riddhi-bhumi", express.static(ridhiBhoomiDistPath));
-  app.get(["/ridhi-bhoomi", "/ridhi-bhoomi/*", "/riddhi-bhumi", "/riddhi-bhumi/*"], (req, res) => {
-    res.sendFile(path.join(ridhiBhoomiDistPath, "index.html"));
-  });
-}
-
 if (activeBuildPath) {
   console.log(`[Static] Serving React frontend build from: ${activeBuildPath}`);
   app.use(express.static(activeBuildPath));

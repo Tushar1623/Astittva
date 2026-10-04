@@ -12,6 +12,7 @@
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const compression = require("compression");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const { ObjectId } = require("mongodb");
@@ -29,6 +30,47 @@ const REFRESH_EXPIRES_DAYS = 7;
 const VALID_ROLES = ["admin", "sales", "marketing"];
 
 // ---------------------------------------------------------------------------
+// High-Speed In-Memory Cache System (Sub-millisecond API response)
+// ---------------------------------------------------------------------------
+const memoryCache = new Map();
+
+function cacheGet(key) {
+  const entry = memoryCache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    memoryCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function cacheSet(key, data, ttlSeconds = 300) {
+  if (memoryCache.size > 1000) {
+    const oldestKey = memoryCache.keys().next().value;
+    memoryCache.delete(oldestKey);
+  }
+  memoryCache.set(key, {
+    data,
+    expiresAt: Date.now() + ttlSeconds * 1000,
+  });
+}
+
+function cacheInvalidatePrefix(prefix) {
+  for (const k of memoryCache.keys()) {
+    if (k.startsWith(prefix)) {
+      memoryCache.delete(k);
+    }
+  }
+}
+
+const IMAGE_CACHE_DIR = path.join(__dirname, ".image_cache");
+if (!fs.existsSync(IMAGE_CACHE_DIR)) {
+  try {
+    fs.mkdirSync(IMAGE_CACHE_DIR, { recursive: true });
+  } catch {}
+}
+
+// ---------------------------------------------------------------------------
 // Middleware
 // ---------------------------------------------------------------------------
 app.use(
@@ -41,13 +83,19 @@ app.use(
   })
 );
 
+app.use(compression());
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 app.use(cookieParser());
 
 // Auto-connect to MongoDB for API endpoints that query the database
 app.use(async (req, res, next) => {
-  if (req.path === "/healthz" || req.path === "/api" || req.path === "/api/") {
+  if (
+    req.path === "/healthz" ||
+    req.path === "/api" ||
+    req.path === "/api/" ||
+    req.path.startsWith("/api/images/")
+  ) {
     return next();
   }
 
@@ -368,10 +416,79 @@ app.post("/api/auth/refresh", async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// Properties (Public)
+// High-Speed Cached Image Proxy (Optimized size & 30-day HTTP caching)
+// ---------------------------------------------------------------------------
+app.get("/api/images/thumbnail", async (req, res) => {
+  const fileId = req.query.id;
+  if (!fileId || typeof fileId !== "string" || !/^[a-zA-Z0-9_-]+$/.test(fileId)) {
+    return res.status(400).json({ detail: "Invalid image ID" });
+  }
+
+  const width = Math.min(Math.max(parseInt(req.query.w, 10) || 600, 100), 1600);
+  const cacheFile = path.join(IMAGE_CACHE_DIR, `${fileId}_w${width}.jpg`);
+
+  if (fs.existsSync(cacheFile)) {
+    res.set({
+      "Content-Type": "image/jpeg",
+      "Cache-Control": "public, max-age=2592000, immutable",
+      "X-Cache": "HIT",
+    });
+    return fs.createReadStream(cacheFile).pipe(res);
+  }
+
+  const driveUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w${width}`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+  try {
+    const upstream = await fetch(driveUrl, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+      },
+    });
+    clearTimeout(timeoutId);
+
+    if (upstream.ok) {
+      const contentType = upstream.headers.get("content-type") || "image/jpeg";
+      const buffer = Buffer.from(await upstream.arrayBuffer());
+      if (buffer.length > 500 && !contentType.includes("text/html")) {
+        fs.promises.writeFile(cacheFile, buffer).catch((err) => {
+          console.error("[ImageProxy] Cache write error:", err.message);
+        });
+        res.set({
+          "Content-Type": contentType,
+          "Cache-Control": "public, max-age=2592000, immutable",
+          "X-Cache": "MISS",
+        });
+        return res.end(buffer);
+      }
+    }
+  } catch (err) {
+    clearTimeout(timeoutId);
+  }
+
+  // Graceful fallback to direct Google Drive redirect if proxy fetch encounters issues
+  return res.redirect(302, driveUrl);
+});
+
+// ---------------------------------------------------------------------------
+// Properties (Public - Cached & Accelerated)
 // ---------------------------------------------------------------------------
 app.get("/api/properties", async (req, res) => {
   try {
+    const cacheKey = `prop:list:${JSON.stringify(req.query)}`;
+    const cached = cacheGet(cacheKey);
+    if (cached) {
+      res.set({
+        "X-Cache": "HIT",
+        "Cache-Control": "public, max-age=120, stale-while-revalidate=600",
+      });
+      return res.json(cached);
+    }
+
     const db = getDb();
     const query = { status: "published" };
 
@@ -457,7 +574,13 @@ app.get("/api/properties", async (req, res) => {
       });
     }
 
-    return res.json(docs.map(serializeProperty));
+    const result = docs.map(serializeProperty);
+    cacheSet(cacheKey, result, 300); // 5 min TTL
+    res.set({
+      "X-Cache": "MISS",
+      "Cache-Control": "public, max-age=120, stale-while-revalidate=600",
+    });
+    return res.json(result);
   } catch (err) {
     console.error("List properties error:", err);
     return res.status(500).json({ detail: "Failed to fetch properties" });
@@ -466,6 +589,16 @@ app.get("/api/properties", async (req, res) => {
 
 app.get("/api/properties/:id", async (req, res) => {
   try {
+    const cacheKey = `prop:item:${req.params.id}`;
+    const cached = cacheGet(cacheKey);
+    if (cached) {
+      res.set({
+        "X-Cache": "HIT",
+        "Cache-Control": "public, max-age=300, stale-while-revalidate=600",
+      });
+      return res.json(cached);
+    }
+
     const db = getDb();
     let query = {};
     try {
@@ -477,17 +610,33 @@ app.get("/api/properties/:id", async (req, res) => {
     if (!doc || doc.status !== "published") {
       return res.status(404).json({ detail: "Property not found" });
     }
-    return res.json(serializeProperty(doc));
+    const result = serializeProperty(doc);
+    cacheSet(cacheKey, result, 600); // 10 min TTL
+    res.set({
+      "X-Cache": "MISS",
+      "Cache-Control": "public, max-age=300, stale-while-revalidate=600",
+    });
+    return res.json(result);
   } catch {
     return res.status(400).json({ detail: "Invalid property ID" });
   }
 });
 
 // ---------------------------------------------------------------------------
-// Blogs (Public)
+// Blogs (Public - Cached & Accelerated)
 // ---------------------------------------------------------------------------
 app.get("/api/blogs", async (req, res) => {
   try {
+    const cacheKey = `blog:list:${req.query.limit || 50}`;
+    const cached = cacheGet(cacheKey);
+    if (cached) {
+      res.set({
+        "X-Cache": "HIT",
+        "Cache-Control": "public, max-age=300, stale-while-revalidate=600",
+      });
+      return res.json(cached);
+    }
+
     const db = getDb();
     const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
     const docs = await db
@@ -496,7 +645,13 @@ app.get("/api/blogs", async (req, res) => {
       .sort({ publish_date: -1, created_at: -1 })
       .limit(limit)
       .toArray();
-    return res.json(docs.map(serializeBlogSummary));
+    const result = docs.map(serializeBlogSummary);
+    cacheSet(cacheKey, result, 600); // 10 min TTL
+    res.set({
+      "X-Cache": "MISS",
+      "Cache-Control": "public, max-age=300, stale-while-revalidate=600",
+    });
+    return res.json(result);
   } catch (err) {
     console.error("List blogs error:", err);
     return res.status(500).json({ detail: "Failed to fetch blogs" });
@@ -505,6 +660,16 @@ app.get("/api/blogs", async (req, res) => {
 
 app.get("/api/blogs/:slug", async (req, res) => {
   try {
+    const cacheKey = `blog:item:${req.params.slug}`;
+    const cached = cacheGet(cacheKey);
+    if (cached) {
+      res.set({
+        "X-Cache": "HIT",
+        "Cache-Control": "public, max-age=600, stale-while-revalidate=1200",
+      });
+      return res.json(cached);
+    }
+
     const db = getDb();
     const slug = req.params.slug;
     let doc = await db.collection("blogs").findOne({ slug, status: "published" });
@@ -518,7 +683,13 @@ app.get("/api/blogs/:slug", async (req, res) => {
     if (!doc) {
       return res.status(404).json({ detail: "Blog not found" });
     }
-    return res.json(serializeBlog(doc));
+    const result = serializeBlog(doc);
+    cacheSet(cacheKey, result, 600);
+    res.set({
+      "X-Cache": "MISS",
+      "Cache-Control": "public, max-age=600, stale-while-revalidate=1200",
+    });
+    return res.json(result);
   } catch (err) {
     console.error("Get blog error:", err);
     return res.status(500).json({ detail: "Failed to fetch blog" });
@@ -596,6 +767,7 @@ app.post("/api/admin/properties", requireStaff, async (req, res) => {
     const doc = { ...req.body, created_at: nowUtcIso(), updated_at: nowUtcIso() };
     const result = await db.collection("properties").insertOne(doc);
     doc._id = result.inserted_id;
+    cacheInvalidatePrefix("prop:");
     return res.status(201).json(serializeProperty(doc));
   } catch (err) {
     return res.status(500).json({ detail: "Failed to create property" });
@@ -612,6 +784,7 @@ app.put("/api/admin/properties/:id", requireStaff, async (req, res) => {
       .collection("properties")
       .findOneAndUpdate({ _id: new ObjectId(req.params.id) }, { $set: update }, { returnDocument: "after" });
     if (!result) return res.status(404).json({ detail: "Property not found" });
+    cacheInvalidatePrefix("prop:");
     return res.json(serializeProperty(result));
   } catch {
     return res.status(400).json({ detail: "Failed to update property" });
@@ -629,6 +802,7 @@ app.patch("/api/admin/properties/:id/status", requireStaff, async (req, res) => 
       .collection("properties")
       .updateOne({ _id: new ObjectId(req.params.id) }, { $set: { status, updated_at: nowUtcIso() } });
     if (result.matchedCount === 0) return res.status(404).json({ detail: "Property not found" });
+    cacheInvalidatePrefix("prop:");
     return res.json({ ok: true, status });
   } catch {
     return res.status(400).json({ detail: "Failed to update status" });
@@ -640,6 +814,7 @@ app.delete("/api/admin/properties/:id", requireAdmin, async (req, res) => {
     const db = getDb();
     const result = await db.collection("properties").deleteOne({ _id: new ObjectId(req.params.id) });
     if (result.deletedCount === 0) return res.status(404).json({ detail: "Property not found" });
+    cacheInvalidatePrefix("prop:");
     return res.json({ ok: true });
   } catch {
     return res.status(400).json({ detail: "Failed to delete property" });
@@ -689,6 +864,7 @@ app.post("/api/admin/blogs", requireStaff, async (req, res) => {
     }
     const result = await db.collection("blogs").insertOne(doc);
     doc._id = result.inserted_id;
+    cacheInvalidatePrefix("blog:");
     return res.status(201).json(serializeBlog(doc));
   } catch (err) {
     return res.status(500).json({ detail: "Failed to create blog" });
@@ -705,6 +881,7 @@ app.put("/api/admin/blogs/:id", requireStaff, async (req, res) => {
       .collection("blogs")
       .findOneAndUpdate({ _id: new ObjectId(req.params.id) }, { $set: update }, { returnDocument: "after" });
     if (!result) return res.status(404).json({ detail: "Blog not found" });
+    cacheInvalidatePrefix("blog:");
     return res.json(serializeBlog(result));
   } catch {
     return res.status(400).json({ detail: "Failed to update blog" });
@@ -729,6 +906,7 @@ app.patch("/api/admin/blogs/:id/status", requireStaff, async (req, res) => {
       .collection("blogs")
       .updateOne({ _id: new ObjectId(req.params.id) }, { $set: update });
     if (result.matchedCount === 0) return res.status(404).json({ detail: "Blog not found" });
+    cacheInvalidatePrefix("blog:");
     return res.json({ ok: true, status });
   } catch {
     return res.status(400).json({ detail: "Failed to update status" });
@@ -740,6 +918,7 @@ app.delete("/api/admin/blogs/:id", requireAdmin, async (req, res) => {
     const db = getDb();
     const result = await db.collection("blogs").deleteOne({ _id: new ObjectId(req.params.id) });
     if (result.deletedCount === 0) return res.status(404).json({ detail: "Blog not found" });
+    cacheInvalidatePrefix("blog:");
     return res.json({ ok: true });
   } catch {
     return res.status(400).json({ detail: "Failed to delete blog" });
@@ -890,9 +1069,25 @@ app.delete("/api/users/:id", requireAdmin, async (req, res) => {
 // ---------------------------------------------------------------------------
 app.get("/api/news/trending", async (req, res) => {
   try {
+    const cacheKey = "news:trending";
+    const cached = cacheGet(cacheKey);
+    if (cached) {
+      res.set({
+        "X-Cache": "HIT",
+        "Cache-Control": "public, max-age=600, stale-while-revalidate=1200",
+      });
+      return res.json(cached);
+    }
+
     const db = getDb();
     const cache = await db.collection("news_cache").findOne({ topic: "trending" });
-    return res.json({ articles: cache?.articles ? cache.articles.slice(0, 12) : [] });
+    const result = { articles: cache?.articles ? cache.articles.slice(0, 12) : [] };
+    cacheSet(cacheKey, result, 900); // 15 min TTL
+    res.set({
+      "X-Cache": "MISS",
+      "Cache-Control": "public, max-age=600, stale-while-revalidate=1200",
+    });
+    return res.json(result);
   } catch {
     return res.json({ articles: [] });
   }
@@ -900,13 +1095,29 @@ app.get("/api/news/trending", async (req, res) => {
 
 app.get("/api/news/all", async (req, res) => {
   try {
+    const cacheKey = "news:all";
+    const cached = cacheGet(cacheKey);
+    if (cached) {
+      res.set({
+        "X-Cache": "HIT",
+        "Cache-Control": "public, max-age=600, stale-while-revalidate=1200",
+      });
+      return res.json(cached);
+    }
+
     const db = getDb();
     const caches = await db.collection("news_cache").find().toArray();
     let allArticles = [];
     caches.forEach((c) => {
       if (Array.isArray(c.articles)) allArticles = allArticles.concat(c.articles);
     });
-    return res.json({ articles: allArticles, count: allArticles.length });
+    const result = { articles: allArticles, count: allArticles.length };
+    cacheSet(cacheKey, result, 900); // 15 min TTL
+    res.set({
+      "X-Cache": "MISS",
+      "Cache-Control": "public, max-age=600, stale-while-revalidate=1200",
+    });
+    return res.json(result);
   } catch {
     return res.json({ articles: [], count: 0 });
   }
@@ -935,33 +1146,6 @@ app.all(["/api/*", "/healthz/*"], (req, res) => {
   res.status(404).json({ detail: "Endpoint not found", path: req.path });
 });
 
-// Serve Ridhi Bhoomi build from workspace folder
-const ridhiBhoomiCandidates = [
-  path.join(__dirname, "..", "..", "frontend", "ridhi bhoomi", "client", "dist"),
-  path.join(__dirname, "..", "..", "frontend", "public", "ridhi-bhoomi"),
-  path.join(__dirname, "..", "..", "frontend", "build", "ridhi-bhoomi"),
-  path.join(__dirname, "frontend", "build", "ridhi-bhoomi"),
-  path.join(__dirname, "public", "ridhi-bhoomi"),
-  path.join(__dirname, "..", "..", "ridhi bhoomi", "client", "dist"),
-];
-
-let ridhiBhoomiDistPath = null;
-for (const cand of ridhiBhoomiCandidates) {
-  if (fs.existsSync(cand) && fs.existsSync(path.join(cand, "index.html"))) {
-    ridhiBhoomiDistPath = cand;
-    break;
-  }
-}
-
-if (ridhiBhoomiDistPath) {
-  console.log(`[Static] Serving Ridhi Bhoomi build from: ${ridhiBhoomiDistPath} at /ridhi-bhoomi`);
-  app.use("/ridhi-bhoomi", express.static(ridhiBhoomiDistPath));
-  app.use("/riddhi-bhumi", express.static(ridhiBhoomiDistPath));
-  app.get(["/ridhi-bhoomi", "/ridhi-bhoomi/*", "/riddhi-bhumi", "/riddhi-bhumi/*"], (req, res) => {
-    res.sendFile(path.join(ridhiBhoomiDistPath, "index.html"));
-  });
-}
-
 if (activeBuildPath) {
   console.log(`[Static] Serving React frontend build from: ${activeBuildPath}`);
   app.use(express.static(activeBuildPath));
@@ -989,6 +1173,26 @@ app.use((err, req, res, next) => {
 // ---------------------------------------------------------------------------
 // Server Startup & Database Seeding
 // ---------------------------------------------------------------------------
+async function ensureDatabaseIndexes() {
+  try {
+    const db = getDb();
+    if (!db) return;
+    await Promise.allSettled([
+      db.collection("properties").createIndex({ status: 1, is_featured: 1, created_at: -1 }),
+      db.collection("properties").createIndex({ status: 1, city: 1, location: 1 }),
+      db.collection("properties").createIndex({ status: 1, property_type: 1 }),
+      db.collection("properties").createIndex({ status: 1, property_category: 1 }),
+      db.collection("blogs").createIndex({ slug: 1 }),
+      db.collection("blogs").createIndex({ status: 1, publish_date: -1, created_at: -1 }),
+      db.collection("news_cache").createIndex({ topic: 1 }),
+      db.collection("leads").createIndex({ status: 1, created_at: -1 }),
+    ]);
+    console.log("[MongoDB] Database compound indexes verified & active");
+  } catch (err) {
+    console.warn("[MongoDB] Index verification notice:", err.message);
+  }
+}
+
 async function seedDefaultAdmin() {
   try {
     const db = getDb();
@@ -1016,6 +1220,7 @@ async function startServer() {
   try {
     await connectToDatabase();
     await seedDefaultAdmin();
+    ensureDatabaseIndexes().catch(() => {});
 
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`====================================================`);

@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY } from "@/lib/site";
 import CinematicHero from "@/components/CinematicHero";
 import Seo from "@/components/Seo";
-import RiddhiBhumiSection from "@/components/RiddhiBhumiSection";
 
 const TEXTURE = "https://static.prod-images.emergentagent.com/jobs/50ac1e2c-4ee3-4d48-ad5e-fd37063ae3c0/images/1f5da7f44ad5aab6c1f6ab3c12df3ec89723084c1042e95749a6b4658dcffcc6.png";
 
@@ -22,7 +21,7 @@ const LOCATIONS = [
   {
     name: "New Town",
     tag: "Smart City Hub",
-    img: "/images/luxe/locations_newtown.jpg",
+    img: "/images/luxe/locations_newtown.webp",
     blurb: "India's first planned smart-city — IT corridors and rising luxury sky-residences.",
     starting: "₹1.2 Cr",
     category: "Luxury · Premium",
@@ -30,7 +29,7 @@ const LOCATIONS = [
   {
     name: "Rajarhat",
     tag: "Investment Frontier",
-    img: "/images/luxe/locations_rajarhat.jpg",
+    img: "/images/luxe/locations_rajarhat.webp",
     blurb: "The fastest-appreciating corridor of Greater Kolkata, anchored by Eco Park & global IT.",
     starting: "₹35 L",
     category: "Premium · Plots",
@@ -38,7 +37,7 @@ const LOCATIONS = [
   {
     name: "Kolkata",
     tag: "Cultural Capital",
-    img: "/images/luxe/locations_kolkata.jpg",
+    img: "/images/luxe/locations_kolkata.webp",
     blurb: "A legacy city reimagined — heritage, art, and a new wave of luxury residences.",
     starting: "₹4.5 Cr",
     category: "Heritage · Luxury",
@@ -217,9 +216,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===================== FEATURED: RIDDHI BHOOMI ===================== */}
-      <RiddhiBhumiSection />
-
       {/* ===================== WHY ASTITTVA placeholder will follow ===================== */}
       <section data-testid="why-astitva-section" className="relative py-16 sm:py-24 overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-16">
@@ -354,14 +350,14 @@ export default function HomePage() {
                             alt={p.project_name}
                             onError={(e) => {
                               e.currentTarget.onerror = null;
-                              e.currentTarget.src = "/images/luxe/luxury_villa.jpg";
+                              e.currentTarget.src = "/images/luxe/luxury_villa.webp";
                             }}
                             className="w-full h-full object-cover transition-transform duration-[1.8s] ease-out group-hover:scale-105"
                           />
                         ) : (
                           <img
                             loading="lazy"
-                            src="/images/luxe/luxury_villa.jpg"
+                            src="/images/luxe/luxury_villa.webp"
                             alt={p.project_name}
                             className="w-full h-full object-cover transition-transform duration-[1.8s] ease-out group-hover:scale-105"
                           />

@@ -21,7 +21,7 @@ function formatDate(iso) {
 
 function blogImage(src) {
   if (!src) return "";
-  if (isGoogleDriveImage(src)) return driveImageUrl(src);
+  if (isGoogleDriveImage(src)) return driveImageUrl(src, 1200);
   if (src.startsWith("http")) return src;
   return "";
 }

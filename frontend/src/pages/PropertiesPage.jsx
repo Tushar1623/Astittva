@@ -62,10 +62,10 @@ function FilterSelect({ label, value, onChange, options, allLabel, testId }) {
 
 // Distinct luxury fallback images so the grid never repeats when properties have no uploads.
 const FALLBACK_IMAGES = [
-  "/images/luxe/luxury_villa.jpg",
-  "/images/luxe/property_tower.jpg",
-  "/images/luxe/property_villa_garden.jpg",
-  "/images/luxe/property_heritage_estate.jpg",
+  "/images/luxe/luxury_villa.webp",
+  "/images/luxe/property_tower.webp",
+  "/images/luxe/property_villa_garden.webp",
+  "/images/luxe/property_heritage_estate.webp",
 ];
 
 function pickFallback(id) {

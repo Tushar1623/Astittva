@@ -4,10 +4,10 @@ import { ArrowRight, MapPin } from "lucide-react";
 import { isGoogleDriveImage, driveImageUrl } from "@/lib/api";
 
 const FALLBACK_IMAGES = [
-  "/images/luxe/luxury_villa.jpg",
-  "/images/luxe/property_tower.jpg",
-  "/images/luxe/property_villa_garden.jpg",
-  "/images/luxe/property_heritage_estate.jpg",
+  "/images/luxe/luxury_villa.webp",
+  "/images/luxe/property_tower.webp",
+  "/images/luxe/property_villa_garden.webp",
+  "/images/luxe/property_heritage_estate.webp",
 ];
 
 export function pickPropertyFallback(id) {

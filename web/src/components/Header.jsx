@@ -7,11 +7,9 @@ import { LOGO_URL } from "@/lib/site";
 const nav = [
   { to: "/", label: "Home" },
   { to: "/properties", label: "Properties" },
-  { to: "/ridhi-bhoomi", label: "Ridhi Bhoomi", isFeatured: true },
-  { to: "/market-intelligence", label: "Market Intelligence" },
+  { to: "/news", label: "News" },
   { to: "/blogs", label: "Blogs" },
-  { to: "/about", label: "About" },
-  { to: "/contact", label: "Contact" },
+  { to: "/about", label: "About & Contact" },
 ];
 
 export default function Header() {

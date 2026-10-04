@@ -63,21 +63,21 @@ export function isGoogleDriveImage(url) {
   return Boolean(getGoogleDriveFileId(url));
 }
 
-export function driveImageUrl(url) {
+export function driveImageUrl(url, width = 600) {
   const id = getGoogleDriveFileId(url);
-
   if (!id) return "";
 
-  return `https://drive.google.com/thumbnail?id=${id}&sz=w2000`;
+  const base = API.replace(/\/api$/, "");
+  return `${base}/api/images/thumbnail?id=${id}&w=${width}`;
 }
 
-export function fileUrl(path) {
+export function fileUrl(path, width = 600) {
   if (!path) return "";
 
   const driveId = getGoogleDriveFileId(path);
-
   if (driveId) {
-    return `https://drive.google.com/thumbnail?id=${driveId}&sz=w2000`;
+    const base = API.replace(/\/api$/, "");
+    return `${base}/api/images/thumbnail?id=${driveId}&w=${width}`;
   }
 
   // Do NOT request legacy Astittva storage paths anymore.

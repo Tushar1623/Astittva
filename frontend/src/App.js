@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { HelmetProvider } from "react-helmet-async";
 
@@ -19,7 +19,6 @@ const ContactPage = lazy(() => import("@/pages/ContactPage"));
 const MarketIntelligencePage = lazy(() => import("@/pages/MarketIntelligencePage"));
 const BlogsListPage = lazy(() => import("@/pages/BlogsListPage"));
 const BlogDetailPage = lazy(() => import("@/pages/BlogDetailPage"));
-const RidhiBhoomiPage = lazy(() => import("@/pages/RidhiBhoomiPage"));
 
 const AdminLoginPage = lazy(() => import("@/pages/admin/AdminLoginPage"));
 const AdminLayout = lazy(() => import("@/layouts/AdminLayout"));
@@ -60,13 +59,12 @@ function App() {
                     <Route path="/" element={<HomePage />} />
                     <Route path="/properties" element={<PropertiesPage />} />
                     <Route path="/properties/:id" element={<PropertyDetailPage />} />
-                    <Route path="/market-intelligence" element={<MarketIntelligencePage />} />
+                    <Route path="/news" element={<MarketIntelligencePage />} />
+                    <Route path="/market-intelligence" element={<Navigate to="/news" replace />} />
                     <Route path="/blogs" element={<BlogsListPage />} />
                     <Route path="/blogs/:slug" element={<BlogDetailPage />} />
                     <Route path="/about" element={<AboutPage />} />
                     <Route path="/contact" element={<ContactPage />} />
-                    <Route path="/ridhi-bhoomi" element={<RidhiBhoomiPage />} />
-                    <Route path="/riddhi-bhumi" element={<RidhiBhoomiPage />} />
                   </Route>
 
                   {/* Admin authentication */}

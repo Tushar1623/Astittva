@@ -1,6 +1,6 @@
 import "@/App.css";
 import { lazy, Suspense, useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { HelmetProvider } from "react-helmet-async";
 
@@ -50,22 +50,6 @@ function RouteFallback() {
   );
 }
 
-function RidhiBhoomiRedirect() {
-  useEffect(() => {
-    const targetUrl = process.env.REACT_APP_RIDDHI_BHOOMI_URL || "http://localhost:5173";
-    window.location.href = targetUrl;
-  }, []);
-
-  return (
-    <div className="w-full min-h-[60vh] flex flex-col items-center justify-center bg-[#FAF8F5] gap-3" data-testid="ridhi-bhoomi-redirect">
-      <div className="w-8 h-8 rounded-full border-2 border-copper border-t-transparent animate-spin" />
-      <span className="text-[11px] tracking-[0.3em] uppercase text-copper font-medium">
-        Redirecting to Ridhi Bhoomi…
-      </span>
-    </div>
-  );
-}
-
 function App() {
   return (
     <div className="App">
@@ -81,13 +65,12 @@ function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/properties" element={<PropertiesPage />} />
                 <Route path="/properties/:id" element={<PropertyDetailPage />} />
-                <Route path="/market-intelligence" element={<MarketIntelligencePage />} />
+                <Route path="/news" element={<MarketIntelligencePage />} />
+                <Route path="/market-intelligence" element={<Navigate to="/news" replace />} />
                 <Route path="/blogs" element={<BlogsListPage />} />
                 <Route path="/blogs/:slug" element={<BlogDetailPage />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/contact" element={<ContactPage />} />
-                <Route path="/ridhi-bhoomi" element={<RidhiBhoomiRedirect />} />
-                <Route path="/riddhi-bhumi" element={<RidhiBhoomiRedirect />} />
                 {/* 404 — must be last inside the public layout */}
                 <Route path="*" element={<NotFoundPage />} />
               </Route>

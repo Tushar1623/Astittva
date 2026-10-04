@@ -146,7 +146,7 @@ export default function PropertyDetailPage() {
             {images.length > 0 && images[activeImg] ? (
               <img
                 loading="lazy"
-                src={driveImageUrl(images[activeImg])}
+                src={driveImageUrl(images[activeImg], 1200)}
                 alt={property.project_name}
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -170,7 +170,7 @@ export default function PropertyDetailPage() {
                 >
                   <img
                     loading="lazy"
-                    src={driveImageUrl(img)}
+                    src={driveImageUrl(img, 400)}
                     alt=""
                     className="absolute inset-0 w-full h-full object-cover"
                     onError={(e) => {
