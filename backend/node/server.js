@@ -729,7 +729,9 @@ app.post("/api/leads", async (req, res) => {
     };
 
     const result = await db.collection("leads").insertOne(leadDoc);
-    leadDoc.id = String(result.inserted_id);
+    const insertedId = result.insertedId || result.inserted_id;
+    leadDoc._id = insertedId;
+    leadDoc.id = String(insertedId);
     return res.status(201).json(leadDoc);
   } catch (err) {
     console.error("Create lead error:", err);
@@ -766,7 +768,7 @@ app.post("/api/admin/properties", requireStaff, async (req, res) => {
     const db = getDb();
     const doc = { ...req.body, created_at: nowUtcIso(), updated_at: nowUtcIso() };
     const result = await db.collection("properties").insertOne(doc);
-    doc._id = result.inserted_id;
+    doc._id = result.insertedId || result.inserted_id;
     cacheInvalidatePrefix("prop:");
     return res.status(201).json(serializeProperty(doc));
   } catch (err) {
@@ -780,13 +782,23 @@ app.put("/api/admin/properties/:id", requireStaff, async (req, res) => {
     const update = { ...req.body, updated_at: nowUtcIso() };
     delete update._id;
     delete update.id;
-    const result = await db
+
+    let query = {};
+    try {
+      query = { _id: new ObjectId(req.params.id) };
+    } catch {
+      query = { id: req.params.id };
+    }
+
+    const rawResult = await db
       .collection("properties")
-      .findOneAndUpdate({ _id: new ObjectId(req.params.id) }, { $set: update }, { returnDocument: "after" });
-    if (!result) return res.status(404).json({ detail: "Property not found" });
+      .findOneAndUpdate(query, { $set: update }, { returnDocument: "after" });
+    const updatedDoc = rawResult?.value || rawResult;
+    if (!updatedDoc) return res.status(404).json({ detail: "Property not found" });
     cacheInvalidatePrefix("prop:");
-    return res.json(serializeProperty(result));
-  } catch {
+    return res.json(serializeProperty(updatedDoc));
+  } catch (err) {
+    console.error("[Admin] Update property error:", err);
     return res.status(400).json({ detail: "Failed to update property" });
   }
 });
@@ -798,9 +810,15 @@ app.patch("/api/admin/properties/:id/status", requireStaff, async (req, res) => 
       return res.status(400).json({ detail: "Invalid status" });
     }
     const db = getDb();
+    let query = {};
+    try {
+      query = { _id: new ObjectId(req.params.id) };
+    } catch {
+      query = { id: req.params.id };
+    }
     const result = await db
       .collection("properties")
-      .updateOne({ _id: new ObjectId(req.params.id) }, { $set: { status, updated_at: nowUtcIso() } });
+      .updateOne(query, { $set: { status, updated_at: nowUtcIso() } });
     if (result.matchedCount === 0) return res.status(404).json({ detail: "Property not found" });
     cacheInvalidatePrefix("prop:");
     return res.json({ ok: true, status });
@@ -812,7 +830,13 @@ app.patch("/api/admin/properties/:id/status", requireStaff, async (req, res) => 
 app.delete("/api/admin/properties/:id", requireAdmin, async (req, res) => {
   try {
     const db = getDb();
-    const result = await db.collection("properties").deleteOne({ _id: new ObjectId(req.params.id) });
+    let query = {};
+    try {
+      query = { _id: new ObjectId(req.params.id) };
+    } catch {
+      query = { id: req.params.id };
+    }
+    const result = await db.collection("properties").deleteOne(query);
     if (result.deletedCount === 0) return res.status(404).json({ detail: "Property not found" });
     cacheInvalidatePrefix("prop:");
     return res.json({ ok: true });
@@ -837,7 +861,13 @@ app.get("/api/admin/blogs", requireStaff, async (req, res) => {
 app.get("/api/admin/blogs/:id", requireStaff, async (req, res) => {
   try {
     const db = getDb();
-    const doc = await db.collection("blogs").findOne({ _id: new ObjectId(req.params.id) });
+    let query = {};
+    try {
+      query = { _id: new ObjectId(req.params.id) };
+    } catch {
+      query = { slug: req.params.id };
+    }
+    const doc = await db.collection("blogs").findOne(query);
     if (!doc) return res.status(404).json({ detail: "Blog not found" });
     return res.json(serializeBlog(doc));
   } catch {
@@ -863,7 +893,7 @@ app.post("/api/admin/blogs", requireStaff, async (req, res) => {
       doc.publish_date = doc.created_at.substring(0, 10);
     }
     const result = await db.collection("blogs").insertOne(doc);
-    doc._id = result.inserted_id;
+    doc._id = result.insertedId || result.inserted_id;
     cacheInvalidatePrefix("blog:");
     return res.status(201).json(serializeBlog(doc));
   } catch (err) {
@@ -877,13 +907,23 @@ app.put("/api/admin/blogs/:id", requireStaff, async (req, res) => {
     const update = { ...req.body, updated_at: nowUtcIso() };
     delete update._id;
     delete update.id;
-    const result = await db
+
+    let query = {};
+    try {
+      query = { _id: new ObjectId(req.params.id) };
+    } catch {
+      query = { slug: req.params.id };
+    }
+
+    const rawResult = await db
       .collection("blogs")
-      .findOneAndUpdate({ _id: new ObjectId(req.params.id) }, { $set: update }, { returnDocument: "after" });
-    if (!result) return res.status(404).json({ detail: "Blog not found" });
+      .findOneAndUpdate(query, { $set: update }, { returnDocument: "after" });
+    const updatedDoc = rawResult?.value || rawResult;
+    if (!updatedDoc) return res.status(404).json({ detail: "Blog not found" });
     cacheInvalidatePrefix("blog:");
-    return res.json(serializeBlog(result));
-  } catch {
+    return res.json(serializeBlog(updatedDoc));
+  } catch (err) {
+    console.error("[Admin] Update blog error:", err);
     return res.status(400).json({ detail: "Failed to update blog" });
   }
 });
@@ -1040,8 +1080,9 @@ app.post("/api/users", requireAdmin, async (req, res) => {
       created_at: nowUtcIso(),
     };
     const result = await db.collection("users").insertOne(doc);
+    const insertedId = result.insertedId || result.inserted_id;
     return res.status(201).json({
-      id: String(result.inserted_id),
+      id: String(insertedId),
       email: doc.email,
       name: doc.name,
       role: doc.role,

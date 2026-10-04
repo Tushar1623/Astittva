@@ -51,6 +51,9 @@ export default function AdminBlogFormPage() {
         .get(`/admin/blogs/${id}`)
         .then(({ data }) => {
           setForm({ ...empty, ...data });
+          if (data?.featured_image) {
+            setDriveImageUrlInput(data.featured_image);
+          }
           setSlugTouched(true); // don't auto-overwrite existing slug
         })
         .catch(() => toast.error("Failed to load blog"))
@@ -65,22 +68,26 @@ export default function AdminBlogFormPage() {
     if (!slugTouched) set("slug", slugify(v));
   };
 
+  const handleDriveUrlChange = (val) => {
+    setDriveImageUrlInput(val);
+    set("featured_image", val.trim());
+  };
+
   const applyDriveImage = () => {
-    const url = driveImageUrlInput.trim();
+    const url = (driveImageUrlInput || form.featured_image || "").trim();
     if (!url) {
       toast.error("Paste a Google Drive image link");
       return;
     }
-    if (!isGoogleDriveImage(url)) {
-      toast.error("Please enter a valid Google Drive image link");
-      return;
-    }
     set("featured_image", url);
-    setDriveImageUrlInput("");
-    toast.success("Google Drive image set");
+    setDriveImageUrlInput(url);
+    toast.success("Google Drive image linked");
   };
 
-  const removeImage = () => set("featured_image", "");
+  const removeImage = () => {
+    set("featured_image", "");
+    setDriveImageUrlInput("");
+  };
 
   const submit = async (e, overrideStatus) => {
     e.preventDefault();
@@ -93,7 +100,8 @@ export default function AdminBlogFormPage() {
       return;
     }
     setSaving(true);
-    const payload = { ...form };
+    const finalFeaturedImage = (driveImageUrlInput.trim() || form.featured_image || "").trim();
+    const payload = { ...form, featured_image: finalFeaturedImage };
     if (overrideStatus) payload.status = overrideStatus;
     if (!payload.slug) payload.slug = slugify(payload.title);
     try {
@@ -120,7 +128,8 @@ export default function AdminBlogFormPage() {
     );
   }
 
-  const imgSrc = blogImage(form.featured_image);
+  const currentImageUrl = form.featured_image || driveImageUrlInput;
+  const imgSrc = blogImage(currentImageUrl);
 
   return (
     <div data-testid="admin-blog-form-page">
@@ -325,12 +334,12 @@ export default function AdminBlogFormPage() {
               <label className="input-label">Google Drive Image Link</label>
               <div className="space-y-2">
                 <input
-                  type="url"
+                  type="text"
                   data-testid="blog-drive-image-input"
-                  className="input-filled text-xs"
-                  placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
-                  value={driveImageUrlInput}
-                  onChange={(e) => setDriveImageUrlInput(e.target.value)}
+                  className="input-filled text-xs font-mono"
+                  placeholder="https://drive.google.com/file/d/.../view"
+                  value={driveImageUrlInput || form.featured_image || ""}
+                  onChange={(e) => handleDriveUrlChange(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
@@ -338,14 +347,20 @@ export default function AdminBlogFormPage() {
                     }
                   }}
                 />
-                <button
-                  type="button"
-                  onClick={applyDriveImage}
-                  data-testid="use-drive-image-btn"
-                  className="btn-outline w-full text-xs py-2"
-                >
-                  Use Drive Image
-                </button>
+                {(driveImageUrlInput || form.featured_image) && (
+                  <div className="flex items-center justify-between text-[11px] text-ivory/60 pt-1">
+                    <span className="truncate max-w-[280px] text-copper/80">
+                      Linked: {driveImageUrlInput || form.featured_image}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      className="text-rose-400 hover:text-rose-300 ml-2"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
               </div>
               <p className="text-[10px] text-ivory/50 mt-2 font-light">
                 Before adding the image, open Google Drive → Share → General access → Anyone with the link → Viewer.

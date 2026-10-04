@@ -309,23 +309,18 @@ export default function PropertiesPage() {
                   <div className="aspect-[4/3] overflow-hidden relative">
                     {(() => {
                       const driveImg = (p.images || []).find(isGoogleDriveImage);
-                      return driveImg ? (
+                      const anyHttpImg = (p.images || []).find((img) => typeof img === "string" && img.startsWith("http"));
+                      const imgSrc = driveImg ? driveImageUrl(driveImg, 1000) : (anyHttpImg || pickFallback(p.id));
+                      return (
                         <img
                           loading="lazy"
-                          src={driveImageUrl(driveImg)}
+                          src={imgSrc}
                           alt={p.project_name}
                           className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
                           onError={(e) => {
                             e.currentTarget.onerror = null;
                             e.currentTarget.src = pickFallback(p.id);
                           }}
-                        />
-                      ) : (
-                        <img
-                          loading="lazy"
-                          src={pickFallback(p.id)}
-                          alt={p.project_name}
-                          className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
                         />
                       );
                     })()}

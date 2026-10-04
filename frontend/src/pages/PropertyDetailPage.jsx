@@ -130,7 +130,9 @@ export default function PropertyDetailPage() {
     );
   }
 
-  const images = (property.images || []).filter(isGoogleDriveImage);
+  const images = (property.images || []).filter(
+    (img) => typeof img === "string" && (isGoogleDriveImage(img) || img.startsWith("http"))
+  );
 
   return (
     <div data-testid="property-detail-page" className="pt-28 pb-24">
@@ -146,11 +148,12 @@ export default function PropertyDetailPage() {
             {images.length > 0 && images[activeImg] ? (
               <img
                 loading="lazy"
-                src={driveImageUrl(images[activeImg], 1200)}
+                src={isGoogleDriveImage(images[activeImg]) ? driveImageUrl(images[activeImg], 1200) : images[activeImg]}
                 alt={property.project_name}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  e.currentTarget.style.display = "none";
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "/images/luxe/luxury_villa.webp";
                 }}
               />
             ) : (
@@ -170,11 +173,12 @@ export default function PropertyDetailPage() {
                 >
                   <img
                     loading="lazy"
-                    src={driveImageUrl(img, 400)}
+                    src={isGoogleDriveImage(img) ? driveImageUrl(img, 400) : img}
                     alt=""
                     className="absolute inset-0 w-full h-full object-cover"
                     onError={(e) => {
-                      e.currentTarget.style.display = "none";
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "/images/luxe/luxury_villa.webp";
                     }}
                   />
                 </button>

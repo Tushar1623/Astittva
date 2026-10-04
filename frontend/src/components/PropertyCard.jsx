@@ -29,7 +29,8 @@ export default function PropertyCard({
     (variant === "featured" ? `project-card-${p.id}` : `property-card-${p.id}`);
 
   const driveImg = (p.images || []).find(isGoogleDriveImage);
-  const imageSrc = driveImg ? driveImageUrl(driveImg) : pickPropertyFallback(p.id);
+  const anyHttpImg = (p.images || []).find((img) => typeof img === "string" && img.startsWith("http"));
+  const imageSrc = driveImg ? driveImageUrl(driveImg, 1000) : (anyHttpImg || pickPropertyFallback(p.id));
 
   const price =
     p.price_label ||

@@ -343,22 +343,17 @@ export default function HomePage() {
                     <div className="aspect-[4/3] overflow-hidden bg-[#FAF8F5]">
                       {(() => {
                         const driveImg = (p.images || []).find(isGoogleDriveImage);
-                        return driveImg ? (
+                        const anyHttpImg = (p.images || []).find((img) => typeof img === "string" && img.startsWith("http"));
+                        const imgSrc = driveImg ? driveImageUrl(driveImg, 1000) : (anyHttpImg || "/images/luxe/luxury_villa.webp");
+                        return (
                           <img
                             loading="lazy"
-                            src={driveImageUrl(driveImg)}
+                            src={imgSrc}
                             alt={p.project_name}
                             onError={(e) => {
                               e.currentTarget.onerror = null;
                               e.currentTarget.src = "/images/luxe/luxury_villa.webp";
                             }}
-                            className="w-full h-full object-cover transition-transform duration-[1.8s] ease-out group-hover:scale-105"
-                          />
-                        ) : (
-                          <img
-                            loading="lazy"
-                            src="/images/luxe/luxury_villa.webp"
-                            alt={p.project_name}
                             className="w-full h-full object-cover transition-transform duration-[1.8s] ease-out group-hover:scale-105"
                           />
                         );

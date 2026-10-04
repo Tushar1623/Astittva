@@ -73,21 +73,33 @@ export default function AdminPropertyFormPage() {
   };
 
   const addDriveImage = () => {
-    const url = driveInputUrl.trim();
-    if (!url) {
+    const raw = driveInputUrl.trim();
+    if (!raw) {
       toast.error("Paste a Google Drive image link");
       return;
     }
-    if (!isGoogleDriveImage(url)) {
-      toast.error("Please enter a valid Google Drive image link");
-      return;
+    // Support multiple URLs pasted at once (comma, semicolon, or newline separated)
+    const candidates = raw.split(/[\n,;]+/).map((s) => s.trim().replace(/^[<"']+|[>"']+$/g, "")).filter(Boolean);
+    const newUrls = [];
+    for (const u of candidates) {
+      if (isGoogleDriveImage(u) || u.startsWith("http")) {
+        newUrls.push(u);
+      } else {
+        toast.error(`Invalid link: ${u.slice(0, 45)}`);
+      }
     }
-    setForm((f) => ({
-      ...f,
-      images: [...(f.images || []), url],
-    }));
-    setDriveInputUrl("");
-    toast.success("Google Drive image added");
+    if (newUrls.length > 0) {
+      setForm((f) => {
+        const existing = f.images || [];
+        const combined = [...existing];
+        newUrls.forEach((url) => {
+          if (!combined.includes(url)) combined.push(url);
+        });
+        return { ...f, images: combined };
+      });
+      setDriveInputUrl("");
+      toast.success(`${newUrls.length} image link(s) added`);
+    }
   };
 
   const addAmenity = () => {
@@ -101,8 +113,22 @@ export default function AdminPropertyFormPage() {
   const submit = async (e) => {
     e.preventDefault();
     setSaving(true);
+
+    // Auto-include any link currently in the input field even if "+ Add Drive Image" wasn't clicked
+    let finalImages = Array.isArray(form.images) ? [...form.images] : [];
+    const pending = driveInputUrl.trim();
+    if (pending) {
+      const candidates = pending.split(/[\n,;]+/).map((s) => s.trim().replace(/^[<"']+|[>"']+$/g, "")).filter(Boolean);
+      candidates.forEach((u) => {
+        if (!finalImages.includes(u) && (isGoogleDriveImage(u) || u.startsWith("http"))) {
+          finalImages.push(u);
+        }
+      });
+    }
+
     const payload = {
       ...form,
+      images: finalImages,
       starting_price: form.starting_price === "" ? null : Number(form.starting_price),
     };
     try {
@@ -234,76 +260,93 @@ export default function AdminPropertyFormPage() {
           </div>
         </section>
 
-        {/* Images */}
-        <section className="border border-copper/15 p-8">
-          <h3 className="overline mb-6">Images</h3>
-          {(() => {
-            const driveImages = (form.images || []).filter(isGoogleDriveImage);
-            return (
-              <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-                  {driveImages.map((path) => (
-                    <div key={path} className="relative aspect-[4/3] group border border-copper/20 bg-charcoal/30">
-                      <img
-                        loading="lazy"
-                        src={driveImageUrl(path)}
-                        alt=""
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(path)}
-                        data-testid="remove-image"
-                        className="absolute top-1 right-1 w-7 h-7 bg-charcoal/90 border border-copper/40 flex items-center justify-center text-copper hover:bg-copper hover:text-charcoal transition"
-                        title="Remove image"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                {driveImages.length === 0 && (
-                  <p className="text-xs text-ivory/40 mb-6 italic">No Google Drive images added yet.</p>
-                )}
-              </>
-            );
-          })()}
-
-          {/* Google Drive Image Link Input */}
-          <div>
-            <label className="input-label">Google Drive Image Link</label>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="url"
-                data-testid="form-drive-image-url"
-                className="input-filled flex-1"
-                placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
-                value={driveInputUrl}
-                onChange={(e) => setDriveInputUrl(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addDriveImage();
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={addDriveImage}
-                data-testid="add-drive-image-button"
-                className="btn-outline shrink-0 inline-flex items-center justify-center gap-2"
-              >
-                + Add Drive Image
-              </button>
+          {/* Images */}
+          <section className="border border-copper/15 p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="overline">Images</h3>
+              {Array.isArray(form.images) && form.images.length > 0 && (
+                <span className="text-copper text-xs tracking-wider">
+                  {form.images.length} Image{form.images.length !== 1 ? "s" : ""} Attached
+                </span>
+              )}
             </div>
-            <p className="text-[11px] text-ivory/50 mt-2 font-light">
-              Before adding the image, open Google Drive → Share → General access → Anyone with the link → Viewer.
-            </p>
-          </div>
-        </section>
+            {(() => {
+              const driveImages = (form.images || []).filter(
+                (img) => typeof img === "string" && (isGoogleDriveImage(img) || img.startsWith("http"))
+              );
+              return (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+                    {driveImages.map((path) => (
+                      <div key={path} className="relative group border border-copper/20 bg-charcoal/30 flex flex-col overflow-hidden">
+                        <div className="aspect-[4/3] w-full overflow-hidden relative">
+                          <img
+                            loading="lazy"
+                            src={isGoogleDriveImage(path) ? driveImageUrl(path, 400) : path}
+                            alt=""
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = "/images/luxe/luxury_villa.webp";
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(path)}
+                            data-testid="remove-image"
+                            className="absolute top-1 right-1 w-7 h-7 bg-charcoal/90 border border-copper/40 flex items-center justify-center text-copper hover:bg-copper hover:text-charcoal transition"
+                            title="Remove image"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="p-2 bg-charcoal-2/80 border-t border-copper/10">
+                          <span className="text-[10px] text-ivory/60 truncate block font-mono" title={path}>
+                            {path}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {driveImages.length === 0 && (
+                    <p className="text-xs text-ivory/40 mb-6 italic">No Google Drive images added yet.</p>
+                  )}
+                </>
+              );
+            })()}
+
+            {/* Google Drive Image Link Input */}
+            <div>
+              <label className="input-label">Google Drive Image Link</label>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="text"
+                  data-testid="form-drive-image-url"
+                  className="input-filled flex-1 font-mono text-xs"
+                  placeholder="https://drive.google.com/file/d/.../view (paste single or multiple links)"
+                  value={driveInputUrl}
+                  onChange={(e) => setDriveInputUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addDriveImage();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={addDriveImage}
+                  data-testid="add-drive-image-button"
+                  className="btn-outline shrink-0 inline-flex items-center justify-center gap-2"
+                >
+                  + Add Drive Image
+                </button>
+              </div>
+              <p className="text-[11px] text-ivory/50 mt-2 font-light">
+                Paste any Google Drive link (e.g. view, sharing, or /file/d/ link). Links are automatically saved when submitting.
+              </p>
+            </div>
+          </section>
 
         {/* Details */}
         <section className="border border-copper/15 p-8">
