@@ -268,14 +268,19 @@ export default function LeadForm({
   // ----------------------------------------------------
   if (variant === "contact") {
     return (
-      <div className="bg-[rgba(255,255,255,0.58)] backdrop-blur-[12px] border border-[rgba(74,8,13,0.10)] rounded-[12px] sm:rounded-[14px] p-6 sm:p-9 md:p-11 shadow-[0_12px_40px_rgba(40,10,10,0.06)]">
-        {/* Form Introduction */}
-        <div className="mb-8 sm:mb-10">
-          <div className="w-8 h-[2px] bg-gradient-to-r from-[#4A080D] to-[#C89A55] mb-5 rounded-full" />
-          <h3 className="font-sans text-[26px] sm:text-[30px] font-medium text-[#3A2525] tracking-tight leading-tight">
+      <div className="bg-[rgba(255,255,255,0.65)] backdrop-blur-[12px] border border-[rgba(74,8,13,0.10)] rounded-[11px] p-6 sm:p-9 lg:p-11 shadow-[0_20px_60px_rgba(50,20,20,0.07)]">
+        {/* Form Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2.5 mb-2.5">
+            <div className="w-5 h-[2px] bg-[#B4773F] rounded-full" />
+            <span className="text-[10.5px] sm:text-[11px] font-semibold tracking-[0.18em] uppercase text-[#B4773F]">
+              Your Details
+            </span>
+          </div>
+          <h3 className="font-sans text-[22px] sm:text-[26px] font-medium text-[#3A2727] tracking-tight leading-snug">
             Tell us what you&apos;re looking for.
           </h3>
-          <p className="mt-2 text-[14px] sm:text-[15px] text-[#817572] font-normal leading-relaxed">
+          <p className="mt-1.5 text-[14px] text-[#756762] font-normal leading-relaxed">
             Share a few details and our property advisor will help you find the right opportunity.
           </p>
         </div>
@@ -503,9 +508,9 @@ export default function LeadForm({
               type="submit"
               disabled={submitting}
               data-testid="contact-submit-btn"
-              className="h-[50px] px-7 sm:px-8 text-white rounded-[5px] font-semibold text-[11.5px] uppercase tracking-[0.10em] flex items-center justify-center gap-2.5 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed group shadow-[0_4px_14px_rgba(74,8,13,0.12)] hover:shadow-[0_8px_22px_rgba(74,8,13,0.18)] hover:-translate-y-0.5 active:translate-y-0"
+              className="h-[50px] px-7 text-white rounded-[5px] font-semibold text-[11.5px] uppercase tracking-[0.10em] flex items-center justify-center gap-2.5 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed group shadow-[0_4px_14px_rgba(74,8,13,0.12)] hover:shadow-[0_10px_25px_rgba(74,8,13,0.18)] hover:-translate-y-px active:translate-y-0"
               style={{
-                background: "linear-gradient(135deg, #4A080D 0%, #651118 100%)",
+                background: "linear-gradient(135deg, #4A080D 0%, #68151B 100%)",
               }}
             >
               {submitting ? (
@@ -521,7 +526,7 @@ export default function LeadForm({
               )}
             </button>
 
-            <div className="flex items-center justify-center sm:justify-start gap-2 text-[#8A7A72] text-[9.5px] sm:text-[10px] tracking-[0.10em] uppercase font-medium">
+            <div className="flex items-center justify-center sm:justify-start gap-2 text-[#8B7C75] text-[9.5px] sm:text-[10px] tracking-[0.10em] uppercase font-medium">
               <Check className="w-3.5 h-3.5 text-[#C89A55] shrink-0" strokeWidth={2.2} />
               <span>100% Confidential · Direct Expert Advisory</span>
             </div>
