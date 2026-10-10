@@ -28,6 +28,8 @@ const AdminDashboardPage = lazy(() => import("@/pages/admin/AdminDashboardPage")
 const AdminPropertiesPage = lazy(() => import("@/pages/admin/AdminPropertiesPage"));
 const AdminPropertyFormPage = lazy(() => import("@/pages/admin/AdminPropertyFormPage"));
 const AdminLeadsPage = lazy(() => import("@/pages/admin/AdminLeadsPage"));
+const AdminPropertyLeadsPage = lazy(() => import("@/pages/admin/AdminPropertyLeadsPage"));
+const AdminCareerApplicationsPage = lazy(() => import("@/pages/admin/AdminCareerApplicationsPage"));
 const AdminUsersPage = lazy(() => import("@/pages/admin/AdminUsersPage"));
 const AdminBlogsPage = lazy(() => import("@/pages/admin/AdminBlogsPage"));
 const AdminBlogFormPage = lazy(() => import("@/pages/admin/AdminBlogFormPage"));
@@ -87,7 +89,9 @@ function App() {
                     <Route path="properties" element={<AdminPropertiesPage />} />
                     <Route path="properties/new" element={<AdminPropertyFormPage />} />
                     <Route path="properties/:id/edit" element={<AdminPropertyFormPage />} />
-                    <Route path="leads" element={<AdminLeadsPage />} />
+                    <Route path="leads" element={<AdminPropertyLeadsPage />} />
+                    <Route path="leads/property" element={<AdminPropertyLeadsPage />} />
+                    <Route path="leads/careers" element={<AdminCareerApplicationsPage />} />
                     <Route path="blogs" element={<AdminBlogsPage />} />
                     <Route path="blogs/new" element={<AdminBlogFormPage />} />
                     <Route path="blogs/:id/edit" element={<AdminBlogFormPage />} />

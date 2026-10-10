@@ -15,7 +15,10 @@ const cookieParser = require("cookie-parser");
 const compression = require("compression");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const { ObjectId } = require("mongodb");
+const { ObjectId, GridFSBucket } = require("mongodb");
+const { Readable } = require("stream");
+const http = require("http");
+const https = require("https");
 const path = require("path");
 const fs = require("fs");
 const { connectToDatabase, getDb } = require("./db");
@@ -697,44 +700,349 @@ app.get("/api/blogs/:slug", async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// Leads (Public inquiry submission)
+// Outbound CRM Forwarding (Property Leads Only)
+// ---------------------------------------------------------------------------
+function forwardPropertyLeadToCrm(doc) {
+  const crmBaseUrl = (process.env.CRM_BASE_URL || "").trim().replace(/\/+$/, "");
+  const crmApiKey = (process.env.CRM_API_KEY || "").trim();
+  if (!crmBaseUrl || !crmApiKey) {
+    return Promise.resolve({ status: "skipped", reason: "CRM not configured" });
+  }
+
+  return new Promise((resolve) => {
+    try {
+      const url = new URL(`${crmBaseUrl}/leads`);
+      const postData = JSON.stringify({
+        prefix: doc.prefix || "Mr",
+        firstName: doc.first_name || doc.name || "",
+        lastName: doc.last_name || "",
+        phoneCode: doc.phone_code || "+91",
+        phone: doc.phone || "",
+        email: doc.email || "",
+        leadType: doc.leadType || doc.interest || "Property Enquiry",
+        source: doc.source || "Website",
+        property: doc.propertyName || doc.project || "",
+        location: doc.location || doc.preferred_locality || "",
+        additionalNotes: [
+          `Lead Type: ${doc.leadType || doc.interest || "Property Enquiry"}`,
+          `Source: ${doc.source || "Website"}`,
+          doc.propertyName ? `Property: ${doc.propertyName}` : null,
+          doc.location ? `Location: ${doc.location}` : null,
+          doc.message ? `Message: ${doc.message}` : null,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+        environment: process.env.CRM_ENV || "development",
+        platform: process.env.CRM_PLATFORM || "astittva-website",
+      });
+
+      const client = url.protocol === "https:" ? https : http;
+      const req = client.request(
+        url,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(postData),
+            "x-api-key": crmApiKey,
+          },
+          timeout: 15000,
+        },
+        (res) => {
+          let data = "";
+          res.on("data", (chunk) => (data += chunk));
+          res.on("end", () => {
+            resolve({
+              status: res.statusCode < 300 ? "forwarded" : "failed",
+              statusCode: res.statusCode,
+              body: data,
+            });
+          });
+        }
+      );
+      req.on("error", (err) => {
+        console.warn("[CRM] Outbound forward error:", err.message);
+        resolve({ status: "error", error: err.message });
+      });
+      req.on("timeout", () => {
+        req.destroy();
+        resolve({ status: "timeout" });
+      });
+      req.write(postData);
+      req.end();
+    } catch (err) {
+      resolve({ status: "error", error: err.message });
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Resume Storage in MongoDB GridFS (Career Applications)
+// ---------------------------------------------------------------------------
+function storeResumeInGridFS(db, filename, contentType, buffer) {
+  return new Promise((resolve, reject) => {
+    try {
+      const bucket = new GridFSBucket(db, { bucketName: "career_resumes" });
+      const safeFilename = (filename || "resume.pdf").replace(/[^a-zA-Z0-9._-]/g, "_");
+      const uploadStream = bucket.openUploadStream(safeFilename, {
+        contentType: contentType || "application/pdf",
+        metadata: { uploadedAt: nowUtcIso() },
+      });
+      const stream = Readable.from(buffer);
+      stream
+        .pipe(uploadStream)
+        .on("error", reject)
+        .on("finish", () => {
+          resolve({ fileId: uploadStream.id, filename: safeFilename });
+        });
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// PROPERTY LEADS (Public Submission: POST /api/leads/property)
+// ---------------------------------------------------------------------------
+app.post("/api/leads/property", async (req, res) => {
+  try {
+    const db = getDb();
+    const body = req.body || {};
+
+    const name = (body.name || `${body.first_name || ""} ${body.last_name || ""}`).trim();
+    const phone = (body.phone || "").trim();
+    const email = (body.email || "").toLowerCase().trim();
+
+    if (!name && !phone && !email) {
+      return res.status(400).json({ detail: "Please provide your name, phone number, or email." });
+    }
+
+    const leadDoc = {
+      name: name || "Anonymous Enquiry",
+      phone: phone,
+      email: email,
+      propertyId: body.propertyId || body.property_id || "",
+      propertyName: body.propertyName || body.project || body.project_name || "",
+      location: body.location || body.preferred_locality || body.property_location || body.preferred_city || "",
+      leadType: body.leadType || body.lead_type || body.interest || "Property Enquiry",
+      message: body.message || "",
+      source: body.source || "property-form",
+      status: "New",
+      assignedTo: body.assignedTo || "Unassigned",
+      notes: "",
+      createdAt: nowUtcIso(),
+      updatedAt: nowUtcIso(),
+    };
+
+    // 1. Insert into dedicated property_leads collection
+    const result = await db.collection("property_leads").insertOne(leadDoc);
+    const insertedId = result.insertedId;
+    leadDoc._id = insertedId;
+    leadDoc.id = String(insertedId);
+
+    // 2. Also keep in legacy leads collection so existing external consumers/backups remain unharmed
+    try {
+      await db.collection("leads").insertOne({
+        ...leadDoc,
+        _id: insertedId,
+        first_name: body.first_name || "",
+        last_name: body.last_name || "",
+        interest: leadDoc.leadType,
+        project: leadDoc.propertyName,
+        property_location: leadDoc.location,
+        preferred_locality: leadDoc.location,
+        created_at: leadDoc.createdAt,
+        status: "new",
+      });
+    } catch {}
+
+    // 3. Outbound CRM forwarding (asynchronous & failure-isolated)
+    forwardPropertyLeadToCrm(leadDoc).catch(() => {});
+
+    return res.status(201).json({
+      id: String(insertedId),
+      ok: true,
+      leadType: leadDoc.leadType,
+      message: "Property enquiry submitted successfully",
+    });
+  } catch (err) {
+    console.error("Create property lead error:", err);
+    return res.status(500).json({ detail: "Failed to record property inquiry" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// CAREER APPLICATIONS (Public Submission: POST /api/leads/career)
+// ---------------------------------------------------------------------------
+app.post("/api/leads/career", async (req, res) => {
+  try {
+    const db = getDb();
+    const body = req.body || {};
+
+    const name = (body.name || "").trim();
+    const phone = (body.phone || "").trim();
+    const email = (body.email || "").toLowerCase().trim();
+    const jobTitle = (body.jobTitle || body.role_interest || body.position || "").trim();
+
+    if (!name) {
+      return res.status(400).json({ detail: "Full name is required." });
+    }
+    if (!phone) {
+      return res.status(400).json({ detail: "Phone number is required." });
+    }
+    if (!email) {
+      return res.status(400).json({ detail: "Email address is required." });
+    }
+    if (!jobTitle) {
+      return res.status(400).json({ detail: "Position applying for is required." });
+    }
+
+    // Process resume upload if provided (base64 or link)
+    let resumeFileId = null;
+    let resumeFilename = "";
+    let resumeUrl = (body.resumeUrl || body.linkedin || "").trim();
+
+    if (body.resume && body.resume.base64) {
+      const { filename, contentType, base64 } = body.resume;
+      const rawExt = (filename || "cv.pdf").split(".").pop().toLowerCase();
+      const allowedExts = ["pdf", "doc", "docx"];
+      if (!allowedExts.includes(rawExt)) {
+        return res.status(400).json({ detail: "Only PDF, DOC, and DOCX files are accepted for resumes." });
+      }
+
+      // Strip data URI prefix if present
+      const cleanBase64 = base64.replace(/^data:[^;]+;base64,/, "");
+      const buffer = Buffer.from(cleanBase64, "base64");
+      if (buffer.length > 10 * 1024 * 1024) {
+        return res.status(400).json({ detail: "Resume file must be less than 10MB." });
+      }
+
+      const stored = await storeResumeInGridFS(db, filename, contentType, buffer);
+      resumeFileId = stored.fileId;
+      resumeFilename = stored.filename;
+    }
+
+    const applicationDoc = {
+      name,
+      phone,
+      email,
+      jobTitle,
+      department: (body.department || "Advisory & Client Relations").trim(),
+      experience: (body.experience || "Not specified").trim(),
+      location: (body.location || body.currentLocation || "Kolkata").trim(),
+      resumeUrl: resumeUrl || "",
+      resumeFilename: resumeFilename || "",
+      resumeFileId: resumeFileId || null,
+      coverLetter: (body.coverLetter || body.message || "").trim(),
+      source: body.source || "career-portal",
+      status: "New",
+      notes: "",
+      createdAt: nowUtcIso(),
+      updatedAt: nowUtcIso(),
+    };
+
+    const result = await db.collection("career_applications").insertOne(applicationDoc);
+    const insertedId = result.insertedId;
+
+    if (resumeFileId) {
+      // Set the secure admin download URL
+      const secureDownloadUrl = `/api/admin/leads/career/${insertedId}/resume`;
+      await db.collection("career_applications").updateOne(
+        { _id: insertedId },
+        { $set: { resumeUrl: secureDownloadUrl } }
+      );
+    }
+
+    // Career applications are NEVER forwarded to property CRM per requirements.
+    return res.status(201).json({
+      id: String(insertedId),
+      ok: true,
+      message: "Application submitted successfully. Our talent team will review your profile.",
+    });
+  } catch (err) {
+    console.error("Create career application error:", err);
+    return res.status(500).json({ detail: "Failed to submit career application" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Backward-Compatible Generic Leads Endpoint (POST /api/leads)
 // ---------------------------------------------------------------------------
 app.post("/api/leads", async (req, res) => {
   try {
     const db = getDb();
     const body = req.body || {};
-    const leadDoc = {
-      prefix: body.prefix || "Mr",
-      first_name: body.first_name || "",
-      last_name: body.last_name || "",
-      phone_code: body.phone_code || "+91",
+
+    // Check if this looks like a career submission from an older client
+    const isCareer =
+      body.investment_purpose === "Career / Employment" ||
+      (body.property_type && body.property_type.toLowerCase().includes("career")) ||
+      (body.source && body.source.toLowerCase().includes("career"));
+
+    if (isCareer) {
+      const careerDoc = {
+        name: body.name || `${body.first_name || ""} ${body.last_name || ""}`.trim(),
+        phone: body.phone || "",
+        email: (body.email || "").toLowerCase().trim(),
+        jobTitle: body.jobTitle || body.role_interest || "General Application",
+        department: body.department || "Advisory & Client Relations",
+        experience: body.experience || "Not specified",
+        location: body.location || "Kolkata",
+        resumeUrl: body.resumeUrl || body.linkedin || "",
+        resumeFilename: "",
+        resumeFileId: null,
+        coverLetter: body.coverLetter || body.message || "",
+        source: body.source || "career-portal-legacy",
+        status: "New",
+        notes: "",
+        createdAt: nowUtcIso(),
+        updatedAt: nowUtcIso(),
+      };
+      const result = await db.collection("career_applications").insertOne(careerDoc);
+      return res.status(201).json({ id: String(result.insertedId), ok: true, type: "career" });
+    }
+
+    // Otherwise, route to property_leads
+    const propDoc = {
       name: body.name || `${body.first_name || ""} ${body.last_name || ""}`.trim(),
-      email: (body.email || "").toLowerCase().trim(),
       phone: body.phone || "",
-      interest: body.interest || "",
-      budget: body.budget || "",
+      email: (body.email || "").toLowerCase().trim(),
+      propertyId: body.propertyId || body.property_id || "",
+      propertyName: body.propertyName || body.project || body.project_name || "",
+      location:
+        body.location ||
+        body.preferred_locality ||
+        body.property_location ||
+        body.preferred_city ||
+        "Kolkata",
+      leadType: body.leadType || body.interest || "Property Enquiry",
       message: body.message || "",
       source: body.source || "homepage",
-      preferred_city: body.preferred_city || "Kolkata",
-      preferred_locality: body.preferred_locality || "",
-      investment_purpose: body.investment_purpose || "",
-      property_type: body.property_type || "",
-      timeline: body.timeline || "",
-      project: body.project || "",
-      property_location: body.property_location || "",
-      preferred_date: body.preferred_date || "",
-      form: body.form || "",
-      status: "new",
-      created_at: nowUtcIso(),
+      status: "New",
+      assignedTo: "Unassigned",
+      notes: "",
+      createdAt: nowUtcIso(),
+      updatedAt: nowUtcIso(),
     };
+    const result = await db.collection("property_leads").insertOne(propDoc);
+    const insertedId = result.insertedId;
+    propDoc._id = insertedId;
+    propDoc.id = String(insertedId);
 
-    const result = await db.collection("leads").insertOne(leadDoc);
-    const insertedId = result.insertedId || result.inserted_id;
-    leadDoc._id = insertedId;
-    leadDoc.id = String(insertedId);
-    return res.status(201).json(leadDoc);
+    // Also mirror to legacy leads
+    try {
+      await db.collection("leads").insertOne({
+        ...propDoc,
+        _id: insertedId,
+        status: "new",
+        created_at: propDoc.createdAt,
+      });
+    } catch {}
+
+    forwardPropertyLeadToCrm(propDoc).catch(() => {});
+    return res.status(201).json(propDoc);
   } catch (err) {
-    console.error("Create lead error:", err);
+    console.error("Create legacy lead error:", err);
     return res.status(500).json({ detail: "Failed to record inquiry" });
   }
 });
@@ -966,28 +1274,287 @@ app.delete("/api/admin/blogs/:id", requireAdmin, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// Admin Leads & Stats
+// ADMIN PROPERTY LEADS
+// ---------------------------------------------------------------------------
+app.get("/api/admin/leads/property", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const docs = await db
+      .collection("property_leads")
+      .find()
+      .sort({ createdAt: -1, created_at: -1 })
+      .limit(1000)
+      .toArray();
+
+    return res.json(
+      docs.map((d) => ({
+        id: String(d._id),
+        _id: String(d._id),
+        name: d.name || "",
+        phone: d.phone || "",
+        email: d.email || "",
+        propertyId: d.propertyId || "",
+        propertyName: d.propertyName || d.project || "",
+        location: d.location || d.preferred_locality || "",
+        leadType: d.leadType || d.interest || "Property Enquiry",
+        message: d.message || "",
+        source: d.source || "website",
+        status: d.status || "New",
+        assignedTo: d.assignedTo || "Unassigned",
+        notes: d.notes || "",
+        createdAt: d.createdAt || d.created_at || nowUtcIso(),
+        updatedAt: d.updatedAt || d.updated_at || d.createdAt || nowUtcIso(),
+      }))
+    );
+  } catch (err) {
+    console.error("Fetch property leads error:", err);
+    return res.status(500).json({ detail: "Failed to fetch property leads" });
+  }
+});
+
+app.get("/api/admin/leads/property/:id", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const d = await db.collection("property_leads").findOne({ _id: new ObjectId(req.params.id) });
+    if (!d) return res.status(404).json({ detail: "Property lead not found" });
+
+    return res.json({
+      id: String(d._id),
+      _id: String(d._id),
+      name: d.name || "",
+      phone: d.phone || "",
+      email: d.email || "",
+      propertyId: d.propertyId || "",
+      propertyName: d.propertyName || d.project || "",
+      location: d.location || d.preferred_locality || "",
+      leadType: d.leadType || d.interest || "Property Enquiry",
+      message: d.message || "",
+      source: d.source || "website",
+      status: d.status || "New",
+      assignedTo: d.assignedTo || "Unassigned",
+      notes: d.notes || "",
+      createdAt: d.createdAt || d.created_at,
+      updatedAt: d.updatedAt || d.updated_at,
+    });
+  } catch {
+    return res.status(400).json({ detail: "Invalid property lead ID" });
+  }
+});
+
+app.patch("/api/admin/leads/property/:id", requireStaff, async (req, res) => {
+  try {
+    const { status, assignedTo, notes } = req.body || {};
+    const db = getDb();
+    const updateFields = { updatedAt: nowUtcIso() };
+    if (status !== undefined) updateFields.status = status;
+    if (assignedTo !== undefined) updateFields.assignedTo = assignedTo;
+    if (notes !== undefined) updateFields.notes = notes;
+
+    const result = await db
+      .collection("property_leads")
+      .updateOne({ _id: new ObjectId(req.params.id) }, { $set: updateFields });
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ detail: "Property lead not found" });
+    }
+
+    if (status !== undefined) {
+      try {
+        await db.collection("leads").updateOne(
+          { _id: new ObjectId(req.params.id) },
+          { $set: { status: status.toLowerCase(), updated_at: nowUtcIso() } }
+        );
+      } catch {}
+    }
+
+    return res.json({ ok: true, message: "Property lead updated successfully" });
+  } catch (err) {
+    return res.status(400).json({ detail: "Failed to update property lead" });
+  }
+});
+
+app.delete("/api/admin/leads/property/:id", requireAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    const result = await db.collection("property_leads").deleteOne({ _id: new ObjectId(req.params.id) });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ detail: "Property lead not found" });
+    }
+    try {
+      await db.collection("leads").deleteOne({ _id: new ObjectId(req.params.id) });
+    } catch {}
+    return res.json({ ok: true, message: "Property lead deleted" });
+  } catch {
+    return res.status(400).json({ detail: "Failed to delete property lead" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// ADMIN CAREER APPLICATIONS
+// ---------------------------------------------------------------------------
+app.get("/api/admin/leads/career", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const docs = await db
+      .collection("career_applications")
+      .find()
+      .sort({ createdAt: -1 })
+      .limit(1000)
+      .toArray();
+
+    return res.json(
+      docs.map((d) => ({
+        id: String(d._id),
+        _id: String(d._id),
+        name: d.name || "",
+        phone: d.phone || "",
+        email: d.email || "",
+        jobTitle: d.jobTitle || "",
+        department: d.department || "",
+        experience: d.experience || "",
+        location: d.location || "",
+        resumeUrl: d.resumeUrl || (d.resumeFileId ? `/api/admin/leads/career/${d._id}/resume` : ""),
+        resumeFilename: d.resumeFilename || "",
+        hasResumeFile: Boolean(d.resumeFileId),
+        coverLetter: d.coverLetter || "",
+        source: d.source || "career-portal",
+        status: d.status || "New",
+        notes: d.notes || "",
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt,
+      }))
+    );
+  } catch (err) {
+    console.error("Fetch career applications error:", err);
+    return res.status(500).json({ detail: "Failed to fetch career applications" });
+  }
+});
+
+app.get("/api/admin/leads/career/:id", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const d = await db.collection("career_applications").findOne({ _id: new ObjectId(req.params.id) });
+    if (!d) return res.status(404).json({ detail: "Career application not found" });
+
+    return res.json({
+      id: String(d._id),
+      _id: String(d._id),
+      name: d.name || "",
+      phone: d.phone || "",
+      email: d.email || "",
+      jobTitle: d.jobTitle || "",
+      department: d.department || "",
+      experience: d.experience || "",
+      location: d.location || "",
+      resumeUrl: d.resumeUrl || (d.resumeFileId ? `/api/admin/leads/career/${d._id}/resume` : ""),
+      resumeFilename: d.resumeFilename || "",
+      hasResumeFile: Boolean(d.resumeFileId),
+      coverLetter: d.coverLetter || "",
+      source: d.source || "career-portal",
+      status: d.status || "New",
+      notes: d.notes || "",
+      createdAt: d.createdAt,
+      updatedAt: d.updatedAt,
+    });
+  } catch {
+    return res.status(400).json({ detail: "Invalid career application ID" });
+  }
+});
+
+app.get("/api/admin/leads/career/:id/resume", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const appDoc = await db.collection("career_applications").findOne({ _id: new ObjectId(req.params.id) });
+    if (!appDoc) return res.status(404).json({ detail: "Application not found" });
+
+    if (!appDoc.resumeFileId) {
+      if (appDoc.resumeUrl && appDoc.resumeUrl.startsWith("http")) {
+        return res.redirect(appDoc.resumeUrl);
+      }
+      return res.status(404).json({ detail: "No resume file stored for this application" });
+    }
+
+    const bucket = new GridFSBucket(db, { bucketName: "career_resumes" });
+    const fileId = new ObjectId(appDoc.resumeFileId);
+    const files = await bucket.find({ _id: fileId }).toArray();
+    if (!files.length) return res.status(404).json({ detail: "Resume file not found in storage" });
+
+    const file = files[0];
+    const filename = appDoc.resumeFilename || file.filename || "applicant-resume.pdf";
+    res.setHeader("Content-Type", file.contentType || "application/octet-stream");
+    res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(filename)}"`);
+    bucket.openDownloadStream(fileId).pipe(res);
+  } catch (err) {
+    console.error("Download resume error:", err);
+    return res.status(500).json({ detail: "Failed to download resume" });
+  }
+});
+
+app.patch("/api/admin/leads/career/:id", requireStaff, async (req, res) => {
+  try {
+    const { status, notes } = req.body || {};
+    const db = getDb();
+    const updateFields = { updatedAt: nowUtcIso() };
+    if (status !== undefined) updateFields.status = status;
+    if (notes !== undefined) updateFields.notes = notes;
+
+    const result = await db
+      .collection("career_applications")
+      .updateOne({ _id: new ObjectId(req.params.id) }, { $set: updateFields });
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ detail: "Career application not found" });
+    }
+    return res.json({ ok: true, message: "Career application updated" });
+  } catch (err) {
+    return res.status(400).json({ detail: "Failed to update career application" });
+  }
+});
+
+app.delete("/api/admin/leads/career/:id", requireAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    const appDoc = await db.collection("career_applications").findOne({ _id: new ObjectId(req.params.id) });
+    if (!appDoc) return res.status(404).json({ detail: "Career application not found" });
+
+    if (appDoc.resumeFileId) {
+      try {
+        const bucket = new GridFSBucket(db, { bucketName: "career_resumes" });
+        await bucket.delete(new ObjectId(appDoc.resumeFileId));
+      } catch {}
+    }
+
+    await db.collection("career_applications").deleteOne({ _id: new ObjectId(req.params.id) });
+    return res.json({ ok: true, message: "Career application deleted" });
+  } catch {
+    return res.status(400).json({ detail: "Failed to delete career application" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Backward-Compatible Generic Admin Leads Endpoints
 // ---------------------------------------------------------------------------
 app.get("/api/admin/leads", requireStaff, async (req, res) => {
   try {
     const db = getDb();
-    const docs = await db.collection("leads").find().sort({ created_at: -1 }).limit(1000).toArray();
+    const docs = await db
+      .collection("property_leads")
+      .find()
+      .sort({ createdAt: -1, created_at: -1 })
+      .limit(1000)
+      .toArray();
+
     return res.json(
       docs.map((d) => ({
         id: String(d._id),
         name: d.name,
         email: d.email,
         phone: d.phone,
-        interest: d.interest || "",
-        budget: d.budget || "",
-        preferred_locality: d.preferred_locality || "",
-        investment_purpose: d.investment_purpose || "",
-        property_type: d.property_type || "",
-        timeline: d.timeline || "",
-        message: d.message || "",
+        interest: d.leadType || d.propertyName || "",
+        location: d.location || "",
         source: d.source || "",
-        status: d.status || "new",
-        created_at: d.created_at,
+        status: d.status ? d.status.toLowerCase() : "new",
+        created_at: d.createdAt || d.created_at,
       }))
     );
   } catch {
@@ -999,10 +1566,15 @@ app.patch("/api/admin/leads/:id", requireStaff, async (req, res) => {
   try {
     const { status } = req.body;
     const db = getDb();
-    const result = await db
+    await db
+      .collection("property_leads")
+      .updateOne(
+        { _id: new ObjectId(req.params.id) },
+        { $set: { status: status, updatedAt: nowUtcIso() } }
+      );
+    await db
       .collection("leads")
-      .updateOne({ _id: new ObjectId(req.params.id) }, { $set: { status } });
-    if (result.matchedCount === 0) return res.status(404).json({ detail: "Lead not found" });
+      .updateOne({ _id: new ObjectId(req.params.id) }, { $set: { status: status.toLowerCase() } });
     return res.json({ ok: true });
   } catch {
     return res.status(400).json({ detail: "Failed to update lead" });
@@ -1012,32 +1584,78 @@ app.patch("/api/admin/leads/:id", requireStaff, async (req, res) => {
 app.delete("/api/admin/leads/:id", requireAdmin, async (req, res) => {
   try {
     const db = getDb();
-    const result = await db.collection("leads").deleteOne({ _id: new ObjectId(req.params.id) });
-    if (result.deletedCount === 0) return res.status(404).json({ detail: "Lead not found" });
+    await db.collection("property_leads").deleteOne({ _id: new ObjectId(req.params.id) });
+    await db.collection("leads").deleteOne({ _id: new ObjectId(req.params.id) });
     return res.json({ ok: true });
   } catch {
     return res.status(400).json({ detail: "Failed to delete lead" });
   }
 });
 
+// ---------------------------------------------------------------------------
+// Separated Dashboard Statistics
+// ---------------------------------------------------------------------------
 app.get("/api/admin/stats", requireStaff, async (req, res) => {
   try {
     const db = getDb();
-    const [propertiesTotal, propertiesPublished, leadsTotal, leadsNew, usersTotal] = await Promise.all([
+    const [
+      propertiesTotal,
+      propertiesPublished,
+      propTotal,
+      propNew,
+      propContacted,
+      propSiteVisit,
+      propConverted,
+      careerTotal,
+      careerNew,
+      careerReviewing,
+      careerShortlisted,
+      careerInterview,
+      careerSelected,
+      usersTotal,
+    ] = await Promise.all([
       db.collection("properties").countDocuments({}),
       db.collection("properties").countDocuments({ status: "published" }),
-      db.collection("leads").countDocuments({}),
-      db.collection("leads").countDocuments({ status: "new" }),
+      // Property leads stats
+      db.collection("property_leads").countDocuments({}),
+      db.collection("property_leads").countDocuments({ status: { $regex: /^new$/i } }),
+      db.collection("property_leads").countDocuments({ status: { $regex: /^contacted$/i } }),
+      db.collection("property_leads").countDocuments({ status: { $regex: /^site visit$/i } }),
+      db.collection("property_leads").countDocuments({ status: { $regex: /^converted$/i } }),
+      // Career applications stats
+      db.collection("career_applications").countDocuments({}),
+      db.collection("career_applications").countDocuments({ status: { $regex: /^new$/i } }),
+      db.collection("career_applications").countDocuments({ status: { $regex: /^reviewing$/i } }),
+      db.collection("career_applications").countDocuments({ status: { $regex: /^shortlisted$/i } }),
+      db.collection("career_applications").countDocuments({ status: { $regex: /^interview$/i } }),
+      db.collection("career_applications").countDocuments({ status: { $regex: /^selected$/i } }),
       db.collection("users").countDocuments({}),
     ]);
+
     return res.json({
       properties_total: propertiesTotal,
       properties_published: propertiesPublished,
-      leads_total: leadsTotal,
-      leads_new: leadsNew,
+      property_leads: {
+        total: propTotal,
+        new: propNew,
+        contacted: propContacted,
+        site_visit: propSiteVisit,
+        converted: propConverted,
+      },
+      career_applications: {
+        total: careerTotal,
+        new: careerNew,
+        reviewing: careerReviewing,
+        shortlisted: careerShortlisted,
+        interview: careerInterview,
+        selected: careerSelected,
+      },
+      leads_total: propTotal,
+      leads_new: propNew,
       users_total: usersTotal,
     });
-  } catch {
+  } catch (err) {
+    console.error("Fetch stats error:", err);
     return res.status(500).json({ detail: "Failed to fetch stats" });
   }
 });
@@ -1227,8 +1845,47 @@ async function ensureDatabaseIndexes() {
       db.collection("blogs").createIndex({ status: 1, publish_date: -1, created_at: -1 }),
       db.collection("news_cache").createIndex({ topic: 1 }),
       db.collection("leads").createIndex({ status: 1, created_at: -1 }),
+      // Dedicated Property Leads indexes
+      db.collection("property_leads").createIndex({ phone: 1 }),
+      db.collection("property_leads").createIndex({ email: 1 }),
+      db.collection("property_leads").createIndex({ propertyId: 1 }),
+      db.collection("property_leads").createIndex({ status: 1, createdAt: -1 }),
+      db.collection("property_leads").createIndex({ createdAt: -1 }),
+      // Dedicated Career Applications indexes
+      db.collection("career_applications").createIndex({ email: 1 }),
+      db.collection("career_applications").createIndex({ phone: 1 }),
+      db.collection("career_applications").createIndex({ jobTitle: 1 }),
+      db.collection("career_applications").createIndex({ status: 1, createdAt: -1 }),
+      db.collection("career_applications").createIndex({ createdAt: -1 }),
     ]);
-    console.log("[MongoDB] Database compound indexes verified & active");
+    console.log("[MongoDB] Database compound indexes verified & active (including property_leads & career_applications)");
+
+    // Safe preservation: initialize property_leads from existing leads if property_leads is empty
+    const propCount = await db.collection("property_leads").countDocuments();
+    if (propCount === 0) {
+      const existingLeads = await db.collection("leads").find().toArray();
+      if (existingLeads.length > 0) {
+        const seedDocs = existingLeads.map((l) => ({
+          _id: l._id,
+          name: l.name || `${l.first_name || ""} ${l.last_name || ""}`.trim() || "Anonymous Enquiry",
+          phone: l.phone || "",
+          email: (l.email || "").toLowerCase().trim(),
+          propertyId: l.project || "",
+          propertyName: l.project || l.interest || "",
+          location: l.preferred_locality || l.property_location || l.preferred_city || "Kolkata",
+          leadType: l.interest || (l.source === "resale-coming-soon" ? "Resale Enquiry" : "Property Enquiry"),
+          message: l.message || "",
+          source: l.source || "legacy",
+          status: l.status ? l.status.charAt(0).toUpperCase() + l.status.slice(1).toLowerCase() : "New",
+          assignedTo: "Unassigned",
+          notes: "",
+          createdAt: l.created_at || nowUtcIso(),
+          updatedAt: l.created_at || nowUtcIso(),
+        }));
+        await db.collection("property_leads").insertMany(seedDocs);
+        console.log(`[MongoDB] Preserved and initialized ${seedDocs.length} property lead(s) into property_leads`);
+      }
+    }
   } catch (err) {
     console.warn("[MongoDB] Index verification notice:", err.message);
   }

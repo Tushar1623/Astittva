@@ -96,7 +96,21 @@ export default function HomePage() {
     setSubmitting(true);
     setSubmitError("");
     try {
-      await api.post("/leads", { ...formData, source: "homepage" });
+      const fullName = `${formData.first_name || ""} ${formData.last_name || ""}`.trim() || formData.prefix;
+      await api.post("/leads/property", {
+        name: fullName,
+        phone: formData.phone,
+        email: formData.email,
+        propertyId: "",
+        propertyName: formData.interest || "Astittva Consultation",
+        location: "Kolkata",
+        leadType: formData.interest ? `Property Enquiry: ${formData.interest}` : "General Enquiry",
+        message: formData.message,
+        source: "homepage",
+        budget: formData.budget,
+        interest: formData.interest,
+        ...formData,
+      });
       setSubmitted(true);
       setFormData(initialForm);
     } catch (err) {

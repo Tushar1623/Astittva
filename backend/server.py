@@ -291,6 +291,42 @@ class LeadOut(LeadIn):
     status: str = "new"
 
 
+class PropertyLeadIn(BaseModel):
+    name: Optional[str] = ""
+    phone: str
+    email: Optional[str] = ""
+    propertyId: Optional[str] = ""
+    propertyName: Optional[str] = ""
+    location: Optional[str] = ""
+    leadType: Optional[str] = "Property Enquiry"
+    message: Optional[str] = ""
+    source: Optional[str] = "property-form"
+    budget: Optional[str] = ""
+    timeline: Optional[str] = ""
+    investment_purpose: Optional[str] = ""
+    property_type: Optional[str] = ""
+    project: Optional[str] = ""
+    property_location: Optional[str] = ""
+    preferred_locality: Optional[str] = ""
+    first_name: Optional[str] = ""
+    last_name: Optional[str] = ""
+    prefix: Optional[str] = "Mr"
+
+
+class CareerApplicationIn(BaseModel):
+    name: str
+    phone: str
+    email: str
+    jobTitle: str
+    department: Optional[str] = "Private Client Advisory"
+    experience: Optional[str] = "Not specified"
+    location: Optional[str] = "Kolkata"
+    resumeUrl: Optional[str] = ""
+    coverLetter: Optional[str] = ""
+    source: Optional[str] = "career-portal"
+    resume: Optional[dict] = None
+
+
 class BlogIn(BaseModel):
     title: str
     slug: Optional[str] = ""  # auto-generated from title if empty
@@ -857,8 +893,198 @@ async def retry_crm(lead_id: str, _user: dict = Depends(require_staff)):
 @api_router.delete("/admin/leads/{lead_id}")
 async def delete_lead(lead_id: str, _user: dict = Depends(require_admin)):
     res = await db.leads.delete_one({"_id": ObjectId(lead_id)})
+    await db.property_leads.delete_one({"_id": ObjectId(lead_id)})
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Lead not found")
+    return {"ok": True}
+
+
+# ---------------------- Property Leads ----------------------
+@api_router.post("/leads/property", status_code=201)
+async def create_property_lead(payload: PropertyLeadIn, background_tasks: BackgroundTasks):
+    doc = payload.model_dump()
+    name = (doc.get("name") or f"{doc.get('first_name', '')} {doc.get('last_name', '')}").strip()
+    doc["name"] = name or "Anonymous Enquiry"
+    doc["status"] = "New"
+    doc["assignedTo"] = "Unassigned"
+    doc["notes"] = ""
+    doc["createdAt"] = now_utc_iso()
+    doc["updatedAt"] = now_utc_iso()
+
+    res = await db.property_leads.insert_one(doc)
+    lead_id = str(res.inserted_id)
+
+    # Mirror to legacy leads
+    try:
+        legacy_doc = {
+            **doc,
+            "_id": res.inserted_id,
+            "created_at": doc["createdAt"],
+            "status": "new",
+        }
+        await db.leads.insert_one(legacy_doc)
+        background_tasks.add_task(_forward_lead_and_stamp, res.inserted_id, legacy_doc)
+    except Exception:
+        pass
+
+    return {"id": lead_id, "ok": True, "leadType": doc.get("leadType", "Property Enquiry")}
+
+
+@api_router.get("/admin/leads/property")
+async def list_property_leads(_user: dict = Depends(require_staff)):
+    docs = await db.property_leads.find({}).sort("createdAt", -1).to_list(1000)
+    return [
+        {
+            "id": str(d["_id"]),
+            "_id": str(d["_id"]),
+            "name": d.get("name", ""),
+            "phone": d.get("phone", ""),
+            "email": d.get("email", ""),
+            "propertyId": d.get("propertyId", ""),
+            "propertyName": d.get("propertyName", ""),
+            "location": d.get("location", ""),
+            "leadType": d.get("leadType", "Property Enquiry"),
+            "message": d.get("message", ""),
+            "source": d.get("source", "website"),
+            "status": d.get("status", "New"),
+            "assignedTo": d.get("assignedTo", "Unassigned"),
+            "notes": d.get("notes", ""),
+            "createdAt": d.get("createdAt") or d.get("created_at") or now_utc_iso(),
+            "updatedAt": d.get("updatedAt") or d.get("createdAt") or now_utc_iso(),
+        }
+        for d in docs
+    ]
+
+
+@api_router.get("/admin/leads/property/{lead_id}")
+async def get_property_lead(lead_id: str, _user: dict = Depends(require_staff)):
+    d = await db.property_leads.find_one({"_id": ObjectId(lead_id)})
+    if not d:
+        raise HTTPException(status_code=404, detail="Property lead not found")
+    return {
+        "id": str(d["_id"]),
+        "_id": str(d["_id"]),
+        "name": d.get("name", ""),
+        "phone": d.get("phone", ""),
+        "email": d.get("email", ""),
+        "propertyId": d.get("propertyId", ""),
+        "propertyName": d.get("propertyName", ""),
+        "location": d.get("location", ""),
+        "leadType": d.get("leadType", "Property Enquiry"),
+        "message": d.get("message", ""),
+        "source": d.get("source", "website"),
+        "status": d.get("status", "New"),
+        "assignedTo": d.get("assignedTo", "Unassigned"),
+        "notes": d.get("notes", ""),
+        "createdAt": d.get("createdAt") or d.get("created_at"),
+        "updatedAt": d.get("updatedAt"),
+    }
+
+
+@api_router.patch("/admin/leads/property/{lead_id}")
+async def update_property_lead(lead_id: str, body: dict, _user: dict = Depends(require_staff)):
+    update_data = {"updatedAt": now_utc_iso()}
+    for k in ["status", "assignedTo", "notes"]:
+        if k in body:
+            update_data[k] = body[k]
+    res = await db.property_leads.update_one({"_id": ObjectId(lead_id)}, {"$set": update_data})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Property lead not found")
+    if "status" in body:
+        await db.leads.update_one({"_id": ObjectId(lead_id)}, {"$set": {"status": str(body["status"]).lower()}})
+    return {"ok": True}
+
+
+@api_router.delete("/admin/leads/property/{lead_id}")
+async def delete_property_lead(lead_id: str, _user: dict = Depends(require_admin)):
+    res = await db.property_leads.delete_one({"_id": ObjectId(lead_id)})
+    await db.leads.delete_one({"_id": ObjectId(lead_id)})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Property lead not found")
+    return {"ok": True}
+
+
+# ---------------------- Career Applications ----------------------
+@api_router.post("/leads/career", status_code=201)
+async def create_career_application(payload: CareerApplicationIn):
+    doc = payload.model_dump()
+    doc["status"] = "New"
+    doc["notes"] = ""
+    doc["createdAt"] = now_utc_iso()
+    doc["updatedAt"] = now_utc_iso()
+    res = await db.career_applications.insert_one(doc)
+    app_id = str(res.inserted_id)
+    return {"id": app_id, "ok": True, "message": "Career application submitted successfully"}
+
+
+@api_router.get("/admin/leads/career")
+async def list_career_applications(_user: dict = Depends(require_staff)):
+    docs = await db.career_applications.find({}).sort("createdAt", -1).to_list(1000)
+    return [
+        {
+            "id": str(d["_id"]),
+            "_id": str(d["_id"]),
+            "name": d.get("name", ""),
+            "phone": d.get("phone", ""),
+            "email": d.get("email", ""),
+            "jobTitle": d.get("jobTitle", ""),
+            "department": d.get("department", ""),
+            "experience": d.get("experience", ""),
+            "location": d.get("location", ""),
+            "resumeUrl": d.get("resumeUrl", ""),
+            "coverLetter": d.get("coverLetter", ""),
+            "source": d.get("source", "career-portal"),
+            "status": d.get("status", "New"),
+            "notes": d.get("notes", ""),
+            "createdAt": d.get("createdAt"),
+            "updatedAt": d.get("updatedAt"),
+        }
+        for d in docs
+    ]
+
+
+@api_router.get("/admin/leads/career/{app_id}")
+async def get_career_application(app_id: str, _user: dict = Depends(require_staff)):
+    d = await db.career_applications.find_one({"_id": ObjectId(app_id)})
+    if not d:
+        raise HTTPException(status_code=404, detail="Career application not found")
+    return {
+        "id": str(d["_id"]),
+        "_id": str(d["_id"]),
+        "name": d.get("name", ""),
+        "phone": d.get("phone", ""),
+        "email": d.get("email", ""),
+        "jobTitle": d.get("jobTitle", ""),
+        "department": d.get("department", ""),
+        "experience": d.get("experience", ""),
+        "location": d.get("location", ""),
+        "resumeUrl": d.get("resumeUrl", ""),
+        "coverLetter": d.get("coverLetter", ""),
+        "source": d.get("source", "career-portal"),
+        "status": d.get("status", "New"),
+        "notes": d.get("notes", ""),
+        "createdAt": d.get("createdAt"),
+        "updatedAt": d.get("updatedAt"),
+    }
+
+
+@api_router.patch("/admin/leads/career/{app_id}")
+async def update_career_application(app_id: str, body: dict, _user: dict = Depends(require_staff)):
+    update_data = {"updatedAt": now_utc_iso()}
+    for k in ["status", "notes"]:
+        if k in body:
+            update_data[k] = body[k]
+    res = await db.career_applications.update_one({"_id": ObjectId(app_id)}, {"$set": update_data})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Career application not found")
+    return {"ok": True}
+
+
+@api_router.delete("/admin/leads/career/{app_id}")
+async def delete_career_application(app_id: str, _user: dict = Depends(require_admin)):
+    res = await db.career_applications.delete_one({"_id": ObjectId(app_id)})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Career application not found")
     return {"ok": True}
 
 
@@ -1067,11 +1293,39 @@ async def serve_file(path: str):
 # ---------------------- Stats ----------------------
 @api_router.get("/admin/stats")
 async def stats(_user: dict = Depends(require_staff)):
+    prop_total = await db.property_leads.count_documents({})
+    prop_new = await db.property_leads.count_documents({"status": {"$regex": "^new$", "$options": "i"}})
+    prop_contacted = await db.property_leads.count_documents({"status": {"$regex": "^contacted$", "$options": "i"}})
+    prop_site_visit = await db.property_leads.count_documents({"status": {"$regex": "^site visit$", "$options": "i"}})
+    prop_converted = await db.property_leads.count_documents({"status": {"$regex": "^converted$", "$options": "i"}})
+
+    career_total = await db.career_applications.count_documents({})
+    career_new = await db.career_applications.count_documents({"status": {"$regex": "^new$", "$options": "i"}})
+    career_reviewing = await db.career_applications.count_documents({"status": {"$regex": "^reviewing$", "$options": "i"}})
+    career_shortlisted = await db.career_applications.count_documents({"status": {"$regex": "^shortlisted$", "$options": "i"}})
+    career_interview = await db.career_applications.count_documents({"status": {"$regex": "^interview$", "$options": "i"}})
+    career_selected = await db.career_applications.count_documents({"status": {"$regex": "^selected$", "$options": "i"}})
+
     return {
         "properties_total": await db.properties.count_documents({}),
         "properties_published": await db.properties.count_documents({"status": "published"}),
-        "leads_total": await db.leads.count_documents({}),
-        "leads_new": await db.leads.count_documents({"status": "new"}),
+        "property_leads": {
+            "total": prop_total,
+            "new": prop_new,
+            "contacted": prop_contacted,
+            "site_visit": prop_site_visit,
+            "converted": prop_converted,
+        },
+        "career_applications": {
+            "total": career_total,
+            "new": career_new,
+            "reviewing": career_reviewing,
+            "shortlisted": career_shortlisted,
+            "interview": career_interview,
+            "selected": career_selected,
+        },
+        "leads_total": prop_total,
+        "leads_new": prop_new,
         "users_total": await db.users.count_documents({}),
     }
 

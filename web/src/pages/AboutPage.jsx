@@ -48,7 +48,22 @@ export default function AboutPage({ scrollToContact = false }) {
     setSubmitting(true);
     setErrorMsg("");
     try {
-      await api.post("/leads", { ...form, source: "about-contact-page", interest: form.property_type });
+      await api.post("/leads/property", {
+        name: form.name,
+        phone: form.phone,
+        email: form.email,
+        propertyId: "",
+        propertyName: form.property_type || "Private Property Consultation",
+        location: form.preferred_locality || "Kolkata",
+        leadType: "Book Consultation",
+        message: form.message,
+        source: "about-contact-page",
+        budget: form.budget,
+        timeline: form.timeline,
+        investment_purpose: form.investment_purpose,
+        ...form,
+        interest: form.property_type,
+      });
       setSubmitted(true);
       setForm(initialForm);
       toast.success("Enquiry received. An Astittva advisor will connect shortly.");

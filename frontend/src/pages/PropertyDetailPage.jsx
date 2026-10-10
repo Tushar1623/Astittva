@@ -104,12 +104,19 @@ export default function PropertyDetailPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await api.post("/leads", {
-        ...form,
-        interest: property?.project_name || "Property Enquiry",
+      await api.post("/leads/property", {
+        name: form.name,
+        phone: form.phone,
+        email: form.email,
+        propertyId: id || property?.id || "",
+        propertyName: property?.project_name || property?.title || "Property Enquiry",
+        location: property?.location || property?.city || "",
+        leadType: "Property Enquiry",
+        message: form.message,
+        source: `property:${id}`,
         project: property?.project_name || "",
         property_location: property?.location || property?.city || "",
-        source: `property:${id}`,
+        interest: property?.project_name || "Property Enquiry",
       });
       toast.success("Enquiry sent. Our team will reach out shortly.");
       setForm({ name: "", email: "", phone: "", message: "" });

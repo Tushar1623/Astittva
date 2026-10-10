@@ -61,7 +61,21 @@ export default function LeadForm({
     setSubmitting(true);
     setErrorMsg("");
     try {
-      await api.post("/leads", { ...consultForm, source });
+      const fullName = `${consultForm.first_name || ""} ${consultForm.last_name || ""}`.trim() || consultForm.prefix;
+      await api.post("/leads/property", {
+        name: fullName,
+        phone: consultForm.phone,
+        email: consultForm.email,
+        propertyId: property?.id || property?._id || "",
+        propertyName: property?.project_name || property?.title || "",
+        location: property?.location || property?.city || consultForm.preferred_locality || "",
+        leadType: "Book Consultation",
+        message: consultForm.message,
+        source: source || "book-consultation",
+        budget: consultForm.budget,
+        interest: consultForm.interest,
+        ...consultForm,
+      });
       setSubmitted(true);
       setConsultForm({
         prefix: "Mr",
@@ -91,10 +105,20 @@ export default function LeadForm({
     setSubmitting(true);
     setErrorMsg("");
     try {
-      await api.post("/leads", {
-        ...contactForm,
+      await api.post("/leads/property", {
+        name: contactForm.name,
+        phone: contactForm.phone,
+        email: contactForm.email,
+        propertyId: property?.id || property?._id || "",
+        propertyName: property?.project_name || property?.title || "",
+        location: property?.location || property?.city || contactForm.preferred_locality || "",
+        leadType: contactForm.property_type || "General Enquiry",
+        message: contactForm.message,
         source: source || "contact-page",
-        interest: contactForm.property_type,
+        budget: contactForm.budget,
+        timeline: contactForm.timeline,
+        investment_purpose: contactForm.investment_purpose,
+        ...contactForm,
       });
       setSubmitted(true);
       setContactForm({
@@ -125,12 +149,20 @@ export default function LeadForm({
     setSubmitting(true);
     setErrorMsg("");
     try {
-      await api.post("/leads", {
-        ...propForm,
-        interest: property?.project_name || "Property Enquiry",
+      await api.post("/leads/property", {
+        name: propForm.name,
+        phone: propForm.phone,
+        email: propForm.email,
+        propertyId: property?.id || property?._id || "",
+        propertyName: property?.project_name || property?.title || "Property Enquiry",
+        location: property?.location || property?.city || "",
+        leadType: "Property Enquiry",
+        message: propForm.message,
+        source: source || `property:${property?.id || property?._id || ""}`,
         project: property?.project_name || "",
         property_location: property?.location || property?.city || "",
-        source: source || `property:${property?.id || ""}`,
+        interest: property?.project_name || "Property Enquiry",
+        ...propForm,
       });
       toast.success("Enquiry sent. Our team will reach out shortly.");
       setSubmitted(true);

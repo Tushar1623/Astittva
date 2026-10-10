@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   Globe,
+  Briefcase,
 } from "lucide-react";
 
 export default function AdminLayout() {
@@ -41,13 +42,28 @@ export default function AdminLayout() {
     navigate("/admin/login");
   };
 
-  const items = [
-    { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
-    { to: "/admin/properties", label: "Properties", icon: Building2 },
-    { to: "/admin/blogs", label: "Blogs", icon: BookOpen },
-    { to: "/admin/leads", label: "Leads", icon: Inbox },
+  const navSections = [
+    {
+      items: [
+        { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
+        { to: "/admin/properties", label: "Properties", icon: Building2 },
+        { to: "/admin/blogs", label: "Blogs", icon: BookOpen },
+      ],
+    },
+    {
+      title: "LEADS",
+      items: [
+        { to: "/admin/leads/property", label: "Property Leads", icon: Inbox },
+        { to: "/admin/leads/careers", label: "Career Applications", icon: Briefcase },
+      ],
+    },
     ...(user?.role === "admin"
-      ? [{ to: "/admin/users", label: "Users", icon: Users }]
+      ? [
+          {
+            title: "SYSTEM",
+            items: [{ to: "/admin/users", label: "Users", icon: Users }],
+          },
+        ]
       : []),
   ];
 
@@ -129,24 +145,33 @@ export default function AdminLayout() {
           </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {items.map((it) => (
-            <NavLink
-              key={it.to}
-              to={it.to}
-              end={it.end}
-              data-testid={`nav-admin-${it.label.toLowerCase()}`}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 text-xs tracking-[0.2em] uppercase transition ${
-                  isActive
-                    ? "bg-copper/10 text-copper border-l-2 border-copper"
-                    : "text-ivory/65 hover:text-ivory hover:bg-charcoal-2/60"
-                }`
-              }
-            >
-              <it.icon className="w-4 h-4" strokeWidth={1.5} />
-              {it.label}
-            </NavLink>
+        <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
+          {navSections.map((sec, sIdx) => (
+            <div key={sIdx} className="space-y-1">
+              {sec.title && (
+                <div className="px-3 pt-2 pb-1 text-[9.5px] font-semibold tracking-[0.25em] text-copper/80 uppercase">
+                  {sec.title}
+                </div>
+              )}
+              {sec.items.map((it) => (
+                <NavLink
+                  key={it.to}
+                  to={it.to}
+                  end={it.end}
+                  data-testid={`nav-admin-${it.label.toLowerCase().replace(/\s+/g, "-")}`}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3.5 py-2.5 text-xs tracking-[0.16em] uppercase rounded-[4px] transition ${
+                      isActive
+                        ? "bg-copper/15 text-copper border-l-2 border-copper font-medium"
+                        : "text-ivory/65 hover:text-ivory hover:bg-charcoal-2/60"
+                    }`
+                  }
+                >
+                  <it.icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                  <span className="truncate">{it.label}</span>
+                </NavLink>
+              ))}
+            </div>
           ))}
         </nav>
 

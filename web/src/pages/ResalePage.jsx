@@ -29,16 +29,20 @@ export default function ResalePage() {
     setSubmitting(true);
     setErrorMsg("");
     try {
-      await api.post("/leads", {
+      await api.post("/leads/property", {
         name: form.name,
         phone: form.phone,
         email: form.email,
-        preferred_locality: form.preferred_locality,
+        propertyId: "",
+        propertyName: form.intent === "sell" ? "Resale Listing Request" : "Resale Purchase Enquiry",
+        location: form.preferred_locality || "Kolkata",
+        leadType: "Resale Enquiry",
+        message: form.message || `Interest registered via Resale Desk portal (${form.intent.toUpperCase()}).`,
+        source: "resale-page",
         budget: form.budget || "Unspecified",
+        preferred_locality: form.preferred_locality,
         investment_purpose: form.intent === "sell" ? "Resale / Listing" : "Resale Purchase",
         property_type: "Secondary Market / Resale",
-        message: form.message || `Interest registered via Resale Desk Coming Soon portal (${form.intent.toUpperCase()}).`,
-        source: "resale-coming-soon",
       });
       setSubmitted(true);
       toast.success("Interest registered. Our Resale Desk will contact you shortly.");

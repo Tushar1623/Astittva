@@ -15,34 +15,99 @@ export default function CareerPage() {
     name: "",
     phone: "",
     email: "",
-    role_interest: "Luxury Property Advisory",
-    experience: "2-5 years",
-    linkedin: "",
-    message: "",
+    jobTitle: "Senior Luxury Real Estate Consultant",
+    department: "Private Client Advisory",
+    experience: "3-5 years",
+    location: "Kolkata",
+    coverLetter: "",
   });
+  const [resumeData, setResumeData] = useState(null); // { filename, contentType, base64, size }
+  const [resumeError, setResumeError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    setResumeError("");
+    if (!file) {
+      setResumeData(null);
+      return;
+    }
+
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (!["pdf", "doc", "docx"].includes(ext)) {
+      setResumeError("Please upload a PDF, DOC, or DOCX file.");
+      setResumeData(null);
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setResumeError("Resume file size must be less than 10MB.");
+      setResumeData(null);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setResumeData({
+        filename: file.name,
+        contentType: file.type || "application/pdf",
+        base64: reader.result,
+        size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
+      });
+    };
+    reader.onerror = () => {
+      setResumeError("Failed to read file. Please try again.");
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setErrorMsg("");
+
+    if (!form.name.trim()) {
+      setErrorMsg("Full name is required.");
+      setSubmitting(false);
+      return;
+    }
+    if (!form.phone.trim() || form.phone.trim().length < 8) {
+      setErrorMsg("Please enter a valid phone number.");
+      setSubmitting(false);
+      return;
+    }
+    if (!form.email.trim() || !form.email.includes("@")) {
+      setErrorMsg("Please enter a valid email address.");
+      setSubmitting(false);
+      return;
+    }
+    if (!form.jobTitle.trim()) {
+      setErrorMsg("Position applying for is required.");
+      setSubmitting(false);
+      return;
+    }
+
     try {
-      await api.post("/leads", {
-        name: form.name,
-        phone: form.phone,
-        email: form.email,
-        preferred_locality: "Kolkata HQ",
-        property_type: `Career Application: ${form.role_interest} (${form.experience})`,
-        investment_purpose: "Career / Employment",
-        message: `${form.message ? `${form.message} | ` : ""}LinkedIn / Portfolio: ${form.linkedin || "Not provided"}`,
-        source: "career-portal-coming-soon",
-      });
+      const payload = {
+        name: form.name.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim(),
+        jobTitle: form.jobTitle.trim(),
+        department: form.department.trim(),
+        experience: form.experience.trim(),
+        location: form.location.trim(),
+        coverLetter: form.coverLetter.trim(),
+        source: "career-portal",
+        ...(resumeData ? { resume: resumeData } : {}),
+      };
+
+      await api.post("/leads/career", payload);
       setSubmitted(true);
-      toast.success("Profile submitted. Our talent acquisition team will review your application.");
+      toast.success("Application submitted successfully. Our talent acquisition team will review your profile.");
     } catch (err) {
-      const msg = formatApiErrorDetail(err.response?.data?.detail) || "Failed to submit. Please try again.";
+      const msg = formatApiErrorDetail(err.response?.data?.detail) || "Failed to submit application. Please try again.";
       setErrorMsg(msg);
       toast.error(msg);
     } finally {
@@ -293,10 +358,23 @@ export default function CareerPage() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => { setSubmitted(false); setForm({ name: "", phone: "", email: "", role_interest: "Luxury Property Advisory", experience: "2-5 years", linkedin: "", message: "" }); }}
+                  onClick={() => {
+                    setSubmitted(false);
+                    setForm({
+                      name: "",
+                      phone: "",
+                      email: "",
+                      jobTitle: "Senior Luxury Real Estate Consultant",
+                      department: "Private Client Advisory",
+                      experience: "3-5 years",
+                      location: "Kolkata",
+                      coverLetter: "",
+                    });
+                    setResumeData(null);
+                  }}
                   className="font-sans text-[12.5px] font-semibold uppercase tracking-[0.1em] text-[#B87333] hover:underline"
                 >
-                  Submit Another Profile
+                  Submit Another Application
                 </button>
               </div>
             ) : (
@@ -307,6 +385,7 @@ export default function CareerPage() {
                   </div>
                 )}
 
+                {/* Name & Phone */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[11.5px] font-semibold uppercase tracking-[0.12em] text-[#5F5F5F] mb-1.5">
@@ -336,6 +415,7 @@ export default function CareerPage() {
                   </div>
                 </div>
 
+                {/* Email & Location */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[11.5px] font-semibold uppercase tracking-[0.12em] text-[#5F5F5F] mb-1.5">
@@ -352,63 +432,131 @@ export default function CareerPage() {
                   </div>
                   <div>
                     <label className="block text-[11.5px] font-semibold uppercase tracking-[0.12em] text-[#5F5F5F] mb-1.5">
-                      Domain of Interest
-                    </label>
-                    <select
-                      value={form.role_interest}
-                      onChange={(e) => setForm({ ...form, role_interest: e.target.value })}
-                      className="w-full h-11 px-3.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-[4px] text-[13.5px] focus:outline-none focus:border-[#B87333]"
-                    >
-                      <option value="Luxury Property Advisory">Luxury Property Advisory</option>
-                      <option value="HNI Relationship Management">HNI Relationship Management</option>
-                      <option value="Real Estate Marketing & Content">Marketing &amp; Content</option>
-                      <option value="Valuation & Market Research">Valuation &amp; Market Research</option>
-                      <option value="Operations & Legal Liaison">Operations &amp; Legal Liaison</option>
-                      <option value="Other">Other / General Management</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[11.5px] font-semibold uppercase tracking-[0.12em] text-[#5F5F5F] mb-1.5">
-                      Relevant Experience
-                    </label>
-                    <select
-                      value={form.experience}
-                      onChange={(e) => setForm({ ...form, experience: e.target.value })}
-                      className="w-full h-11 px-3.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-[4px] text-[13.5px] focus:outline-none focus:border-[#B87333]"
-                    >
-                      <option value="Entry Level (< 1 year)">Entry Level (&lt; 1 year)</option>
-                      <option value="1-3 years">1 – 3 years</option>
-                      <option value="3-5 years">3 – 5 years</option>
-                      <option value="5-10 years">5 – 10 years</option>
-                      <option value="10+ years (Senior / Leadership)">10+ years (Senior / Leadership)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[11.5px] font-semibold uppercase tracking-[0.12em] text-[#5F5F5F] mb-1.5">
-                      LinkedIn Profile / Portfolio Link
+                      Current Location *
                     </label>
                     <input
-                      type="url"
-                      value={form.linkedin}
-                      onChange={(e) => setForm({ ...form, linkedin: e.target.value })}
-                      placeholder="e.g. https://linkedin.com/in/username"
+                      type="text"
+                      required
+                      value={form.location}
+                      onChange={(e) => setForm({ ...form, location: e.target.value })}
+                      placeholder="e.g. Kolkata / New Town"
                       className="w-full h-11 px-3.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-[4px] text-[13.5px] focus:outline-none focus:border-[#B87333]"
                     />
                   </div>
                 </div>
 
+                {/* Position & Department */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[11.5px] font-semibold uppercase tracking-[0.12em] text-[#5F5F5F] mb-1.5">
+                      Position Applying For *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={form.jobTitle}
+                      onChange={(e) => setForm({ ...form, jobTitle: e.target.value })}
+                      placeholder="e.g. Senior Luxury Real Estate Consultant"
+                      className="w-full h-11 px-3.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-[4px] text-[13.5px] focus:outline-none focus:border-[#B87333]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11.5px] font-semibold uppercase tracking-[0.12em] text-[#5F5F5F] mb-1.5">
+                      Department
+                    </label>
+                    <select
+                      value={form.department}
+                      onChange={(e) => setForm({ ...form, department: e.target.value })}
+                      className="w-full h-11 px-3.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-[4px] text-[13.5px] focus:outline-none focus:border-[#B87333]"
+                    >
+                      <option value="Private Client Advisory">Private Client Advisory</option>
+                      <option value="Client Relationship Management">Client Relationship Management</option>
+                      <option value="Marketing & Communications">Marketing &amp; Communications</option>
+                      <option value="Research & Valuation">Research &amp; Valuation</option>
+                      <option value="Operations & Legal">Operations &amp; Legal Liaison</option>
+                      <option value="General Management">General Management / Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Experience */}
                 <div>
                   <label className="block text-[11.5px] font-semibold uppercase tracking-[0.12em] text-[#5F5F5F] mb-1.5">
-                    Brief Introduction / Highlights
+                    Years of Experience
+                  </label>
+                  <select
+                    value={form.experience}
+                    onChange={(e) => setForm({ ...form, experience: e.target.value })}
+                    className="w-full h-11 px-3.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-[4px] text-[13.5px] focus:outline-none focus:border-[#B87333]"
+                  >
+                    <option value="Entry Level (< 1 year)">Entry Level (&lt; 1 year)</option>
+                    <option value="1-3 years">1 – 3 years</option>
+                    <option value="3-5 years">3 – 5 years</option>
+                    <option value="5-10 years">5 – 10 years</option>
+                    <option value="10+ years">10+ years (Senior / Leadership)</option>
+                  </select>
+                </div>
+
+                {/* Resume/CV Upload */}
+                <div>
+                  <label className="block text-[11.5px] font-semibold uppercase tracking-[0.12em] text-[#5F5F5F] mb-1.5">
+                    Resume / CV Upload (PDF, DOC, DOCX — Max 10MB)
+                  </label>
+                  <div className="relative border border-dashed border-[#C89A55]/40 rounded-[6px] bg-[#FAF8F5] p-4 text-center hover:border-[#B87333] transition-colors">
+                    {resumeData ? (
+                      <div className="flex items-center justify-between gap-3 text-left">
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                          <CheckCircle2 className="w-5 h-5 text-[#2E7D32] shrink-0" />
+                          <div className="truncate">
+                            <p className="text-[13px] font-medium text-[#1C1C1C] truncate">
+                              {resumeData.filename}
+                            </p>
+                            <p className="text-[11px] text-[#5F5F5F]">
+                              {resumeData.size} · Ready to submit
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setResumeData(null)}
+                          className="text-[11.5px] text-red-600 hover:underline shrink-0 font-medium"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <input
+                          type="file"
+                          id="resume-file-input"
+                          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                          onChange={handleFileChange}
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                        />
+                        <div className="text-[13px] text-[#5F5F5F]">
+                          <span className="text-[#B87333] font-semibold">Click to upload</span> or drag and drop your Resume/CV
+                        </div>
+                        <p className="text-[11px] text-[#8F8F8F] mt-1">
+                          Supported formats: PDF, DOC, DOCX up to 10MB
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  {resumeError && (
+                    <p className="text-[11.5px] text-red-600 mt-1">{resumeError}</p>
+                  )}
+                </div>
+
+                {/* Cover Letter */}
+                <div>
+                  <label className="block text-[11.5px] font-semibold uppercase tracking-[0.12em] text-[#5F5F5F] mb-1.5">
+                    Cover Letter / Specific Notes (Optional)
                   </label>
                   <textarea
                     rows={3}
-                    value={form.message}
-                    onChange={(e) => setForm({ ...form, message: e.target.value })}
-                    placeholder="Tell us about your background, key transactions, or why you want to join Astittva..."
+                    value={form.coverLetter}
+                    onChange={(e) => setForm({ ...form, coverLetter: e.target.value })}
+                    placeholder="Briefly tell us about your background, career goals, or why you are excited to join Astittva..."
                     className="w-full p-3.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-[4px] text-[13.5px] focus:outline-none focus:border-[#B87333]"
                   />
                 </div>
@@ -422,7 +570,7 @@ export default function CareerPage() {
                     boxShadow: "0 6px 20px rgba(185, 125, 62, 0.20)",
                   }}
                 >
-                  {submitting ? "Submitting Profile…" : "Submit Expression of Interest"}
+                  {submitting ? "Submitting Application…" : "Submit Career Application"}
                   {!submitting && <Send className="w-4 h-4" />}
                 </button>
               </form>
