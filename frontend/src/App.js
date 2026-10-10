@@ -19,6 +19,8 @@ const ContactPage = lazy(() => import("@/pages/ContactPage"));
 const MarketIntelligencePage = lazy(() => import("@/pages/MarketIntelligencePage"));
 const BlogsListPage = lazy(() => import("@/pages/BlogsListPage"));
 const BlogDetailPage = lazy(() => import("@/pages/BlogDetailPage"));
+const ResalePage = lazy(() => import("@/pages/ResalePage"));
+const CareerPage = lazy(() => import("@/pages/CareerPage"));
 
 const AdminLoginPage = lazy(() => import("@/pages/admin/AdminLoginPage"));
 const AdminLayout = lazy(() => import("@/layouts/AdminLayout"));
@@ -63,6 +65,8 @@ function App() {
                     <Route path="/market-intelligence" element={<Navigate to="/news" replace />} />
                     <Route path="/blogs" element={<BlogsListPage />} />
                     <Route path="/blogs/:slug" element={<BlogDetailPage />} />
+                    <Route path="/resale" element={<ResalePage />} />
+                    <Route path="/career" element={<CareerPage />} />
                     <Route path="/about" element={<AboutPage />} />
                     <Route path="/contact" element={<ContactPage />} />
                   </Route>

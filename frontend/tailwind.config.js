@@ -28,7 +28,7 @@ module.exports = {
         'muted-fg': '#5F5F5F',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Manrope', 'Inter', 'sans-serif'],
         display: ['Poppins', 'sans-serif'],
         serif: ['"Cormorant Garamond"', 'serif'],
       },

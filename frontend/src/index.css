@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Poppins:wght@200;300;400;500;600&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600;700&family=Poppins:wght@200;300;400;500;600&family=Inter:wght@300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -80,8 +80,8 @@
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #F5F1EC; }
-::-webkit-scrollbar-thumb { background: rgba(184,115,51,0.45); }
-::-webkit-scrollbar-thumb:hover { background: #B87333; }
+::-webkit-scrollbar-thumb { background: rgba(74, 13, 18, 0.35); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(74, 13, 18, 0.65); }
 
 /* Utility: hide the horizontal scrollbar on mobile scroll-snap rows (filter
    chips, tag lists) while keeping the row scrollable via touch/trackpad. */

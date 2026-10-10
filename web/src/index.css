@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Poppins:wght@200;300;400;500;600&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600;700&family=Poppins:wght@200;300;400;500;600&family=Inter:wght@300;400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -76,65 +76,17 @@
   img { max-width: 100%; height: auto; }
   h1, h2, h3, h4, h5, h6 { font-family: 'Poppins', sans-serif; font-weight: 400; letter-spacing: -0.01em; color: #1C1C1C; }
   ::selection { background-color: #B87333; color: #FAF8F5; }
-
-  /* Fluid heading scale — prevents both tiny mobile and over-large desktop text */
-  h1 { font-size: clamp(2rem, 5vw, 3.75rem); line-height: 1.1; }
-  h2 { font-size: clamp(1.5rem, 3.5vw, 2.5rem); line-height: 1.2; }
-  h3 { font-size: clamp(1.125rem, 2.5vw, 1.75rem); line-height: 1.3; }
-
-  /* Accessible focus ring — visible to all keyboard users, matches brand */
-  :focus-visible {
-    outline: 2px solid #B87333;
-    outline-offset: 3px;
-    border-radius: 2px;
-  }
 }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: #F5F1EC; }
-::-webkit-scrollbar-thumb { background: rgba(184,115,51,0.45); }
-::-webkit-scrollbar-thumb:hover { background: #B87333; }
+::-webkit-scrollbar-thumb { background: rgba(74, 13, 18, 0.35); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(74, 13, 18, 0.65); }
 
 /* Utility: hide the horizontal scrollbar on mobile scroll-snap rows (filter
    chips, tag lists) while keeping the row scrollable via touch/trackpad. */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
-
-/* ────────────────────────────────────────────────────────────────
- * SKIP TO CONTENT LINK — visually hidden until keyboard focus (NAV-03)
- * ──────────────────────────────────────────────────────────────── */
-.skip-link {
-  position: absolute;
-  top: -100px;
-  left: 0;
-  z-index: 9999;
-  padding: 0.75rem 1.5rem;
-  background: #5E1F28;
-  color: #FAF8F5;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-decoration: none;
-  border-bottom-right-radius: 4px;
-  transition: top 0.2s ease;
-}
-.skip-link:focus {
-  top: 0;
-  outline: 2px solid #B87333;
-  outline-offset: 2px;
-}
-
-/* ────────────────────────────────────────────────────────────────
- * REDUCED MOTION — respect OS accessibility preference (VIS-06)
- * ──────────────────────────────────────────────────────────────── */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
 
 /* ────────────────────────────────────────────────────────────────
  * BRAND UTILITY CLASSES — kept by name, repointed to light palette
