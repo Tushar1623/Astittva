@@ -308,6 +308,86 @@ function serializeBlogSummary(doc) {
   };
 }
 
+function serializeResaleProperty(doc, isAdmin = false) {
+  const images = Array.isArray(doc.images) ? doc.images : [];
+  const featuredImage = doc.featuredImage || (images.length > 0 ? images[0] : "");
+  const numPrice = typeof doc.price === "number" ? doc.price : parseFloat(doc.price) || 0;
+  const numArea = typeof doc.area === "number" ? doc.area : parseFloat(doc.area) || 0;
+  let pricePerSqFt =
+    typeof doc.pricePerSqFt === "number" ? doc.pricePerSqFt : parseFloat(doc.pricePerSqFt) || 0;
+  if (!pricePerSqFt && numPrice > 0 && numArea > 0) {
+    pricePerSqFt = Math.round(numPrice / numArea);
+  }
+
+  const res = {
+    id: String(doc._id),
+    title: doc.title || "",
+    propertyType: doc.propertyType || "Apartment",
+    listingType: doc.listingType || "For Sale",
+    location: doc.location || "",
+    address: doc.address || "",
+    locality: doc.locality || "",
+    city: doc.city || "",
+    pincode: doc.pincode || "",
+    price: numPrice,
+    pricePerSqFt: pricePerSqFt,
+    area: numArea,
+    areaUnit: doc.areaUnit || "sq.ft.",
+    bedrooms: doc.bedrooms != null ? doc.bedrooms : "",
+    bathrooms: doc.bathrooms != null ? doc.bathrooms : "",
+    balconies: doc.balconies != null ? doc.balconies : "",
+    floor: doc.floor != null ? doc.floor : "",
+    totalFloors: doc.totalFloors != null ? doc.totalFloors : "",
+    furnishingStatus: doc.furnishingStatus || "Unfurnished",
+    parking: doc.parking || "None",
+    ageOfProperty: doc.ageOfProperty || "",
+    description: doc.description || "",
+    amenities: Array.isArray(doc.amenities)
+      ? doc.amenities
+      : typeof doc.amenities === "string"
+      ? doc.amenities
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [],
+    images: images,
+    featuredImage: featuredImage,
+    possessionStatus: doc.possessionStatus || "Ready to Move",
+    status: doc.status || "Draft",
+    featured: Boolean(doc.featured),
+    createdAt: doc.createdAt || doc.created_at || "",
+    updatedAt: doc.updatedAt || doc.updated_at || "",
+    createdBy: doc.createdBy || "admin",
+  };
+
+  // Requirement 19: Keep seller details strictly private to admin
+  if (isAdmin) {
+    res.sellerName = doc.sellerName || "";
+    res.sellerPhone = doc.sellerPhone || "";
+    res.sellerEmail = doc.sellerEmail || "";
+  }
+
+  return res;
+}
+
+function serializeResaleLead(doc) {
+  return {
+    id: String(doc._id),
+    resalePropertyId: doc.resalePropertyId || "",
+    propertyTitle: doc.propertyTitle || "",
+    name: doc.name || "",
+    phone: doc.phone || "",
+    email: doc.email || "",
+    message: doc.message || "",
+    source: doc.source || "resale-page",
+    status: doc.status || "New",
+    assignedTo: doc.assignedTo || "Unassigned",
+    notes: doc.notes || "",
+    createdAt: doc.createdAt || "",
+    updatedAt: doc.updatedAt || "",
+  };
+}
+
 function slugify(text) {
   if (!text) return "blog";
   const s = text
@@ -626,6 +706,161 @@ app.get("/api/properties/:id", async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// RESALE PROPERTIES (Public Marketplace - Isolated from normal properties)
+// ---------------------------------------------------------------------------
+app.get("/api/resale", async (req, res) => {
+  try {
+    const cacheKey = `resale:public:${JSON.stringify(req.query)}`;
+    const cached = cacheGet(cacheKey);
+    if (cached) {
+      res.set({
+        "X-Cache": "HIT",
+        "Cache-Control": "public, max-age=120, stale-while-revalidate=600",
+      });
+      return res.json(cached);
+    }
+
+    const db = getDb();
+    // Requirement 5: Only Published resale properties appear on public page
+    const query = { status: { $regex: /^published$/i } };
+
+    if (req.query.city && req.query.city.trim() !== "") {
+      query.city = {
+        $regex: new RegExp(req.query.city.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"),
+      };
+    }
+
+    if (req.query.location && req.query.location.trim() !== "") {
+      const loc = req.query.location.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const locRegex = { $regex: loc, $options: "i" };
+      query.$or = [
+        { location: locRegex },
+        { locality: locRegex },
+        { city: locRegex },
+        { address: locRegex },
+      ];
+    }
+
+    if (req.query.propertyType && req.query.propertyType.trim() !== "") {
+      query.propertyType = {
+        $regex: `^${req.query.propertyType.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+        $options: "i",
+      };
+    }
+
+    if (req.query.furnishingStatus && req.query.furnishingStatus.trim() !== "") {
+      query.furnishingStatus = {
+        $regex: req.query.furnishingStatus.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+        $options: "i",
+      };
+    }
+
+    if (req.query.bedrooms && req.query.bedrooms.trim() !== "") {
+      const bhk = req.query.bedrooms.trim();
+      const numBhk = parseInt(bhk, 10);
+      if (!isNaN(numBhk)) {
+        query.$or = [
+          { bedrooms: numBhk },
+          { bedrooms: String(numBhk) },
+          { bedrooms: { $regex: `${numBhk}`, $options: "i" } },
+        ];
+      }
+    }
+
+    if (req.query.featured === "true" || req.query.featured === true) {
+      query.featured = true;
+    }
+
+    // Price filtering (numeric)
+    if (req.query.minPrice != null || req.query.maxPrice != null) {
+      query.price = {};
+      if (req.query.minPrice != null && !isNaN(parseFloat(req.query.minPrice))) {
+        query.price.$gte = parseFloat(req.query.minPrice);
+      }
+      if (req.query.maxPrice != null && !isNaN(parseFloat(req.query.maxPrice))) {
+        query.price.$lte = parseFloat(req.query.maxPrice);
+      }
+    }
+
+    let sortObj = { createdAt: -1 };
+    if (req.query.sort === "price_asc") {
+      sortObj = { price: 1, createdAt: -1 };
+    } else if (req.query.sort === "price_desc") {
+      sortObj = { price: -1, createdAt: -1 };
+    } else if (req.query.sort === "area_desc") {
+      sortObj = { area: -1, createdAt: -1 };
+    }
+
+    const limit = Math.min(parseInt(req.query.limit, 10) || 100, 200);
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const skip = (page - 1) * limit;
+
+    const [total, docs] = await Promise.all([
+      db.collection("resale_properties").countDocuments(query),
+      db
+        .collection("resale_properties")
+        .find(query)
+        .sort(sortObj)
+        .skip(skip)
+        .limit(limit)
+        .toArray(),
+    ]);
+
+    // Omit seller contact info for public view (Requirement 19)
+    const result = docs.map((d) => serializeResaleProperty(d, false));
+
+    cacheSet(cacheKey, result, 120);
+    res.set({
+      "X-Cache": "MISS",
+      "Cache-Control": "public, max-age=120, stale-while-revalidate=600",
+      "X-Total-Count": String(total),
+    });
+    return res.json(result);
+  } catch (err) {
+    console.error("List resale properties error:", err);
+    return res.status(500).json({ detail: "Failed to fetch resale properties" });
+  }
+});
+
+app.get("/api/resale/:id", async (req, res) => {
+  try {
+    const cacheKey = `resale:item:${req.params.id}`;
+    const cached = cacheGet(cacheKey);
+    if (cached) {
+      res.set({
+        "X-Cache": "HIT",
+        "Cache-Control": "public, max-age=300, stale-while-revalidate=600",
+      });
+      return res.json(cached);
+    }
+
+    const db = getDb();
+    let query = {};
+    try {
+      query = { _id: new ObjectId(req.params.id) };
+    } catch {
+      query = { id: req.params.id };
+    }
+
+    const doc = await db.collection("resale_properties").findOne(query);
+    if (!doc || !/^published$/i.test(doc.status || "")) {
+      return res.status(404).json({ detail: "Resale property not found" });
+    }
+
+    // Omit seller contact info for public view (Requirement 19)
+    const result = serializeResaleProperty(doc, false);
+    cacheSet(cacheKey, result, 300);
+    res.set({
+      "X-Cache": "MISS",
+      "Cache-Control": "public, max-age=300, stale-while-revalidate=600",
+    });
+    return res.json(result);
+  } catch {
+    return res.status(400).json({ detail: "Invalid resale property ID" });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Blogs (Public - Cached & Accelerated)
 // ---------------------------------------------------------------------------
 app.get("/api/blogs", async (req, res) => {
@@ -868,6 +1103,53 @@ app.post("/api/leads/property", async (req, res) => {
   } catch (err) {
     console.error("Create property lead error:", err);
     return res.status(500).json({ detail: "Failed to record property inquiry" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// RESALE LEADS (Public Submission: POST /api/leads/resale)
+// Strictly stores in resale_leads - isolated from property_leads & career_applications
+// ---------------------------------------------------------------------------
+app.post("/api/leads/resale", async (req, res) => {
+  try {
+    const db = getDb();
+    const body = req.body || {};
+
+    const name = (body.name || `${body.first_name || ""} ${body.last_name || ""}`).trim();
+    const phone = (body.phone || "").trim();
+    const email = (body.email || "").toLowerCase().trim();
+
+    if (!name && !phone && !email) {
+      return res.status(400).json({ detail: "Please provide your name, phone number, or email." });
+    }
+
+    const leadDoc = {
+      resalePropertyId: String(body.resalePropertyId || body.propertyId || ""),
+      propertyTitle: String(body.propertyTitle || body.propertyName || body.title || ""),
+      name: name || "Anonymous Enquiry",
+      phone: phone,
+      email: email,
+      message: String(body.message || ""),
+      source: String(body.source || "resale-page"),
+      status: "New",
+      assignedTo: "Unassigned",
+      notes: "",
+      createdAt: nowUtcIso(),
+      updatedAt: nowUtcIso(),
+    };
+
+    const result = await db.collection("resale_leads").insertOne(leadDoc);
+    leadDoc._id = result.insertedId;
+    leadDoc.id = String(result.insertedId);
+
+    return res.status(201).json({
+      id: String(result.insertedId),
+      ok: true,
+      message: "Resale enquiry submitted successfully",
+    });
+  } catch (err) {
+    console.error("Create resale lead error:", err);
+    return res.status(500).json({ detail: "Failed to record resale inquiry" });
   }
 });
 
@@ -1154,6 +1436,269 @@ app.delete("/api/admin/properties/:id", requireAdmin, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// ADMIN RESALE PROPERTIES (Dedicated Admin CRUD for resale_properties)
+// ---------------------------------------------------------------------------
+app.get("/api/admin/resale", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const query = {};
+
+    if (req.query.status && req.query.status.trim() !== "") {
+      query.status = { $regex: `^${req.query.status.trim()}$`, $options: "i" };
+    }
+    if (req.query.propertyType && req.query.propertyType.trim() !== "") {
+      query.propertyType = { $regex: `^${req.query.propertyType.trim()}$`, $options: "i" };
+    }
+    if (req.query.location && req.query.location.trim() !== "") {
+      const loc = req.query.location.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      query.$or = [
+        { location: { $regex: loc, $options: "i" } },
+        { locality: { $regex: loc, $options: "i" } },
+        { city: { $regex: loc, $options: "i" } },
+      ];
+    }
+    if (req.query.featured !== undefined) {
+      query.featured = req.query.featured === "true" || req.query.featured === true;
+    }
+    if (req.query.search && req.query.search.trim() !== "") {
+      const s = req.query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const sRegex = { $regex: s, $options: "i" };
+      query.$or = [
+        { title: sRegex },
+        { location: sRegex },
+        { locality: sRegex },
+        { city: sRegex },
+        { sellerName: sRegex },
+        { sellerPhone: sRegex },
+      ];
+    }
+
+    const docs = await db
+      .collection("resale_properties")
+      .find(query)
+      .sort({ createdAt: -1 })
+      .limit(500)
+      .toArray();
+
+    return res.json(docs.map((d) => serializeResaleProperty(d, true)));
+  } catch (err) {
+    console.error("Admin resale list error:", err);
+    return res.status(500).json({ detail: "Failed to fetch admin resale properties" });
+  }
+});
+
+app.get("/api/admin/resale/:id", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    let query = {};
+    try {
+      query = { _id: new ObjectId(req.params.id) };
+    } catch {
+      query = { id: req.params.id };
+    }
+    const doc = await db.collection("resale_properties").findOne(query);
+    if (!doc) return res.status(404).json({ detail: "Resale property not found" });
+    return res.json(serializeResaleProperty(doc, true));
+  } catch {
+    return res.status(400).json({ detail: "Invalid resale property ID" });
+  }
+});
+
+app.post("/api/admin/resale", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const b = req.body || {};
+
+    const priceNum = typeof b.price === "number" ? b.price : parseFloat(b.price) || 0;
+    const areaNum = typeof b.area === "number" ? b.area : parseFloat(b.area) || 0;
+    let ppsf = typeof b.pricePerSqFt === "number" ? b.pricePerSqFt : parseFloat(b.pricePerSqFt) || 0;
+    if (!ppsf && priceNum > 0 && areaNum > 0) {
+      ppsf = Math.round(priceNum / areaNum);
+    }
+
+    const images = Array.isArray(b.images) ? b.images : [];
+    const featuredImage = b.featuredImage || (images.length > 0 ? images[0] : "");
+
+    const doc = {
+      title: (b.title || "").trim() || "Untitled Resale Property",
+      propertyType: b.propertyType || "Apartment",
+      listingType: b.listingType || "For Sale",
+      location: (b.location || "").trim(),
+      address: (b.address || "").trim(),
+      locality: (b.locality || "").trim(),
+      city: (b.city || "").trim() || "Kolkata",
+      pincode: (b.pincode || "").trim(),
+
+      price: priceNum,
+      pricePerSqFt: ppsf,
+
+      area: areaNum,
+      areaUnit: b.areaUnit || "sq.ft.",
+
+      bedrooms: b.bedrooms != null ? b.bedrooms : "",
+      bathrooms: b.bathrooms != null ? b.bathrooms : "",
+      balconies: b.balconies != null ? b.balconies : "",
+      floor: b.floor != null ? b.floor : "",
+      totalFloors: b.totalFloors != null ? b.totalFloors : "",
+
+      furnishingStatus: b.furnishingStatus || "Unfurnished",
+      parking: b.parking || "None",
+      ageOfProperty: b.ageOfProperty || "",
+
+      description: b.description || "",
+      amenities: Array.isArray(b.amenities)
+        ? b.amenities
+        : typeof b.amenities === "string"
+        ? b.amenities
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+        : [],
+
+      images: images,
+      featuredImage: featuredImage,
+
+      sellerName: (b.sellerName || "").trim(),
+      sellerPhone: (b.sellerPhone || "").trim(),
+      sellerEmail: (b.sellerEmail || "").toLowerCase().trim(),
+
+      possessionStatus: b.possessionStatus || "Ready to Move",
+
+      status: b.status || "Draft",
+      featured: Boolean(b.featured),
+
+      createdAt: nowUtcIso(),
+      updatedAt: nowUtcIso(),
+      createdBy: req.user?.email || "admin",
+    };
+
+    const result = await db.collection("resale_properties").insertOne(doc);
+    doc._id = result.insertedId;
+    cacheInvalidatePrefix("resale:");
+    return res.status(201).json(serializeResaleProperty(doc, true));
+  } catch (err) {
+    console.error("Create admin resale error:", err);
+    return res.status(500).json({ detail: "Failed to create resale property" });
+  }
+});
+
+const handleResaleUpdate = async (req, res) => {
+  try {
+    const db = getDb();
+    const update = { ...req.body, updatedAt: nowUtcIso() };
+    delete update._id;
+    delete update.id;
+    delete update.createdAt;
+
+    if (update.price != null) {
+      update.price = typeof update.price === "number" ? update.price : parseFloat(update.price) || 0;
+    }
+    if (update.area != null) {
+      update.area = typeof update.area === "number" ? update.area : parseFloat(update.area) || 0;
+    }
+    if (update.pricePerSqFt != null) {
+      update.pricePerSqFt =
+        typeof update.pricePerSqFt === "number" ? update.pricePerSqFt : parseFloat(update.pricePerSqFt) || 0;
+    } else if (update.price > 0 && update.area > 0) {
+      update.pricePerSqFt = Math.round(update.price / update.area);
+    }
+    if (update.featured !== undefined) {
+      update.featured = Boolean(update.featured);
+    }
+
+    let query = {};
+    try {
+      query = { _id: new ObjectId(req.params.id) };
+    } catch {
+      query = { id: req.params.id };
+    }
+
+    const rawResult = await db
+      .collection("resale_properties")
+      .findOneAndUpdate(query, { $set: update }, { returnDocument: "after" });
+    const updatedDoc = rawResult?.value || rawResult;
+    if (!updatedDoc) return res.status(404).json({ detail: "Resale property not found" });
+    cacheInvalidatePrefix("resale:");
+    return res.json(serializeResaleProperty(updatedDoc, true));
+  } catch (err) {
+    console.error("Update resale property error:", err);
+    return res.status(400).json({ detail: "Failed to update resale property" });
+  }
+};
+
+app.put("/api/admin/resale/:id", requireStaff, handleResaleUpdate);
+app.patch("/api/admin/resale/:id", requireStaff, handleResaleUpdate);
+
+app.patch("/api/admin/resale/:id/status", requireStaff, async (req, res) => {
+  try {
+    let { status } = req.body;
+    const allowed = ["Draft", "Pending Review", "Published", "Sold", "Inactive"];
+    const matched = allowed.find((s) => s.toLowerCase() === (status || "").toLowerCase());
+    if (!matched) {
+      return res.status(400).json({ detail: `Invalid status. Must be one of: ${allowed.join(", ")}` });
+    }
+
+    const db = getDb();
+    let query = {};
+    try {
+      query = { _id: new ObjectId(req.params.id) };
+    } catch {
+      query = { id: req.params.id };
+    }
+
+    const result = await db
+      .collection("resale_properties")
+      .updateOne(query, { $set: { status: matched, updatedAt: nowUtcIso() } });
+    if (result.matchedCount === 0) return res.status(404).json({ detail: "Resale property not found" });
+    cacheInvalidatePrefix("resale:");
+    return res.json({ ok: true, status: matched });
+  } catch {
+    return res.status(400).json({ detail: "Failed to update resale status" });
+  }
+});
+
+app.patch("/api/admin/resale/:id/featured", requireStaff, async (req, res) => {
+  try {
+    const featured = Boolean(req.body.featured);
+    const db = getDb();
+    let query = {};
+    try {
+      query = { _id: new ObjectId(req.params.id) };
+    } catch {
+      query = { id: req.params.id };
+    }
+
+    const result = await db
+      .collection("resale_properties")
+      .updateOne(query, { $set: { featured, updatedAt: nowUtcIso() } });
+    if (result.matchedCount === 0) return res.status(404).json({ detail: "Resale property not found" });
+    cacheInvalidatePrefix("resale:");
+    return res.json({ ok: true, featured });
+  } catch {
+    return res.status(400).json({ detail: "Failed to update featured flag" });
+  }
+});
+
+app.delete("/api/admin/resale/:id", requireAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    let query = {};
+    try {
+      query = { _id: new ObjectId(req.params.id) };
+    } catch {
+      query = { id: req.params.id };
+    }
+
+    const result = await db.collection("resale_properties").deleteOne(query);
+    if (result.deletedCount === 0) return res.status(404).json({ detail: "Resale property not found" });
+    cacheInvalidatePrefix("resale:");
+    return res.json({ ok: true });
+  } catch {
+    return res.status(400).json({ detail: "Failed to delete resale property" });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Admin Blogs
 // ---------------------------------------------------------------------------
 app.get("/api/admin/blogs", requireStaff, async (req, res) => {
@@ -1390,6 +1935,89 @@ app.delete("/api/admin/leads/property/:id", requireAdmin, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// ADMIN RESALE LEADS (Dedicated Admin management for resale_leads)
+// ---------------------------------------------------------------------------
+app.get("/api/admin/leads/resale", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const query = {};
+
+    if (req.query.status && req.query.status.trim() !== "") {
+      query.status = { $regex: `^${req.query.status.trim()}$`, $options: "i" };
+    }
+    if (req.query.search && req.query.search.trim() !== "") {
+      const s = req.query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const sRegex = { $regex: s, $options: "i" };
+      query.$or = [
+        { name: sRegex },
+        { phone: sRegex },
+        { email: sRegex },
+        { propertyTitle: sRegex },
+        { message: sRegex },
+      ];
+    }
+
+    const docs = await db
+      .collection("resale_leads")
+      .find(query)
+      .sort({ createdAt: -1 })
+      .limit(1000)
+      .toArray();
+
+    return res.json(docs.map(serializeResaleLead));
+  } catch (err) {
+    console.error("Admin resale leads fetch error:", err);
+    return res.status(500).json({ detail: "Failed to fetch resale leads" });
+  }
+});
+
+app.patch("/api/admin/leads/resale/:id", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const update = { updatedAt: nowUtcIso() };
+
+    if (req.body.status) {
+      const allowed = ["New", "Contacted", "Follow Up", "Site Visit", "Converted", "Closed"];
+      const matched = allowed.find((s) => s.toLowerCase() === (req.body.status || "").toLowerCase());
+      if (matched) update.status = matched;
+      else update.status = req.body.status;
+    }
+    if (req.body.assignedTo !== undefined) update.assignedTo = req.body.assignedTo;
+    if (req.body.notes !== undefined) update.notes = req.body.notes;
+
+    let query = {};
+    try {
+      query = { _id: new ObjectId(req.params.id) };
+    } catch {
+      query = { id: req.params.id };
+    }
+
+    const result = await db.collection("resale_leads").updateOne(query, { $set: update });
+    if (result.matchedCount === 0) return res.status(404).json({ detail: "Resale lead not found" });
+    return res.json({ ok: true, update });
+  } catch {
+    return res.status(400).json({ detail: "Failed to update resale lead" });
+  }
+});
+
+app.delete("/api/admin/leads/resale/:id", requireAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    let query = {};
+    try {
+      query = { _id: new ObjectId(req.params.id) };
+    } catch {
+      query = { id: req.params.id };
+    }
+    const result = await db.collection("resale_leads").deleteOne(query);
+    if (result.deletedCount === 0) return res.status(404).json({ detail: "Resale lead not found" });
+    return res.json({ ok: true, message: "Resale lead deleted" });
+  } catch {
+    return res.status(400).json({ detail: "Failed to delete resale lead" });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // ADMIN CAREER APPLICATIONS
 // ---------------------------------------------------------------------------
 app.get("/api/admin/leads/career", requireStaff, async (req, res) => {
@@ -1613,6 +2241,10 @@ app.get("/api/admin/stats", requireStaff, async (req, res) => {
       careerInterview,
       careerSelected,
       usersTotal,
+      resaleTotal,
+      resalePublished,
+      resaleLeadsTotal,
+      resaleLeadsNew,
     ] = await Promise.all([
       db.collection("properties").countDocuments({}),
       db.collection("properties").countDocuments({ status: "published" }),
@@ -1630,6 +2262,11 @@ app.get("/api/admin/stats", requireStaff, async (req, res) => {
       db.collection("career_applications").countDocuments({ status: { $regex: /^interview$/i } }),
       db.collection("career_applications").countDocuments({ status: { $regex: /^selected$/i } }),
       db.collection("users").countDocuments({}),
+      // Resale stats (isolated)
+      db.collection("resale_properties").countDocuments({}),
+      db.collection("resale_properties").countDocuments({ status: { $regex: /^published$/i } }),
+      db.collection("resale_leads").countDocuments({}),
+      db.collection("resale_leads").countDocuments({ status: { $regex: /^new$/i } }),
     ]);
 
     return res.json({
@@ -1649,6 +2286,12 @@ app.get("/api/admin/stats", requireStaff, async (req, res) => {
         shortlisted: careerShortlisted,
         interview: careerInterview,
         selected: careerSelected,
+      },
+      resale: {
+        total: resaleTotal,
+        published: resalePublished,
+        leads_total: resaleLeadsTotal,
+        leads_new: resaleLeadsNew,
       },
       leads_total: propTotal,
       leads_new: propNew,
@@ -1857,8 +2500,20 @@ async function ensureDatabaseIndexes() {
       db.collection("career_applications").createIndex({ jobTitle: 1 }),
       db.collection("career_applications").createIndex({ status: 1, createdAt: -1 }),
       db.collection("career_applications").createIndex({ createdAt: -1 }),
+      // Dedicated Resale Collections indexes (Requirement 18 - additive and isolated)
+      db.collection("resale_properties").createIndex({ status: 1, featured: 1, createdAt: -1 }),
+      db.collection("resale_properties").createIndex({ location: 1 }),
+      db.collection("resale_properties").createIndex({ city: 1 }),
+      db.collection("resale_properties").createIndex({ propertyType: 1 }),
+      db.collection("resale_properties").createIndex({ price: 1 }),
+      db.collection("resale_properties").createIndex({ createdAt: -1 }),
+      db.collection("resale_leads").createIndex({ resalePropertyId: 1 }),
+      db.collection("resale_leads").createIndex({ phone: 1 }),
+      db.collection("resale_leads").createIndex({ email: 1 }),
+      db.collection("resale_leads").createIndex({ status: 1, createdAt: -1 }),
+      db.collection("resale_leads").createIndex({ createdAt: -1 }),
     ]);
-    console.log("[MongoDB] Database compound indexes verified & active (including property_leads & career_applications)");
+    console.log("[MongoDB] Database compound indexes verified & active (including resale_properties & resale_leads)");
 
     // Safe preservation: initialize property_leads from existing leads if property_leads is empty
     const propCount = await db.collection("property_leads").countDocuments();

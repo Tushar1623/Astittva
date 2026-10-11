@@ -20,6 +20,7 @@ const MarketIntelligencePage = lazy(() => import("@/pages/MarketIntelligencePage
 const BlogsListPage = lazy(() => import("@/pages/BlogsListPage"));
 const BlogDetailPage = lazy(() => import("@/pages/BlogDetailPage"));
 const ResalePage = lazy(() => import("@/pages/ResalePage"));
+const ResaleDetailPage = lazy(() => import("@/pages/ResaleDetailPage"));
 const CareerPage = lazy(() => import("@/pages/CareerPage"));
 const CalculatorsLandingPage = lazy(() => import("@/pages/calculators/CalculatorsLandingPage"));
 const CalculatorDetailPage = lazy(() => import("@/pages/calculators/CalculatorDetailPage"));
@@ -29,6 +30,9 @@ const AdminLayout = lazy(() => import("@/layouts/AdminLayout"));
 const AdminDashboardPage = lazy(() => import("@/pages/admin/AdminDashboardPage"));
 const AdminPropertiesPage = lazy(() => import("@/pages/admin/AdminPropertiesPage"));
 const AdminPropertyFormPage = lazy(() => import("@/pages/admin/AdminPropertyFormPage"));
+const AdminResalePropertiesPage = lazy(() => import("@/pages/admin/AdminResalePropertiesPage"));
+const AdminResalePropertyFormPage = lazy(() => import("@/pages/admin/AdminResalePropertyFormPage"));
+const AdminResaleLeadsPage = lazy(() => import("@/pages/admin/AdminResaleLeadsPage"));
 const AdminLeadsPage = lazy(() => import("@/pages/admin/AdminLeadsPage"));
 const AdminPropertyLeadsPage = lazy(() => import("@/pages/admin/AdminPropertyLeadsPage"));
 const AdminCareerApplicationsPage = lazy(() => import("@/pages/admin/AdminCareerApplicationsPage"));
@@ -70,6 +74,7 @@ function App() {
                     <Route path="/blogs" element={<BlogsListPage />} />
                     <Route path="/blogs/:slug" element={<BlogDetailPage />} />
                     <Route path="/resale" element={<ResalePage />} />
+                    <Route path="/resale/:id" element={<ResaleDetailPage />} />
                     <Route path="/calculators" element={<CalculatorsLandingPage />} />
                     <Route path="/calculators/:slug" element={<CalculatorDetailPage />} />
                     <Route path="/career" element={<CareerPage />} />
@@ -93,8 +98,12 @@ function App() {
                     <Route path="properties" element={<AdminPropertiesPage />} />
                     <Route path="properties/new" element={<AdminPropertyFormPage />} />
                     <Route path="properties/:id/edit" element={<AdminPropertyFormPage />} />
+                    <Route path="resale" element={<AdminResalePropertiesPage />} />
+                    <Route path="resale/new" element={<AdminResalePropertyFormPage />} />
+                    <Route path="resale/:id/edit" element={<AdminResalePropertyFormPage />} />
                     <Route path="leads" element={<AdminPropertyLeadsPage />} />
                     <Route path="leads/property" element={<AdminPropertyLeadsPage />} />
+                    <Route path="leads/resale" element={<AdminResaleLeadsPage />} />
                     <Route path="leads/careers" element={<AdminCareerApplicationsPage />} />
                     <Route path="blogs" element={<AdminBlogsPage />} />
                     <Route path="blogs/new" element={<AdminBlogFormPage />} />

@@ -772,6 +772,394 @@ async def delete_property(prop_id: str, _user: dict = Depends(require_admin)):
     return {"ok": True}
 
 
+# ---------------------- Resale Module ----------------------
+def serialize_resale_property(doc: dict, is_admin: bool = False) -> dict:
+    images = doc.get("images", []) if isinstance(doc.get("images"), list) else []
+    featured_img = doc.get("featuredImage") or (images[0] if images else "")
+    try:
+        price_val = float(doc.get("price", 0))
+    except (ValueError, TypeError):
+        price_val = 0.0
+    try:
+        area_val = float(doc.get("area", 0))
+    except (ValueError, TypeError):
+        area_val = 0.0
+    try:
+        ppsf_val = float(doc.get("pricePerSqFt", 0))
+    except (ValueError, TypeError):
+        ppsf_val = round(price_val / area_val) if price_val > 0 and area_val > 0 else 0.0
+
+    res = {
+        "id": str(doc["_id"]),
+        "title": doc.get("title", ""),
+        "propertyType": doc.get("propertyType", "Apartment"),
+        "listingType": doc.get("listingType", "For Sale"),
+        "location": doc.get("location", ""),
+        "address": doc.get("address", ""),
+        "locality": doc.get("locality", ""),
+        "city": doc.get("city", "Kolkata"),
+        "pincode": doc.get("pincode", ""),
+        "price": price_val,
+        "pricePerSqFt": ppsf_val,
+        "area": area_val,
+        "areaUnit": doc.get("areaUnit", "sq.ft."),
+        "bedrooms": doc.get("bedrooms", ""),
+        "bathrooms": doc.get("bathrooms", ""),
+        "balconies": doc.get("balconies", ""),
+        "floor": doc.get("floor", ""),
+        "totalFloors": doc.get("totalFloors", ""),
+        "furnishingStatus": doc.get("furnishingStatus", "Unfurnished"),
+        "parking": doc.get("parking", "None"),
+        "ageOfProperty": doc.get("ageOfProperty", ""),
+        "description": doc.get("description", ""),
+        "amenities": doc.get("amenities", []) if isinstance(doc.get("amenities"), list) else [],
+        "images": images,
+        "featuredImage": featured_img,
+        "possessionStatus": doc.get("possessionStatus", "Ready to Move"),
+        "status": doc.get("status", "Draft"),
+        "featured": bool(doc.get("featured", False)),
+        "createdAt": doc.get("createdAt", ""),
+        "updatedAt": doc.get("updatedAt", ""),
+        "createdBy": doc.get("createdBy", "admin"),
+    }
+    if is_admin:
+        res["sellerName"] = doc.get("sellerName", "")
+        res["sellerPhone"] = doc.get("sellerPhone", "")
+        res["sellerEmail"] = doc.get("sellerEmail", "")
+    return res
+
+
+def serialize_resale_lead(doc: dict) -> dict:
+    return {
+        "id": str(doc["_id"]),
+        "resalePropertyId": doc.get("resalePropertyId", ""),
+        "propertyTitle": doc.get("propertyTitle", ""),
+        "name": doc.get("name", ""),
+        "phone": doc.get("phone", ""),
+        "email": doc.get("email", ""),
+        "message": doc.get("message", ""),
+        "source": doc.get("source", "resale-page"),
+        "status": doc.get("status", "New"),
+        "assignedTo": doc.get("assignedTo", "Unassigned"),
+        "notes": doc.get("notes", ""),
+        "createdAt": doc.get("createdAt", ""),
+        "updatedAt": doc.get("updatedAt", ""),
+    }
+
+
+@api_router.get("/resale")
+async def list_resale_properties(
+    location: Optional[str] = None,
+    city: Optional[str] = None,
+    propertyType: Optional[str] = None,
+    minPrice: Optional[float] = None,
+    maxPrice: Optional[float] = None,
+    bedrooms: Optional[str] = None,
+    furnishingStatus: Optional[str] = None,
+    featured: Optional[bool] = None,
+    sort: Optional[str] = None,
+    limit: int = 100,
+    page: int = 1,
+):
+    query = {"status": {"$regex": "^published$", "$options": "i"}}
+    if city:
+        query["city"] = {"$regex": re.escape(city.strip()), "$options": "i"}
+    if location:
+        loc_esc = re.escape(location.strip())
+        query["$or"] = [
+            {"location": {"$regex": loc_esc, "$options": "i"}},
+            {"locality": {"$regex": loc_esc, "$options": "i"}},
+            {"city": {"$regex": loc_esc, "$options": "i"}},
+            {"address": {"$regex": loc_esc, "$options": "i"}},
+        ]
+    if propertyType:
+        query["propertyType"] = {"$regex": f"^{re.escape(propertyType.strip())}$", "$options": "i"}
+    if furnishingStatus:
+        query["furnishingStatus"] = {"$regex": re.escape(furnishingStatus.strip()), "$options": "i"}
+    if bedrooms:
+        try:
+            nb = int(bedrooms.strip())
+            query["$or"] = [{"bedrooms": nb}, {"bedrooms": str(nb)}, {"bedrooms": {"$regex": str(nb)}}]
+        except ValueError:
+            query["bedrooms"] = {"$regex": re.escape(bedrooms.strip()), "$options": "i"}
+    if featured is not None:
+        query["featured"] = featured
+    if minPrice is not None or maxPrice is not None:
+        query["price"] = {}
+        if minPrice is not None:
+            query["price"]["$gte"] = minPrice
+        if maxPrice is not None:
+            query["price"]["$lte"] = maxPrice
+
+    sort_order = [("createdAt", -1)]
+    if sort == "price_asc":
+        sort_order = [("price", 1), ("createdAt", -1)]
+    elif sort == "price_desc":
+        sort_order = [("price", -1), ("createdAt", -1)]
+    elif sort == "area_desc":
+        sort_order = [("area", -1), ("createdAt", -1)]
+
+    skip = (max(page, 1) - 1) * limit
+    cursor = db.resale_properties.find(query).sort(sort_order).skip(skip).limit(min(limit, 200))
+    docs = await cursor.to_list(length=200)
+    return [serialize_resale_property(d, is_admin=False) for d in docs]
+
+
+@api_router.get("/resale/{prop_id}")
+async def get_resale_property_public(prop_id: str):
+    try:
+        oid = ObjectId(prop_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid resale property ID")
+    doc = await db.resale_properties.find_one({"_id": oid, "status": {"$regex": "^published$", "$options": "i"}})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Resale property not found")
+    return serialize_resale_property(doc, is_admin=False)
+
+
+@api_router.post("/leads/resale", status_code=201)
+async def submit_resale_lead(payload: dict):
+    name = (payload.get("name") or f"{payload.get('first_name', '')} {payload.get('last_name', '')}").strip()
+    phone = (payload.get("phone") or "").strip()
+    email = (payload.get("email") or "").lower().strip()
+    if not name and not phone and not email:
+        raise HTTPException(status_code=400, detail="Please provide your name, phone number, or email.")
+
+    lead_doc = {
+        "resalePropertyId": str(payload.get("resalePropertyId") or payload.get("propertyId") or ""),
+        "propertyTitle": str(payload.get("propertyTitle") or payload.get("propertyName") or ""),
+        "name": name or "Anonymous Enquiry",
+        "phone": phone,
+        "email": email,
+        "message": str(payload.get("message") or ""),
+        "source": str(payload.get("source") or "resale-page"),
+        "status": "New",
+        "assignedTo": "Unassigned",
+        "notes": "",
+        "createdAt": now_utc_iso(),
+        "updatedAt": now_utc_iso(),
+    }
+    res = await db.resale_leads.insert_one(lead_doc)
+    return {"id": str(res.inserted_id), "ok": True, "message": "Resale enquiry submitted successfully"}
+
+
+@api_router.get("/admin/resale")
+async def list_admin_resale_properties(
+    status: Optional[str] = None,
+    propertyType: Optional[str] = None,
+    location: Optional[str] = None,
+    featured: Optional[bool] = None,
+    search: Optional[str] = None,
+    _user: dict = Depends(require_staff),
+):
+    query = {}
+    if status:
+        query["status"] = {"$regex": f"^{re.escape(status.strip())}$", "$options": "i"}
+    if propertyType:
+        query["propertyType"] = {"$regex": f"^{re.escape(propertyType.strip())}$", "$options": "i"}
+    if location:
+        loc_esc = re.escape(location.strip())
+        query["$or"] = [
+            {"location": {"$regex": loc_esc, "$options": "i"}},
+            {"locality": {"$regex": loc_esc, "$options": "i"}},
+            {"city": {"$regex": loc_esc, "$options": "i"}},
+        ]
+    if featured is not None:
+        query["featured"] = featured
+    if search:
+        s_esc = re.escape(search.strip())
+        query["$or"] = [
+            {"title": {"$regex": s_esc, "$options": "i"}},
+            {"location": {"$regex": s_esc, "$options": "i"}},
+            {"locality": {"$regex": s_esc, "$options": "i"}},
+            {"city": {"$regex": s_esc, "$options": "i"}},
+            {"sellerName": {"$regex": s_esc, "$options": "i"}},
+            {"sellerPhone": {"$regex": s_esc, "$options": "i"}},
+        ]
+    cursor = db.resale_properties.find(query).sort([("createdAt", -1)]).limit(500)
+    docs = await cursor.to_list(length=500)
+    return [serialize_resale_property(d, is_admin=True) for d in docs]
+
+
+@api_router.get("/admin/resale/{prop_id}")
+async def get_admin_resale_property(prop_id: str, _user: dict = Depends(require_staff)):
+    try:
+        oid = ObjectId(prop_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid resale property ID")
+    doc = await db.resale_properties.find_one({"_id": oid})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Resale property not found")
+    return serialize_resale_property(doc, is_admin=True)
+
+
+@api_router.post("/admin/resale", status_code=201)
+async def create_admin_resale_property(payload: dict, user: dict = Depends(require_staff)):
+    now = now_utc_iso()
+    doc = {
+        "title": (payload.get("title") or "Untitled Resale Property").strip(),
+        "propertyType": payload.get("propertyType", "Apartment"),
+        "listingType": payload.get("listingType", "For Sale"),
+        "location": (payload.get("location") or "").strip(),
+        "address": (payload.get("address") or "").strip(),
+        "locality": (payload.get("locality") or "").strip(),
+        "city": (payload.get("city") or "Kolkata").strip(),
+        "pincode": (payload.get("pincode") or "").strip(),
+        "price": float(payload.get("price") or 0),
+        "pricePerSqFt": float(payload.get("pricePerSqFt") or 0),
+        "area": float(payload.get("area") or 0),
+        "areaUnit": payload.get("areaUnit", "sq.ft."),
+        "bedrooms": payload.get("bedrooms", ""),
+        "bathrooms": payload.get("bathrooms", ""),
+        "balconies": payload.get("balconies", ""),
+        "floor": payload.get("floor", ""),
+        "totalFloors": payload.get("totalFloors", ""),
+        "furnishingStatus": payload.get("furnishingStatus", "Unfurnished"),
+        "parking": payload.get("parking", "None"),
+        "ageOfProperty": payload.get("ageOfProperty", ""),
+        "description": payload.get("description", ""),
+        "amenities": payload.get("amenities", []) if isinstance(payload.get("amenities"), list) else [],
+        "images": payload.get("images", []) if isinstance(payload.get("images"), list) else [],
+        "featuredImage": payload.get("featuredImage") or "",
+        "sellerName": (payload.get("sellerName") or "").strip(),
+        "sellerPhone": (payload.get("sellerPhone") or "").strip(),
+        "sellerEmail": (payload.get("sellerEmail") or "").lower().strip(),
+        "possessionStatus": payload.get("possessionStatus", "Ready to Move"),
+        "status": payload.get("status", "Draft"),
+        "featured": bool(payload.get("featured", False)),
+        "createdAt": now,
+        "updatedAt": now,
+        "createdBy": user.get("email", "admin"),
+    }
+    if not doc["pricePerSqFt"] and doc["price"] > 0 and doc["area"] > 0:
+        doc["pricePerSqFt"] = round(doc["price"] / doc["area"])
+    if not doc["featuredImage"] and doc["images"]:
+        doc["featuredImage"] = doc["images"][0]
+    res = await db.resale_properties.insert_one(doc)
+    doc["_id"] = res.inserted_id
+    return serialize_resale_property(doc, is_admin=True)
+
+
+@api_router.put("/admin/resale/{prop_id}")
+@api_router.patch("/admin/resale/{prop_id}")
+async def update_admin_resale_property(prop_id: str, payload: dict, _user: dict = Depends(require_staff)):
+    try:
+        oid = ObjectId(prop_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid resale property ID")
+    update_data = {k: v for k, v in payload.items() if k not in ("_id", "id", "createdAt")}
+    update_data["updatedAt"] = now_utc_iso()
+    res = await db.resale_properties.find_one_and_update(
+        {"_id": oid},
+        {"$set": update_data},
+        return_document=True,
+    )
+    if not res:
+        raise HTTPException(status_code=404, detail="Resale property not found")
+    return serialize_resale_property(res, is_admin=True)
+
+
+@api_router.patch("/admin/resale/{prop_id}/status")
+async def update_admin_resale_status(prop_id: str, payload: dict, _user: dict = Depends(require_staff)):
+    try:
+        oid = ObjectId(prop_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid resale property ID")
+    status = payload.get("status")
+    allowed = ["Draft", "Pending Review", "Published", "Sold", "Inactive"]
+    matched = next((s for s in allowed if s.lower() == (status or "").lower()), None)
+    if not matched:
+        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {', '.join(allowed)}")
+    res = await db.resale_properties.update_one(
+        {"_id": oid},
+        {"$set": {"status": matched, "updatedAt": now_utc_iso()}},
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Resale property not found")
+    return {"ok": True, "status": matched}
+
+
+@api_router.patch("/admin/resale/{prop_id}/featured")
+async def update_admin_resale_featured(prop_id: str, payload: dict, _user: dict = Depends(require_staff)):
+    try:
+        oid = ObjectId(prop_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid resale property ID")
+    featured = bool(payload.get("featured", False))
+    res = await db.resale_properties.update_one(
+        {"_id": oid},
+        {"$set": {"featured": featured, "updatedAt": now_utc_iso()}},
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Resale property not found")
+    return {"ok": True, "featured": featured}
+
+
+@api_router.delete("/admin/resale/{prop_id}")
+async def delete_admin_resale_property(prop_id: str, _user: dict = Depends(require_admin)):
+    try:
+        oid = ObjectId(prop_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid resale property ID")
+    res = await db.resale_properties.delete_one({"_id": oid})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Resale property not found")
+    return {"ok": True}
+
+
+@api_router.get("/admin/leads/resale")
+async def list_admin_resale_leads(
+    status: Optional[str] = None,
+    search: Optional[str] = None,
+    _user: dict = Depends(require_staff),
+):
+    query = {}
+    if status:
+        query["status"] = {"$regex": f"^{re.escape(status.strip())}$", "$options": "i"}
+    if search:
+        s_esc = re.escape(search.strip())
+        query["$or"] = [
+            {"name": {"$regex": s_esc, "$options": "i"}},
+            {"phone": {"$regex": s_esc, "$options": "i"}},
+            {"email": {"$regex": s_esc, "$options": "i"}},
+            {"propertyTitle": {"$regex": s_esc, "$options": "i"}},
+        ]
+    cursor = db.resale_leads.find(query).sort([("createdAt", -1)]).limit(1000)
+    docs = await cursor.to_list(length=1000)
+    return [serialize_resale_lead(d) for d in docs]
+
+
+@api_router.patch("/admin/leads/resale/{lead_id}")
+async def update_admin_resale_lead(lead_id: str, payload: dict, _user: dict = Depends(require_staff)):
+    try:
+        oid = ObjectId(lead_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid resale lead ID")
+    update_data = {"updatedAt": now_utc_iso()}
+    if "status" in payload:
+        update_data["status"] = payload["status"]
+    if "assignedTo" in payload:
+        update_data["assignedTo"] = payload["assignedTo"]
+    if "notes" in payload:
+        update_data["notes"] = payload["notes"]
+    res = await db.resale_leads.update_one({"_id": oid}, {"$set": update_data})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Resale lead not found")
+    return {"ok": True, "update": update_data}
+
+
+@api_router.delete("/admin/leads/resale/{lead_id}")
+async def delete_admin_resale_lead(lead_id: str, _user: dict = Depends(require_admin)):
+    try:
+        oid = ObjectId(lead_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid resale lead ID")
+    res = await db.resale_leads.delete_one({"_id": oid})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Resale lead not found")
+    return {"ok": True}
+
+
 # ---------------------- Leads ----------------------
 async def _forward_lead_and_stamp(lead_id: ObjectId, doc: dict) -> None:
     """Background-only worker: forward to CRM and stamp the result on the lead.
@@ -1480,9 +1868,21 @@ async def on_startup():
         await db.properties.create_index("is_featured")
         await db.leads.create_index("created_at")
         await db.login_attempts.create_index("identifier")
+        # Dedicated Resale collection indexes
+        await db.resale_properties.create_index([("status", 1), ("featured", 1), ("createdAt", -1)])
+        await db.resale_properties.create_index("location")
+        await db.resale_properties.create_index("city")
+        await db.resale_properties.create_index("propertyType")
+        await db.resale_properties.create_index("price")
+        await db.resale_properties.create_index("createdAt")
+        await db.resale_leads.create_index("resalePropertyId")
+        await db.resale_leads.create_index("phone")
+        await db.resale_leads.create_index("email")
+        await db.resale_leads.create_index([("status", 1), ("createdAt", -1)])
+        await db.resale_leads.create_index("createdAt")
         await seed_admin()
         init_storage()
-        logger.info("Astitva backend started")
+        logger.info("Astitva backend started with resale indexes")
     except Exception as e:  # noqa: BLE001
         logger.error(f"Startup error: {e}")
 

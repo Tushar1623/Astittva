@@ -13,6 +13,8 @@ import {
   X,
   Globe,
   Briefcase,
+  Repeat,
+  BadgePercent,
 } from "lucide-react";
 
 export default function AdminLayout() {
@@ -47,6 +49,7 @@ export default function AdminLayout() {
       items: [
         { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
         { to: "/admin/properties", label: "Properties", icon: Building2 },
+        { to: "/admin/resale", label: "Resale", icon: Repeat },
         { to: "/admin/blogs", label: "Blogs", icon: BookOpen },
       ],
     },
@@ -54,6 +57,7 @@ export default function AdminLayout() {
       title: "LEADS",
       items: [
         { to: "/admin/leads/property", label: "Property Leads", icon: Inbox },
+        { to: "/admin/leads/resale", label: "Resale Leads", icon: BadgePercent },
         { to: "/admin/leads/careers", label: "Career Applications", icon: Briefcase },
       ],
     },
