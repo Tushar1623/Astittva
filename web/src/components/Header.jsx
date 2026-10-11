@@ -1,21 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight, ChevronDown } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { CALCULATORS, CALCULATOR_CATEGORIES } from "@/data/calculatorsData";
+import CalculatorIcon from "@/components/calculators/CalculatorIcon";
 
-const nav = [
+const primaryNav = [
   { to: "/", label: "Home" },
   { to: "/properties", label: "Properties" },
   { to: "/news", label: "News" },
   { to: "/blogs", label: "Blogs" },
   { to: "/resale", label: "Resale" },
+  { to: "/calculators", label: "Calculators", isDropdown: true },
   { to: "/career", label: "Career" },
   { to: "/about", label: "About & Contact" },
 ];
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [calcDropdownOpen, setCalcDropdownOpen] = useState(false);
+  const [mobileCalcExpanded, setMobileCalcExpanded] = useState(false);
+
+  const dropdownTimerRef = useRef(null);
   const { pathname } = useLocation();
 
   useEffect(() => {
@@ -25,22 +32,35 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    setOpen(false);
+    setMobileOpen(false);
+    setCalcDropdownOpen(false);
   }, [pathname]);
 
   useEffect(() => {
-    if (open) document.body.classList.add("menu-open");
+    if (mobileOpen) document.body.classList.add("menu-open");
     else document.body.classList.remove("menu-open");
     return () => document.body.classList.remove("menu-open");
-  }, [open]);
+  }, [mobileOpen]);
+
+  const handleMouseEnter = () => {
+    if (dropdownTimerRef.current) clearTimeout(dropdownTimerRef.current);
+    setCalcDropdownOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    dropdownTimerRef.current = setTimeout(() => {
+      setCalcDropdownOpen(false);
+    }, 180);
+  };
+
+  const isCalculatorsActive = pathname.startsWith("/calculators");
 
   return (
     <header
       data-testid="site-header"
-      className="fixed top-0 left-0 right-0 z-50 pointer-events-none"
+      className="fixed top-0 left-0 right-0 z-[1000] pointer-events-none"
     >
-      {/* Floating Dark Maroon Bar */}
-      <div className="pointer-events-auto px-2.5 sm:px-4 lg:px-6 xl:px-8 pt-2.5 sm:pt-3">
+      <div className="pointer-events-auto px-2 sm:px-4 lg:px-5 xl:px-8 pt-2.5 sm:pt-3">
         <div
           className="relative max-w-[1440px] mx-auto rounded-[8px] lg:rounded-[10px] border border-white/10 transition-all duration-300"
           style={{
@@ -50,18 +70,15 @@ export default function Header() {
               : "0 8px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.10)",
           }}
         >
-          {/* Main Navigation Bar Content */}
-          <div className="relative px-3 sm:px-5 lg:px-6 xl:px-7 h-[64px] sm:h-[68px] lg:h-[72px] flex items-center justify-between gap-3 lg:gap-4">
-
-            {/* LEFT: Square Logo Badge + Wordmark Lockup */}
+          <div className="relative px-3 sm:px-4 lg:px-5 xl:px-6 h-[64px] sm:h-[68px] lg:h-[72px] flex items-center justify-between gap-2 lg:gap-3">
+            {/* LEFT: Logo */}
             <div className="flex items-center shrink-0">
               <Link
                 to="/"
                 data-testid="logo-link"
-                className="flex items-center gap-2.5 sm:gap-3 group"
+                className="flex items-center gap-2 sm:gap-2.5 group"
               >
-                {/* Square Emblem Badge */}
-                <div className="w-[40px] h-[40px] sm:w-[44px] sm:h-[44px] lg:w-[46px] lg:h-[46px] rounded-[6px] overflow-hidden shrink-0 border border-white/15 shadow-sm bg-[#3D060E] flex items-center justify-center transition-transform duration-300 group-hover:scale-[1.02]">
+                <div className="w-[38px] h-[38px] sm:w-[42px] sm:h-[42px] lg:w-[44px] lg:h-[44px] rounded-[6px] overflow-hidden shrink-0 border border-white/15 shadow-sm bg-[#3D060E] flex items-center justify-center transition-transform duration-300 group-hover:scale-[1.02]">
                   <img
                     src="/apple-touch-icon.png"
                     alt="Astittva Emblem"
@@ -71,19 +88,15 @@ export default function Header() {
                     }}
                   />
                 </div>
-
-                {/* Vertical separator */}
-                <div className="h-6 sm:h-7 lg:h-8 w-[1px] bg-white/20 shrink-0 mx-1 sm:mx-1.5" />
-
-                {/* Editorial Brand Wordmark */}
+                <div className="h-6 sm:h-7 lg:h-7.5 w-[1px] bg-white/20 shrink-0 mx-0.5 sm:mx-1" />
                 <div className="flex flex-col justify-center leading-none">
                   <span
-                    className="font-cinzel text-[19px] sm:text-[21px] lg:text-[23px] tracking-[0.18em] sm:tracking-[0.20em] text-white font-bold whitespace-nowrap"
+                    className="font-cinzel text-[18px] sm:text-[20px] lg:text-[21px] xl:text-[22px] tracking-[0.16em] sm:tracking-[0.18em] text-white font-bold whitespace-nowrap"
                     style={{ textShadow: "0 1px 2px rgba(0, 0, 0, 0.35)" }}
                   >
                     ASTITTVA
                   </span>
-                  <span className="font-sans text-[8px] sm:text-[9px] lg:text-[9.5px] tracking-[0.44em] text-[#E8DCD5] font-semibold mt-[2px] sm:mt-[3px] whitespace-nowrap">
+                  <span className="font-sans text-[7.5px] sm:text-[8.5px] lg:text-[9px] tracking-[0.42em] text-[#E8DCD5] font-semibold mt-[2px] sm:mt-[2.5px] whitespace-nowrap">
                     MARKETING
                   </span>
                 </div>
@@ -91,53 +104,106 @@ export default function Header() {
             </div>
 
             {/* CENTER: Navigation Links */}
-            <nav className="hidden lg:flex items-center justify-center flex-1 px-2 xl:px-4 min-w-0">
-              <div className="flex items-center gap-2 xl:gap-4 2xl:gap-6">
-                {nav.map((n) => (
-                  <NavLink
-                    key={n.to}
-                    to={n.to}
-                    end={n.to === "/"}
-                    data-testid={`nav-${n.label.toLowerCase().replace(/\s+/g, "-")}`}
-                    className="transition-colors duration-200"
-                  >
-                    {({ isActive }) => {
-                      const active = isActive || (n.to === "/about" && pathname === "/contact");
-                      return (
-                        <span
-                          className={`inline-flex flex-col items-center justify-center transition-all duration-200 ${
-                            active
-                              ? "border border-white/30 bg-white/[0.08] rounded-[6px] px-3.5 xl:px-4 py-1.5"
-                              : "border border-transparent px-2.5 xl:px-3 py-1.5 text-[#E8DCD5] hover:text-white"
-                          }`}
+            <nav className="hidden lg:flex items-center justify-center flex-1 px-1 xl:px-2 min-w-0">
+              <div className="flex items-center gap-1 xl:gap-2 2xl:gap-3.5">
+                {primaryNav.map((n) => {
+                  if (n.isDropdown) {
+                    return (
+                      <div
+                        key={n.to}
+                        className="relative"
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setCalcDropdownOpen((prev) => !prev)}
+                          data-testid="nav-calculators"
+                          className="inline-flex items-center transition-colors duration-200 outline-none"
+                          aria-expanded={calcDropdownOpen}
+                          aria-haspopup="true"
                         >
                           <span
-                            className={`font-sans text-[12px] xl:text-[12.5px] 2xl:text-[13px] font-semibold uppercase tracking-[0.08em] whitespace-nowrap leading-none ${
-                              active ? "text-white" : ""
+                            className={`inline-flex items-center justify-center transition-all duration-200 ${
+                              isCalculatorsActive
+                                ? "border border-white/30 bg-white/[0.08] rounded-[6px] px-2.5 xl:px-3 py-1.5"
+                                : "border border-transparent px-2 xl:px-2.5 py-1.5 text-[#E8DCD5] hover:text-white"
                             }`}
                           >
-                            {n.label}
+                            <span className="inline-flex flex-col items-center justify-center">
+                              <span
+                                className={`inline-flex items-center gap-1 font-sans text-[11.5px] xl:text-[12px] 2xl:text-[12.5px] font-semibold uppercase tracking-[0.07em] whitespace-nowrap leading-none ${
+                                  isCalculatorsActive ? "text-white" : ""
+                                }`}
+                              >
+                                {n.label}
+                                <ChevronDown
+                                  className={`w-3 h-3 transition-transform duration-200 opacity-75 ${
+                                    calcDropdownOpen ? "rotate-180 text-[#D4A359]" : ""
+                                  }`}
+                                  strokeWidth={2.2}
+                                />
+                              </span>
+                              {isCalculatorsActive && (
+                                <span
+                                  aria-hidden="true"
+                                  className="w-full h-[2px] bg-[#D4A359] rounded-full mt-1.5"
+                                />
+                              )}
+                            </span>
                           </span>
-                          {active && (
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <NavLink
+                      key={n.to}
+                      to={n.to}
+                      end={n.to === "/"}
+                      data-testid={`nav-${n.label.toLowerCase().replace(/\s+/g, "-")}`}
+                      className="transition-colors duration-200"
+                    >
+                      {({ isActive }) => {
+                        const active =
+                          isActive || (n.to === "/about" && pathname === "/contact");
+                        return (
+                          <span
+                            className={`inline-flex flex-col items-center justify-center transition-all duration-200 ${
+                              active
+                                ? "border border-white/30 bg-white/[0.08] rounded-[6px] px-2.5 xl:px-3 py-1.5"
+                                : "border border-transparent px-2 xl:px-2.5 py-1.5 text-[#E8DCD5] hover:text-white"
+                            }`}
+                          >
                             <span
-                              aria-hidden="true"
-                              className="w-full h-[2px] bg-[#D4A359] rounded-full mt-1.5"
-                            />
-                          )}
-                        </span>
-                      );
-                    }}
-                  </NavLink>
-                ))}
+                              className={`font-sans text-[11.5px] xl:text-[12px] 2xl:text-[12.5px] font-semibold uppercase tracking-[0.07em] whitespace-nowrap leading-none ${
+                                active ? "text-white" : ""
+                              }`}
+                            >
+                              {n.label}
+                            </span>
+                            {active && (
+                              <span
+                                aria-hidden="true"
+                                className="w-full h-[2px] bg-[#D4A359] rounded-full mt-1.5"
+                              />
+                            )}
+                          </span>
+                        );
+                      }}
+                    </NavLink>
+                  );
+                })}
               </div>
             </nav>
 
-            {/* RIGHT: Warm Amber Book Consultation CTA */}
+            {/* RIGHT: CTA */}
             <div className="hidden lg:flex items-center justify-end shrink-0">
               <Link
                 to="/contact"
                 data-testid="header-cta"
-                className="group relative inline-flex items-center justify-center gap-2 h-[40px] lg:h-[42px] px-5 lg:px-6 font-sans text-[12px] xl:text-[12.5px] font-semibold tracking-[0.06em] uppercase text-white rounded-[6px] border border-white/20 transition-all duration-200 hover:brightness-110 hover:-translate-y-px active:translate-y-0 whitespace-nowrap"
+                className="group relative inline-flex items-center justify-center gap-1.5 h-[38px] xl:h-[40px] px-4 xl:px-5 font-sans text-[11.5px] xl:text-[12px] font-semibold tracking-[0.06em] uppercase text-white rounded-[6px] border border-white/20 transition-all duration-200 hover:brightness-110 hover:-translate-y-px active:translate-y-0 whitespace-nowrap"
                 style={{
                   background: "linear-gradient(135deg, #BD7732 0%, #DA9B48 100%)",
                   boxShadow: "0 4px 16px rgba(189, 119, 50, 0.35)",
@@ -151,23 +217,23 @@ export default function Header() {
               </Link>
             </div>
 
-            {/* Mobile Menu Toggle Button */}
+            {/* Mobile Toggle */}
             <button
               data-testid="mobile-menu-toggle"
               className="lg:hidden text-white hover:text-[#C89A55] relative w-10 h-10 rounded-[6px] flex items-center justify-center transition-colors duration-200 hover:bg-white/[0.06] border border-transparent hover:border-white/10"
-              onClick={() => setOpen(!open)}
-              aria-label={open ? "Close menu" : "Open menu"}
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.span
-                  key={open ? "x" : "menu"}
+                  key={mobileOpen ? "x" : "menu"}
                   initial={{ opacity: 0, rotate: -90 }}
                   animate={{ opacity: 1, rotate: 0 }}
                   exit={{ opacity: 0, rotate: 90 }}
                   transition={{ duration: 0.2 }}
                   className="absolute text-white"
                 >
-                  {open ? (
+                  {mobileOpen ? (
                     <X className="w-5 h-5" strokeWidth={1.75} />
                   ) : (
                     <Menu className="w-5 h-5" strokeWidth={1.75} />
@@ -176,36 +242,215 @@ export default function Header() {
               </AnimatePresence>
             </button>
           </div>
+
+          {/* DESKTOP 3-COLUMN MEGA-MENU DROPDOWN */}
+          <AnimatePresence>
+            {calcDropdownOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 6, scale: 0.99 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 4, scale: 0.99 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+                className="hidden lg:block absolute top-[calc(100%+10px)] right-3 xl:right-4 rounded-[10px] overflow-hidden border border-white/15 p-5 xl:p-6 shadow-[0_24px_64px_rgba(0,0,0,0.7)] z-[1100] text-left before:content-[''] before:absolute before:-top-[14px] before:left-0 before:right-0 before:h-[16px]"
+                style={{
+                  width: "min(920px, calc(100vw - 32px))",
+                  maxWidth: "920px",
+                  background: "linear-gradient(135deg, #44070F 0%, #520C16 50%, #44070F 100%)",
+                  backdropFilter: "blur(24px)",
+                  WebkitBackdropFilter: "blur(24px)",
+                }}
+              >
+                <div
+                  className="grid grid-cols-3"
+                  style={{
+                    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                    gap: "28px",
+                  }}
+                >
+                  {CALCULATOR_CATEGORIES.map((cat) => {
+                    const catCalcs = CALCULATORS.filter(
+                      (c) => c.category === cat.id
+                    );
+
+                    return (
+                      <div key={cat.id} className="min-w-0 flex flex-col">
+                        <div className="pb-2 mb-3 border-b border-white/10 flex items-center justify-between">
+                          <span className="text-[10.5px] font-bold tracking-[0.16em] uppercase text-[#D4A359]">
+                            {cat.name}
+                          </span>
+                          <span className="text-[9.5px] font-semibold tracking-wider text-[#D4C3BA]/60 uppercase">
+                            {catCalcs.length} Tools
+                          </span>
+                        </div>
+
+                        <div className="space-y-2">
+                          {catCalcs.map((item) => {
+                            const isItemActive = pathname === item.path;
+
+                            return (
+                              <Link
+                                key={item.id}
+                                to={item.path}
+                                onClick={() => setCalcDropdownOpen(false)}
+                                className={`group grid grid-cols-[38px_minmax(0,1fr)] items-center h-[50px] px-2.5 rounded-[6px] transition-all duration-150 border ${
+                                  isItemActive
+                                    ? "bg-white/[0.12] border-white/20"
+                                    : "border-transparent hover:bg-white/[0.08] hover:border-white/10"
+                                }`}
+                              >
+                                <div className="w-[30px] h-[30px] rounded-[5px] bg-white/[0.08] text-[#D4A359] group-hover:text-white group-hover:bg-[#B87333] flex items-center justify-center shrink-0 transition-colors">
+                                  <CalculatorIcon
+                                    name={item.iconName}
+                                    className="w-4 h-4"
+                                  />
+                                </div>
+
+                                <div className="min-w-0 pr-1 overflow-hidden flex flex-col justify-center">
+                                  <div className="font-sans text-[12px] font-semibold text-white group-hover:text-[#F3CA8A] transition-colors leading-tight truncate">
+                                    {item.shortName}
+                                  </div>
+                                  <div className="text-[10.5px] text-[#D4C3BA] leading-tight truncate mt-0.5">
+                                    {item.shortDescription}
+                                  </div>
+                                </div>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-3.5 pt-3 border-t border-white/10 flex items-center justify-between text-[11.5px]">
+                  <div className="flex items-center gap-2 text-[#D4C3BA] text-[11.5px] truncate">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#D4A359] shrink-0" />
+                    <span className="truncate">
+                      Make smarter property decisions with verified financial math
+                    </span>
+                  </div>
+                  <Link
+                    to="/calculators"
+                    onClick={() => setCalcDropdownOpen(false)}
+                    className="inline-flex items-center gap-1.5 font-semibold text-[#D4A359] hover:text-white transition-colors shrink-0 ml-4 group"
+                  >
+                    <span>View All 12 Calculators</span>
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Mobile Full-Width Menu Drawer */}
         <AnimatePresence>
-          {open && (
+          {mobileOpen && (
             <motion.div
               key="mobile-glass-menu"
               initial={{ opacity: 0, y: -8, scale: 0.99 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.99 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              className="lg:hidden max-w-[1440px] mx-auto mt-2 rounded-[8px] overflow-hidden border border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
+              className="lg:hidden max-w-[1440px] mx-auto mt-2 rounded-[8px] overflow-hidden border border-white/10 shadow-[0_16px_40px_rgba(0,0,0,0.5)] max-h-[82vh] overflow-y-auto"
               style={{
                 background: "linear-gradient(180deg, #4A0811 0%, #540D17 100%)",
               }}
             >
-              <nav className="p-4 sm:p-5 flex flex-col gap-2">
-                {nav.map((n, i) => (
-                  <motion.div
-                    key={n.to}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.03 * i + 0.03, duration: 0.2 }}
-                  >
+              <nav className="p-4 sm:p-5 flex flex-col gap-1.5">
+                {primaryNav.map((n) => {
+                  if (n.isDropdown) {
+                    return (
+                      <div key={n.to} className="rounded-[6px] overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setMobileCalcExpanded((prev) => !prev)}
+                          className={`w-full flex items-center justify-between px-4 py-3 font-sans text-[13.5px] font-semibold leading-none uppercase rounded-[6px] transition-colors duration-200 min-h-[44px] ${
+                            isCalculatorsActive
+                              ? "text-white bg-white/[0.08] border border-white/25"
+                              : "text-[#E8DCD5] hover:text-white hover:bg-white/[0.04] border border-transparent"
+                          }`}
+                        >
+                          <span className="tracking-[0.08em] flex items-center gap-2">
+                            <span>{n.label}</span>
+                            <span className="text-[10px] font-bold text-[#D4A359] bg-[#D4A359]/20 px-1.5 py-0.5 rounded">
+                              12
+                            </span>
+                          </span>
+                          <ChevronDown
+                            className={`w-4 h-4 transition-transform duration-200 ${
+                              mobileCalcExpanded ? "rotate-180 text-[#D4A359]" : ""
+                            }`}
+                          />
+                        </button>
+
+                        <AnimatePresence>
+                          {mobileCalcExpanded && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="bg-black/25 px-3 py-3 rounded-[6px] mt-1 space-y-3"
+                            >
+                              <Link
+                                to="/calculators"
+                                onClick={() => setMobileOpen(false)}
+                                className="block text-[12px] font-bold text-[#D4A359] uppercase tracking-wider pb-2 border-b border-white/10"
+                              >
+                                View All 12 Calculators →
+                              </Link>
+
+                              {CALCULATOR_CATEGORIES.map((cat) => {
+                                const catCalcs = CALCULATORS.filter(
+                                  (c) => c.category === cat.id
+                                );
+
+                                return (
+                                  <div key={cat.id} className="space-y-1">
+                                    <div className="text-[10px] font-bold uppercase tracking-wider text-white/50 px-2 pt-1">
+                                      {cat.name}
+                                    </div>
+                                    {catCalcs.map((item) => (
+                                      <Link
+                                        key={item.id}
+                                        to={item.path}
+                                        onClick={() => setMobileOpen(false)}
+                                        className={`flex items-center gap-2 px-2.5 py-2 rounded-[5px] text-[12px] font-medium transition-colors ${
+                                          pathname === item.path
+                                            ? "text-[#D4A359] bg-white/[0.08]"
+                                            : "text-[#E8DCD5] hover:text-white"
+                                        }`}
+                                      >
+                                        <CalculatorIcon
+                                          name={item.iconName}
+                                          className="w-3.5 h-3.5 text-[#D4A359]"
+                                        />
+                                        <span className="truncate">{item.name}</span>
+                                      </Link>
+                                    ))}
+                                  </div>
+                                );
+                              })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  }
+
+                  return (
                     <NavLink
+                      key={n.to}
                       to={n.to}
                       end={n.to === "/"}
                       data-testid={`mobile-nav-${n.label.toLowerCase().replace(/\s+/g, "-")}`}
+                      onClick={() => setMobileOpen(false)}
                       className={({ isActive }) => {
-                        const active = isActive || (n.to === "/about" && pathname === "/contact");
+                        const active =
+                          isActive || (n.to === "/about" && pathname === "/contact");
                         return `flex items-center justify-between px-4 py-3 font-sans text-[13.5px] font-semibold leading-none uppercase rounded-[6px] transition-colors duration-200 min-h-[44px] ${
                           active
                             ? "text-white bg-white/[0.08] border border-white/25"
@@ -214,7 +459,8 @@ export default function Header() {
                       }}
                     >
                       {({ isActive }) => {
-                        const active = isActive || (n.to === "/about" && pathname === "/contact");
+                        const active =
+                          isActive || (n.to === "/about" && pathname === "/contact");
                         return (
                           <>
                             <span className="tracking-[0.08em]">{n.label}</span>
@@ -225,19 +471,14 @@ export default function Header() {
                         );
                       }}
                     </NavLink>
-                  </motion.div>
-                ))}
+                  );
+                })}
 
-                {/* Mobile CTA */}
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.25, duration: 0.2 }}
-                  className="mt-3 pt-3 border-t border-white/10"
-                >
+                <div className="mt-3 pt-3 border-t border-white/10">
                   <Link
                     to="/contact"
                     data-testid="mobile-header-cta"
+                    onClick={() => setMobileOpen(false)}
                     className="group flex items-center justify-center gap-2 w-full h-[44px] px-6 font-sans text-[12.5px] font-semibold tracking-[0.06em] uppercase text-white rounded-[6px] transition-all duration-200 border border-white/20"
                     style={{
                       background: "linear-gradient(135deg, #BD7732 0%, #DA9B48 100%)",
@@ -250,7 +491,7 @@ export default function Header() {
                       strokeWidth={2}
                     />
                   </Link>
-                </motion.div>
+                </div>
 
                 <div className="mt-2 text-[9px] tracking-[0.3em] uppercase text-[#E8DCD5]/60 text-center">
                   Real Estate Consulting &amp; Marketing

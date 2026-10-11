@@ -21,6 +21,8 @@ const BlogsListPage = lazy(() => import("@/pages/BlogsListPage"));
 const BlogDetailPage = lazy(() => import("@/pages/BlogDetailPage"));
 const ResalePage = lazy(() => import("@/pages/ResalePage"));
 const CareerPage = lazy(() => import("@/pages/CareerPage"));
+const CalculatorsLandingPage = lazy(() => import("@/pages/calculators/CalculatorsLandingPage"));
+const CalculatorDetailPage = lazy(() => import("@/pages/calculators/CalculatorDetailPage"));
 
 const AdminLoginPage = lazy(() => import("@/pages/admin/AdminLoginPage"));
 const AdminLayout = lazy(() => import("@/layouts/AdminLayout"));
@@ -68,6 +70,8 @@ function App() {
                     <Route path="/blogs" element={<BlogsListPage />} />
                     <Route path="/blogs/:slug" element={<BlogDetailPage />} />
                     <Route path="/resale" element={<ResalePage />} />
+                    <Route path="/calculators" element={<CalculatorsLandingPage />} />
+                    <Route path="/calculators/:slug" element={<CalculatorDetailPage />} />
                     <Route path="/career" element={<CareerPage />} />
                     <Route path="/about" element={<AboutPage />} />
                     <Route path="/contact" element={<ContactPage />} />

@@ -60,6 +60,12 @@
 
 @layer base {
   * { border-color: hsl(var(--border) / 0.55); }
+  html,
+  body,
+  #root {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
   html { scroll-behavior: smooth; }
   body {
     margin: 0;
@@ -70,7 +76,6 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     letter-spacing: 0.01em;
-    overflow-x: hidden;
     -webkit-tap-highlight-color: transparent;
   }
   img { max-width: 100%; height: auto; }
