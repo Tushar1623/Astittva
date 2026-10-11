@@ -17,6 +17,7 @@ import {
   Compass,
 } from "lucide-react";
 import Seo from "@/components/Seo";
+import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
 import { toast } from "sonner";
 import { PHONE_DISPLAY, EMAIL } from "@/lib/site";
@@ -142,12 +143,55 @@ export default function ResaleDetailPage() {
 
   const gallery = Array.isArray(property.images) && property.images.length > 0 ? property.images : [property.featuredImage].filter(Boolean);
 
+  const resaleBreadcrumbs = [
+    { name: "Home", path: "/" },
+    { name: "Resale", path: "/resale" },
+    { name: property.title, path: `/resale/${property.id}` },
+  ];
+
+  const resaleSchema = {
+    "@context": "https://schema.org",
+    "@type": "SingleFamilyResidence",
+    name: property.title,
+    description: property.description || property.title,
+    url: `https://astittva.in/resale/${property.id}`,
+    image: gallery.length > 0 ? gallery : undefined,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: property.address || property.location || "",
+      addressLocality: property.locality || property.location || "Kolkata",
+      addressRegion: "West Bengal",
+      postalCode: property.pincode || "700156",
+      addressCountry: "IN",
+    },
+    numberOfRooms: property.bedrooms || undefined,
+    numberOfBathroomsTotal: property.bathrooms || undefined,
+    floorSize: property.area
+      ? { "@type": "QuantitativeValue", value: property.area, unitText: property.areaUnit || "SQFT" }
+      : undefined,
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "INR",
+      price: property.price || undefined,
+      url: `https://astittva.in/resale/${property.id}`,
+      availability: "https://schema.org/InStock",
+      seller: {
+        "@type": "RealEstateAgent",
+        "@id": "https://astittva.in/#organization",
+        name: "Astittva Marketing",
+      },
+    },
+  };
+
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-[90px] sm:pt-[105px] lg:pt-[115px]">
       <Seo
-        title={`${property.title} | Luxury Resale at Astittva`}
-        description={`${property.bedrooms ? property.bedrooms + " BHK " : ""}${property.propertyType} in ${property.locality || property.location || "Kolkata"}. Price: ${formatPriceINR(property.price)}.`}
+        title={`${property.title} | ${property.bedrooms ? property.bedrooms + " BHK " : ""}Resale Flat in ${property.locality || property.location || "Kolkata"} | Astittva`}
+        description={`Explore ${property.title}, a verified ${property.bedrooms ? property.bedrooms + " BHK " : ""}${property.propertyType || "resale property"} in ${property.locality || property.location || "Kolkata"}. Area: ${property.area || ""} ${property.areaUnit || "sq.ft."}. Listed at ${formatPriceINR(property.price)} with title verification by Astittva Marketing.`}
         path={`/resale/${property.id}`}
+        type="product"
+        image={gallery[0]}
+        schema={[resaleSchema, buildBreadcrumbSchema(resaleBreadcrumbs)]}
       />
 
       {/* Top Breadcrumb & Share Navigation */}

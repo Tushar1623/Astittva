@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import Seo from "@/components/Seo";
+import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import { EVERGREEN_NEWS } from "@/data/evergreenNews";
 
 const TEXTURE = "https://static.prod-images.emergentagent.com/jobs/50ac1e2c-4ee3-4d48-ad5e-fd37063ae3c0/images/1f5da7f44ad5aab6c1f6ab3c12df3ec89723084c1042e95749a6b4658dcffcc6.png";
@@ -218,10 +219,11 @@ function NewsGrid({ articles, loading, max = 12 }) {
 function SEO() {
   return (
     <Seo
-      title="Market Intelligence · Kolkata Real Estate News & Investment Insights"
-      description="Live Kolkata real estate news, India property market trends, infrastructure updates, luxury property news and global investment insights — curated by Astittva Marketing."
-      path="/market-intelligence"
+      title="Kolkata Real Estate Market Intelligence & News | Astittva"
+      description="Stay informed with curated real estate market intelligence, infrastructure milestones, and economic insights across Kolkata and Eastern India."
+      path="/news"
       keywords="Kolkata real estate news, India property market trends, real estate investment news India, luxury property news, New Town infrastructure updates, Rajarhat property updates"
+      schema={buildBreadcrumbSchema([{ name: "Home", path: "/" }, { name: "Market Intelligence", path: "/news" }])}
     />
   );
 }

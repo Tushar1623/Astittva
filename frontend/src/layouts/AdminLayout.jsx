@@ -16,6 +16,7 @@ import {
   Repeat,
   BadgePercent,
 } from "lucide-react";
+import Seo from "@/components/Seo";
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
@@ -73,6 +74,7 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-charcoal">
+      <Seo title="Admin Console | Astittva Marketing" noIndex={true} path={location.pathname} />
       {/* Mobile top bar — visible < lg. Sticky so admin can always reach the menu. */}
       <div className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 h-14 bg-charcoal border-b border-copper/15">
         <div className="flex items-center gap-2 min-w-0">

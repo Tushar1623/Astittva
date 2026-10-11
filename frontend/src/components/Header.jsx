@@ -92,7 +92,7 @@ export default function Header() {
                 <div className="w-[38px] h-[38px] sm:w-[42px] sm:h-[42px] lg:w-[44px] lg:h-[44px] rounded-[6px] overflow-hidden shrink-0 border border-white/15 shadow-sm bg-[#3D060E] flex items-center justify-center transition-transform duration-300 group-hover:scale-[1.02]">
                   <img
                     src="/apple-touch-icon.png"
-                    alt="Astittva Emblem"
+                    alt="Astittva Marketing - Luxury Real Estate Advisory Kolkata"
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.currentTarget.src = "/favicon-512x512.png";
@@ -119,7 +119,7 @@ export default function Header() {
             </div>
 
             {/* CENTER: Navigation Links */}
-            <nav className="hidden lg:flex items-center justify-center flex-1 px-1 xl:px-2 min-w-0">
+            <nav className="hidden lg:flex items-center justify-center flex-1 px-1 xl:px-2 min-w-0" aria-label="Primary Navigation">
               <div className="flex items-center gap-1 xl:gap-2 2xl:gap-3.5">
                 {primaryNav.map((n) => {
                   // Special Dropdown Item for CALCULATORS

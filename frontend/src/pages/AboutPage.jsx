@@ -9,6 +9,7 @@ import api, { formatApiErrorDetail } from "@/lib/api";
 import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY, EMAIL } from "@/lib/site";
 import Seo from "@/components/Seo";
+import { buildBreadcrumbSchema, getOrganizationSchema } from "@/lib/seoConfig";
 
 const TEXTURE = "https://static.prod-images.emergentagent.com/jobs/50ac1e2c-4ee3-4d48-ad5e-fd37063ae3c0/images/1f5da7f44ad5aab6c1f6ab3c12df3ec89723084c1042e95749a6b4658dcffcc6.png";
 
@@ -76,13 +77,30 @@ export default function AboutPage({ scrollToContact = false }) {
     }
   };
 
+  const isContactRoute = location.pathname === "/contact" || scrollToContact;
+
+  const pageTitle = isContactRoute
+    ? "Contact Astittva Marketing | Real Estate Consultants in Kolkata"
+    : "About Astittva Marketing | Real Estate Consultants";
+
+  const pageDescription = isContactRoute
+    ? "Schedule a private consultation with Astittva Marketing. Connect with our property advisors for Kolkata, New Town, and Rajarhat real estate."
+    : "Learn about Astittva Marketing, Kolkata's trusted real estate consultancy. Expert guidance for residential purchases, commercial investments, and developer marketing.";
+
+  const pagePath = isContactRoute ? "/contact" : "/about";
+
+  const breadcrumbs = isContactRoute
+    ? [{ name: "Home", path: "/" }, { name: "Contact", path: "/contact" }]
+    : [{ name: "Home", path: "/" }, { name: "About", path: "/about" }];
+
   return (
     <div data-testid="about-page" className="pt-28 pb-16 sm:pt-32 sm:pb-24">
       <Seo
-        title="About &amp; Contact · Astittva Marketing · Luxury Real Estate Advisory"
-        description="Astittva Marketing is a premier luxury real estate advisory representing Kolkata's most prestigious developments. Learn about our vision, values, and schedule a private consultation."
-        path="/about"
+        title={pageTitle}
+        description={pageDescription}
+        path={pagePath}
         keywords="About Astittva Marketing, contact Astittva, luxury real estate advisory Kolkata, real estate consultation"
+        schema={[getOrganizationSchema(), buildBreadcrumbSchema(breadcrumbs)]}
       />
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         {/* Header Intro */}

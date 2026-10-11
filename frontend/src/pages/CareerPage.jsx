@@ -6,6 +6,7 @@ import {
   ArrowRight, CheckCircle2, Mail, Phone, MapPin, Send 
 } from "lucide-react";
 import Seo from "@/components/Seo";
+import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import api, { formatApiErrorDetail } from "@/lib/api";
 import { toast } from "sonner";
 import { PHONE_DISPLAY, EMAIL, OFFICE_ADDRESS } from "@/lib/site";
@@ -118,9 +119,11 @@ export default function CareerPage() {
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-[90px] sm:pt-[105px] lg:pt-[115px]">
       <Seo
-        title="Careers at Astittva Marketing — Coming Soon"
-        description="Explore career opportunities at Astittva Marketing. Join Kolkata's premier luxury real estate advisory and marketing firm. Portal coming soon."
+        title="Careers | Astittva Marketing"
+        description="Explore career opportunities at Astittva Marketing. Join Kolkata's premier luxury real estate advisory and property marketing consultancy."
         path="/career"
+        keywords="careers Astittva Marketing, real estate jobs Kolkata, luxury property advisor jobs, property consultant careers New Town"
+        schema={buildBreadcrumbSchema([{ name: "Home", path: "/" }, { name: "Careers", path: "/career" }])}
       />
 
       {/* Hero Section */}

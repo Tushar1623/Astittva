@@ -1,22 +1,23 @@
+import React from "react";
 import { Helmet } from "react-helmet-async";
-
-const SITE_URL = "https://astittva.in";
-const SITE_NAME = "Astittva Marketing";
-const DEFAULT_OG_IMAGE =
-  "https://customer-assets.emergentagent.com/job_astitva-luxury-1/artifacts/c212hx9z_ASTITTVA%20MARKETING%20FINAL.png";
+import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/lib/seoConfig";
 
 /**
- * Universal SEO head tags for every public route.
+ * Universal SEO & OpenGraph Head Tag Component
  *
- * Props
- *  - title         (string)  Required. Becomes the document title and og:title.
- *  - description   (string)  Required. Meta description + og/twitter description.
- *  - path          (string)  e.g. "/about". Builds the canonical URL and og:url.
- *  - image         (string)  Optional og:image (absolute URL). Defaults to brand logo.
- *  - type          (string)  og:type — "website" | "article" | "product" etc.
- *  - noIndex       (bool)    Adds `robots: noindex,nofollow` when true.
- *  - jsonLd        (object|array) JSON-LD structured data to embed.
+ * Props:
+ *  - title         (string)  Page title. Formatted with branding if not already included.
+ *  - description   (string)  Meta & social description.
+ *  - path          (string)  Route pathname for canonical & og:url (e.g. "/properties").
+ *  - image         (string)  Absolute or relative image URL for social previews.
+ *  - type          (string)  og:type — "website", "article", or "product". Default: "website".
+ *  - noIndex       (bool)    When true, outputs `noindex, nofollow` (for admin/login).
+ *  - jsonLd        (object|array) Structured data schema(s) to embed as JSON-LD.
+ *  - schema        (object|array) Alias for jsonLd.
  *  - keywords      (string)  Optional comma-separated keywords.
+ *  - publishedTime (string)  ISO date string for articles/blogs.
+ *  - modifiedTime  (string)  ISO date string for articles/blogs.
+ *  - author        (string)  Author name for articles/blogs.
  */
 export default function Seo({
   title,
@@ -26,41 +27,98 @@ export default function Seo({
   type = "website",
   noIndex = false,
   jsonLd,
+  schema,
   keywords,
+  publishedTime,
+  modifiedTime,
+  author,
 }) {
-  const url = `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
-  const fullTitle =
-    title.toLowerCase().includes("astittva") ? title : `${title} | ${SITE_NAME}`;
+  // Ensure path is clean and canonical URL is properly formed
+  const cleanPath = path.startsWith("http")
+    ? path
+    : `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+
+  // Clean title: replace HTML entities if accidentally passed
+  const cleanTitle = (title || SITE_NAME)
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .trim();
+
+  // Smart title suffix: avoid duplicate brand suffix
+  const fullTitle = cleanTitle.toLowerCase().includes("astittva")
+    ? cleanTitle
+    : `${cleanTitle} | ${SITE_NAME}`;
+
+  // Ensure absolute image URL for Open Graph / Twitter
+  let ogImage = image || DEFAULT_OG_IMAGE;
+  if (ogImage && !ogImage.startsWith("http")) {
+    ogImage = `${SITE_URL}${ogImage.startsWith("/") ? ogImage : `/${ogImage}`}`;
+  }
+
+  // Combine schemas
+  const schemasToRender = [];
+  if (jsonLd) {
+    if (Array.isArray(jsonLd)) schemasToRender.push(...jsonLd);
+    else schemasToRender.push(jsonLd);
+  }
+  if (schema) {
+    if (Array.isArray(schema)) schemasToRender.push(...schema);
+    else schemasToRender.push(schema);
+  }
 
   return (
     <Helmet prioritizeSeoTags>
+      {/* Standard SEO */}
       <title>{fullTitle}</title>
-      <meta name="description" content={description} />
+      {description && <meta name="description" content={description} />}
       {keywords && <meta name="keywords" content={keywords} />}
-      <meta name="robots" content={noIndex ? "noindex,nofollow" : "index,follow,max-image-preview:large"} />
-      <link rel="canonical" href={url} />
+      <link rel="canonical" href={cleanPath} />
 
-      {/* Open Graph */}
+      {/* Robots Directive */}
+      <meta
+        name="robots"
+        content={
+          noIndex
+            ? "noindex, nofollow"
+            : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+        }
+      />
+
+      {/* Open Graph / Facebook */}
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:type" content={type} />
       <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={description} />
-      <meta property="og:url" content={url} />
-      <meta property="og:image" content={image} />
-      <meta property="og:image:alt" content={SITE_NAME} />
+      {description && <meta property="og:description" content={description} />}
+      <meta property="og:url" content={cleanPath} />
+      <meta property="og:image" content={ogImage} />
+      <meta property="og:image:alt" content={fullTitle} />
       <meta property="og:locale" content="en_IN" />
 
-      {/* Twitter */}
+      {/* Article Specific Open Graph */}
+      {type === "article" && publishedTime && (
+        <meta property="article:published_time" content={publishedTime} />
+      )}
+      {type === "article" && modifiedTime && (
+        <meta property="article:modified_time" content={modifiedTime} />
+      )}
+      {type === "article" && author && (
+        <meta property="article:author" content={author} />
+      )}
+
+      {/* Twitter Cards */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
-      <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={image} />
+      {description && <meta name="twitter:description" content={description} />}
+      <meta name="twitter:image" content={ogImage} />
 
-      {jsonLd && (
-        <script type="application/ld+json">
-          {JSON.stringify(Array.isArray(jsonLd) ? jsonLd : [jsonLd])}
-        </script>
-      )}
+      {/* JSON-LD Structured Data */}
+      {schemasToRender.length > 0 &&
+        schemasToRender.map((s, idx) => (
+          <script key={idx} type="application/ld+json">
+            {JSON.stringify(s)}
+          </script>
+        ))}
     </Helmet>
   );
 }

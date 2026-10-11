@@ -49,7 +49,7 @@ export default function PropertyCard({
         <img
           loading="lazy"
           src={imageSrc}
-          alt={p.project_name}
+          alt={`${p.project_name} - ${p.bedrooms || p.property_type || "Luxury Property"} in ${p.location ? `${p.location}, ${p.city}` : p.city || "Kolkata"}`}
           onError={(e) => {
             e.currentTarget.onerror = null;
             e.currentTarget.src = pickPropertyFallback(p.id);

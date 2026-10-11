@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import Seo from "@/components/Seo";
+import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import { ArrowLeft, ArrowRight, Share2, Sparkles, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { CALCULATORS, getCalculatorBySlug } from "@/data/calculatorsData";
@@ -66,12 +67,41 @@ function CalculatorInner({ calculator }) {
     ).slice(0, 3);
   }, [calculator]);
 
+  const breadcrumbItems = [
+    { name: "Home", path: "/" },
+    { name: "Calculators", path: "/calculators" },
+    { name: calculator.name, path: `/calculators/${calculator.slug}` },
+  ];
+
+  const calcSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: calculator.name,
+    description: calculator.description,
+    url: `https://astittva.in/calculators/${calculator.slug}`,
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "All",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "INR",
+    },
+    provider: {
+      "@type": "RealEstateAgent",
+      "@id": "https://astittva.in/#organization",
+      name: "Astittva Marketing",
+    },
+  };
+
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-24 sm:pt-28 pb-20">
-      <Helmet>
-        <title>{`${calculator.name} — Astittva Real Estate Advisory`}</title>
-        <meta name="description" content={calculator.description} />
-      </Helmet>
+      <Seo
+        title={`${calculator.name} | Astittva Marketing`}
+        description={`${calculator.description} Calculate online for free with real-time financial math for Kolkata properties.`}
+        path={`/calculators/${calculator.slug}`}
+        keywords={`${calculator.name}, Kolkata real estate calculator, ${calculator.categoryLabel}, property financial tools`}
+        schema={[calcSchema, buildBreadcrumbSchema(breadcrumbItems)]}
+      />
 
       {/* Top Header & Breadcrumb */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-8">

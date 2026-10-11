@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY } from "@/lib/site";
 import CinematicHero from "@/components/CinematicHero";
 import Seo from "@/components/Seo";
+import { getOrganizationSchema, getWebSiteSchema } from "@/lib/seoConfig";
 
 const TEXTURE = "https://static.prod-images.emergentagent.com/jobs/50ac1e2c-4ee3-4d48-ad5e-fd37063ae3c0/images/1f5da7f44ad5aab6c1f6ab3c12df3ec89723084c1042e95749a6b4658dcffcc6.png";
 
@@ -125,10 +126,11 @@ export default function HomePage() {
   return (
     <div data-testid="home-page">
       <Seo
-        title="Astittva Marketing — Luxury Real Estate Advisory, Property Consultants & Investment Advisory in Kolkata"
-        description="Astittva Marketing is a luxury real estate advisory and property consultancy in Kolkata. We curate verified residential, commercial and investment properties across New Town, Rajarhat, Salt Lake, Alipore and partner with India's most trusted developers to deliver opportunities for the discerning investor."
+        title="Astittva Marketing | Property Consultants & Luxury Real Estate in Kolkata"
+        description="Explore residential properties in Kolkata, New Town and Rajarhat with Astittva Marketing. Get expert property guidance for buying, selling, and investing."
         path="/"
         keywords="luxury real estate Kolkata, property consultants Kolkata, investment advisory Kolkata, real estate advisory, New Town properties, Rajarhat apartments, Astittva Marketing, premium real estate Kolkata"
+        schema={[getOrganizationSchema(), getWebSiteSchema()]}
       />
       {/* ===================== HERO ===================== */}
       <section data-testid="hero-section" className="relative min-h-[640px] h-[100svh] sm:min-h-[760px] sm:h-screen w-full overflow-hidden bg-[#FAF8F5]">

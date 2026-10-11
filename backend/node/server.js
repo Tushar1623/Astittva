@@ -414,6 +414,183 @@ app.get(["/api", "/api/"], (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// SEO Dynamic XML Sitemap & Robots.txt
+// ---------------------------------------------------------------------------
+const SITE_DOMAIN = "https://astittva.in";
+
+const STATIC_SITEMAP_ENTRIES = [
+  { path: "/", changefreq: "daily", priority: "1.0" },
+  { path: "/properties", changefreq: "daily", priority: "0.9" },
+  { path: "/resale", changefreq: "daily", priority: "0.9" },
+  { path: "/calculators", changefreq: "weekly", priority: "0.85" },
+  { path: "/blogs", changefreq: "daily", priority: "0.8" },
+  { path: "/news", changefreq: "daily", priority: "0.8" },
+  { path: "/about", changefreq: "monthly", priority: "0.7" },
+  { path: "/contact", changefreq: "monthly", priority: "0.7" },
+  { path: "/career", changefreq: "monthly", priority: "0.6" },
+  // 12 Calculators
+  { path: "/calculators/home-loan-emi", changefreq: "weekly", priority: "0.8" },
+  { path: "/calculators/property-affordability", changefreq: "weekly", priority: "0.8" },
+  { path: "/calculators/property-roi", changefreq: "weekly", priority: "0.8" },
+  { path: "/calculators/rental-yield", changefreq: "weekly", priority: "0.8" },
+  { path: "/calculators/rent-vs-buy", changefreq: "weekly", priority: "0.8" },
+  { path: "/calculators/property-appreciation", changefreq: "weekly", priority: "0.8" },
+  { path: "/calculators/area-conversion", changefreq: "weekly", priority: "0.8" },
+  { path: "/calculators/price-per-sqft", changefreq: "weekly", priority: "0.8" },
+  { path: "/calculators/stamp-duty-registration", changefreq: "weekly", priority: "0.8" },
+  { path: "/calculators/construction-cost", changefreq: "weekly", priority: "0.8" },
+  { path: "/calculators/down-payment", changefreq: "weekly", priority: "0.8" },
+  { path: "/calculators/capital-gains-tax", changefreq: "weekly", priority: "0.8" },
+];
+
+async function generateSitemapXml() {
+  const cached = cacheGet("seo:sitemap:xml");
+  if (cached) return cached;
+
+  const today = new Date().toISOString().split("T")[0];
+  const urls = [];
+
+  // Static URLs
+  for (const entry of STATIC_SITEMAP_ENTRIES) {
+    urls.push(`  <url>
+    <loc>${SITE_DOMAIN}${entry.path}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${entry.changefreq}</changefreq>
+    <priority>${entry.priority}</priority>
+  </url>`);
+  }
+
+  const db = getDb();
+  if (db) {
+    try {
+      // 1. Published Primary Properties
+      const props = await db
+        .collection("properties")
+        .find({ status: "published" }, { projection: { _id: 1, updated_at: 1, created_at: 1 } })
+        .toArray();
+
+      for (const p of props) {
+        const pid = String(p._id);
+        let lastmod = p.updated_at || p.created_at || today;
+        if (typeof lastmod === "string" && lastmod.includes("T")) {
+          lastmod = lastmod.split("T")[0];
+        } else if (lastmod instanceof Date) {
+          lastmod = lastmod.toISOString().split("T")[0];
+        } else {
+          lastmod = today;
+        }
+        urls.push(`  <url>
+    <loc>${SITE_DOMAIN}/properties/${pid}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>`);
+      }
+
+      // 2. Published Resale Properties
+      const resaleProps = await db
+        .collection("resale_properties")
+        .find({ status: "published" }, { projection: { _id: 1, updatedAt: 1, createdAt: 1 } })
+        .toArray();
+
+      for (const rp of resaleProps) {
+        const rpid = String(rp._id);
+        let lastmod = rp.updatedAt || rp.createdAt || today;
+        if (typeof lastmod === "string" && lastmod.includes("T")) {
+          lastmod = lastmod.split("T")[0];
+        } else if (lastmod instanceof Date) {
+          lastmod = lastmod.toISOString().split("T")[0];
+        } else {
+          lastmod = today;
+        }
+        urls.push(`  <url>
+    <loc>${SITE_DOMAIN}/resale/${rpid}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>`);
+      }
+
+      // 3. Published Blogs
+      const blogs = await db
+        .collection("blogs")
+        .find({ status: "published" }, { projection: { slug: 1, updated_at: 1, publish_date: 1, created_at: 1 } })
+        .toArray();
+
+      for (const b of blogs) {
+        if (!b.slug) continue;
+        let lastmod = b.updated_at || b.publish_date || b.created_at || today;
+        if (typeof lastmod === "string" && lastmod.includes("T")) {
+          lastmod = lastmod.split("T")[0];
+        } else if (lastmod instanceof Date) {
+          lastmod = lastmod.toISOString().split("T")[0];
+        } else {
+          lastmod = today;
+        }
+        urls.push(`  <url>
+    <loc>${SITE_DOMAIN}/blogs/${encodeURIComponent(b.slug)}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`);
+      }
+    } catch (err) {
+      console.error("[Sitemap] Error fetching dynamic sitemap records:", err.message);
+    }
+  }
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.join("\n")}
+</urlset>`;
+
+  cacheSet("seo:sitemap:xml", xml, 3600); // 1 hour TTL
+  return xml;
+}
+
+app.get(["/sitemap.xml", "/api/sitemap.xml"], async (req, res) => {
+  try {
+    const xml = await generateSitemapXml();
+    res.set({
+      "Content-Type": "application/xml; charset=utf-8",
+      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+    });
+    return res.send(xml);
+  } catch (err) {
+    console.error("[Sitemap] Failed to generate sitemap:", err);
+    return res.status(500).send("<?xml version=\"1.0\" encoding=\"UTF-8\"?><error>Sitemap unavailable</error>");
+  }
+});
+
+app.get("/robots.txt", (req, res) => {
+  const robots = `# Astittva Marketing — robots.txt
+# Website: https://astittva.in
+# Real Estate Consultants & Advisory in Kolkata
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/admin
+Disallow: /api/admin/
+Disallow: /api/auth
+Disallow: /api/auth/
+Disallow: /dashboard
+Disallow: /dashboard/
+
+# XML Sitemaps
+Sitemap: https://astittva.in/sitemap.xml
+Sitemap: https://astittva.in/api/sitemap.xml
+`;
+  res.set({
+    "Content-Type": "text/plain; charset=utf-8",
+    "Cache-Control": "public, max-age=86400",
+  });
+  return res.send(robots);
+});
+
+
+// ---------------------------------------------------------------------------
 // Auth Routes
 // ---------------------------------------------------------------------------
 app.post("/api/auth/login", async (req, res) => {

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, MapPin, Filter, X, SlidersHorizontal } from "lucide-react";
 import api, { isGoogleDriveImage, driveImageUrl } from "@/lib/api";
 import Seo from "@/components/Seo";
+import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 
 // ---------- Filter option catalogues (per Astittva brand brief) ----------
 const LOCATIONS = [
@@ -142,13 +143,34 @@ export default function PropertiesPage() {
     </div>
   );
 
+  const pageTitle = location
+    ? `Properties in ${location} Kolkata | Astittva Marketing`
+    : "Properties in Kolkata | Flats & Homes | Astittva Marketing";
+
+  const pageDescription = location
+    ? `Explore verified residential and commercial properties in ${location}, Kolkata with Astittva Marketing. Filter by builder, budget, and possession stage.`
+    : "Browse curated residential properties, luxury flats, and apartments in Kolkata, New Town, and Rajarhat. Filter by budget, builder, and possession stage.";
+
+  const pageH1 = location
+    ? `Properties in ${location}, Kolkata`
+    : "Properties in Kolkata";
+
+  const breadcrumbs = [
+    { name: "Home", path: "/" },
+    { name: "Properties", path: "/properties" },
+  ];
+  if (location) {
+    breadcrumbs.push({ name: location, path: `/properties?location=${encodeURIComponent(location)}` });
+  }
+
   return (
     <div data-testid="properties-page" className="relative pt-28 pb-16 sm:pt-32 sm:pb-24 text-ivory">
       <Seo
-        title="Luxury Properties for Sale in Kolkata · New Town · Rajarhat"
-        description="Browse Astittva Marketing's curated portfolio of luxury residential, commercial and investment properties across New Town, Rajarhat, Salt Lake, Alipore and other premium Kolkata destinations. Filter by location, builder, budget and category."
-        path="/properties"
-        keywords="properties for sale Kolkata, New Town flats, Rajarhat apartments, luxury homes Kolkata, PS Group Merlin Siddha Shrachi properties"
+        title={pageTitle}
+        description={pageDescription}
+        path={location ? `/properties?location=${encodeURIComponent(location)}` : "/properties"}
+        keywords={`properties for sale Kolkata, New Town flats, Rajarhat apartments, luxury homes Kolkata${location ? `, properties in ${location}` : ""}`}
+        schema={buildBreadcrumbSchema(breadcrumbs)}
       />
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         <motion.div
@@ -157,7 +179,7 @@ export default function PropertiesPage() {
         >
           <div className="overline mb-4">Curated Portfolio</div>
           <h1 className="font-display font-light text-3xl sm:text-5xl lg:text-6xl text-ivory tracking-tight">
-            Properties
+            {pageH1}
           </h1>
           <p className="text-ivory/55 font-light mt-4 max-w-2xl text-sm sm:text-base">
             Every listing is verified, RERA-compliant where applicable, and curated by our advisory desk.
@@ -315,7 +337,7 @@ export default function PropertiesPage() {
                         <img
                           loading="lazy"
                           src={imgSrc}
-                          alt={p.project_name}
+                          alt={`${p.project_name} - ${p.bedrooms || p.property_type || "Residential property"} in ${p.location || p.city || "Kolkata"}`}
                           className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
                           onError={(e) => {
                             e.currentTarget.onerror = null;

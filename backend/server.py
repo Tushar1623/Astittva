@@ -359,17 +359,34 @@ async def healthz():
 # ---------------------- SEO ----------------------
 SITE_URL = "https://astittva.in"
 STATIC_SITEMAP_URLS = [
-    ("/", "weekly", "1.0"),
+    ("/", "daily", "1.0"),
     ("/properties", "daily", "0.9"),
-    ("/market-intelligence", "daily", "0.8"),
-    ("/about", "monthly", "0.6"),
-    ("/contact", "monthly", "0.6"),
+    ("/resale", "daily", "0.9"),
+    ("/calculators", "weekly", "0.85"),
+    ("/blogs", "daily", "0.8"),
+    ("/news", "daily", "0.8"),
+    ("/about", "monthly", "0.7"),
+    ("/contact", "monthly", "0.7"),
+    ("/career", "monthly", "0.6"),
+    ("/calculators/home-loan-emi", "weekly", "0.8"),
+    ("/calculators/property-affordability", "weekly", "0.8"),
+    ("/calculators/property-roi", "weekly", "0.8"),
+    ("/calculators/rental-yield", "weekly", "0.8"),
+    ("/calculators/rent-vs-buy", "weekly", "0.8"),
+    ("/calculators/property-appreciation", "weekly", "0.8"),
+    ("/calculators/area-conversion", "weekly", "0.8"),
+    ("/calculators/price-per-sqft", "weekly", "0.8"),
+    ("/calculators/stamp-duty-registration", "weekly", "0.8"),
+    ("/calculators/construction-cost", "weekly", "0.8"),
+    ("/calculators/down-payment", "weekly", "0.8"),
+    ("/calculators/capital-gains-tax", "weekly", "0.8"),
 ]
 
 
+@app.get("/sitemap.xml")
 @app.get("/api/sitemap.xml")
 async def sitemap_xml():
-    """Dynamic sitemap.xml — includes every published property + static pages."""
+    """Dynamic sitemap.xml — includes every published property, resale, blog + static pages."""
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     parts = ['<?xml version="1.0" encoding="UTF-8"?>',
              '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
@@ -392,16 +409,29 @@ async def sitemap_xml():
             parts.append(
                 f"  <url><loc>{SITE_URL}/properties/{pid}</loc>"
                 f"<lastmod>{lastmod}</lastmod><changefreq>weekly</changefreq>"
-                f"<priority>0.8</priority></url>"
+                f"<priority>0.85</priority></url>"
             )
+
+        # Dynamic published resale properties
+        resale_cursor = db.resale_properties.find(
+            {"status": "published"},
+            {"_id": 1, "updatedAt": 1, "createdAt": 1},
+        )
+        async for rp in resale_cursor:
+            rpid = str(rp["_id"])
+            lastmod = (rp.get("updatedAt") or rp.get("createdAt") or today)
+            if isinstance(lastmod, str) and "T" in lastmod:
+                lastmod = lastmod.split("T", 1)[0]
+            parts.append(
+                f"  <url><loc>{SITE_URL}/resale/{rpid}</loc>"
+                f"<lastmod>{lastmod}</lastmod><changefreq>weekly</changefreq>"
+                f"<priority>0.85</priority></url>"
+            )
+
         # Dynamic published blogs (SEO-friendly /blogs/<slug> URLs)
         blog_cursor = db.blogs.find(
             {"status": "published"},
             {"slug": 1, "updated_at": 1, "publish_date": 1, "created_at": 1},
-        )
-        parts.append(
-            f"  <url><loc>{SITE_URL}/blogs</loc><lastmod>{today}</lastmod>"
-            f"<changefreq>weekly</changefreq><priority>0.7</priority></url>"
         )
         async for b in blog_cursor:
             slug = b.get("slug")
@@ -412,14 +442,15 @@ async def sitemap_xml():
                 lastmod = lastmod.split("T", 1)[0]
             parts.append(
                 f"  <url><loc>{SITE_URL}/blogs/{slug}</loc>"
-                f"<lastmod>{lastmod}</lastmod><changefreq>monthly</changefreq>"
-                f"<priority>0.7</priority></url>"
+                f"<lastmod>{lastmod}</lastmod><changefreq>weekly</changefreq>"
+                f"<priority>0.8</priority></url>"
             )
     except Exception as e:
         logging.getLogger("astitva.sitemap").exception("sitemap generation failed: %s", e)
     parts.append("</urlset>")
     xml = "\n".join(parts)
     return Response(content=xml, media_type="application/xml")
+
 
 
 # ---------------------- Auth Routes ----------------------

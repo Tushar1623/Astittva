@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import Seo from "@/components/Seo";
+import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import { ArrowRight, Sparkles, ShieldCheck } from "lucide-react";
 import { CALCULATORS, CALCULATOR_CATEGORIES } from "@/data/calculatorsData";
 import CalculatorIcon from "@/components/calculators/CalculatorIcon";
@@ -8,13 +9,13 @@ import CalculatorIcon from "@/components/calculators/CalculatorIcon";
 export default function CalculatorsLandingPage() {
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-24 sm:pt-28 pb-20">
-      <Helmet>
-        <title>Property Calculators — Astittva Real Estate Advisory</title>
-        <meta
-          name="description"
-          content="Make smarter property decisions with simple, practical calculators for home buyers, real estate investors, and developers in Kolkata."
-        />
-      </Helmet>
+      <Seo
+        title="Property Calculators | EMI, ROI & Investment Tools | Astittva"
+        description="Free real estate financial calculators for Kolkata buyers and investors: Home Loan EMI, Affordability, Rental Yield, ROI, West Bengal Stamp Duty & Area Converter."
+        path="/calculators"
+        keywords="property calculators Kolkata, home loan EMI calculator, rental yield calculator India, stamp duty West Bengal calculator, real estate investment tools"
+        schema={buildBreadcrumbSchema([{ name: "Home", path: "/" }, { name: "Calculators", path: "/calculators" }])}
+      />
 
       {/* Hero Section */}
       <section className="relative px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pt-6 sm:pt-10 pb-12 sm:pb-16 text-center">

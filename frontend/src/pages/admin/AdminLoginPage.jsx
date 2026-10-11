@@ -3,6 +3,7 @@ import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { LOGO_URL } from "@/lib/site";
 import { toast } from "sonner";
+import Seo from "@/components/Seo";
 
 export default function AdminLoginPage() {
   const { login, user } = useAuth();
@@ -30,6 +31,7 @@ export default function AdminLoginPage() {
 
   return (
     <div data-testid="admin-login-page" className="min-h-screen bg-charcoal flex items-center justify-center px-6 py-12">
+      <Seo title="Admin Console | Astittva Marketing" noIndex={true} path="/admin/login" />
       <div className="w-full max-w-md">
         <div className="text-center mb-10">
           <img src={LOGO_URL} alt="Astittva" className="h-16 sm:h-20 mx-auto mb-6 object-contain" />

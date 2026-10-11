@@ -19,6 +19,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import Seo from "@/components/Seo";
+import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
 import { toast } from "sonner";
 import { PHONE_DISPLAY, EMAIL } from "@/lib/site";
@@ -173,9 +174,11 @@ export default function ResalePage() {
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-[90px] sm:pt-[105px] lg:pt-[115px]">
       <Seo
-        title="Luxury Resale Properties in Kolkata — Astittva Secondary Market"
-        description="Explore verified, title-cleared secondary market apartments, penthouses, and independent houses across New Town, Rajarhat, and Kolkata."
+        title="Resale Properties in Kolkata | Flats & Homes | Astittva Marketing"
+        description="Discover verified resale flats and apartments in Kolkata, New Town, and Rajarhat. Transparent pricing, clear titles, and ready-to-move secondary market inventory."
         path="/resale"
+        keywords="resale properties Kolkata, resale flats New Town, resale apartments Rajarhat, ready to move flats Kolkata, secondary real estate market"
+        schema={buildBreadcrumbSchema([{ name: "Home", path: "/" }, { name: "Resale", path: "/resale" }])}
       />
 
       {/* Hero Section */}
@@ -521,8 +524,9 @@ export default function ResalePage() {
                     <div className="relative aspect-[16/10] bg-[#1a1a1a] overflow-hidden">
                       {img ? (
                         <img
+                          loading="lazy"
                           src={isDrive ? driveImageUrl(img, 600) : img}
-                          alt={p.title}
+                          alt={`${p.title} - ${p.bedrooms ? p.bedrooms + " BHK " : ""}${p.propertyType || "Resale Property"} in ${p.locality || p.location || "Kolkata"}`}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowUpRight, Calendar, BookOpen } from "lucide-react";
 import api, { isGoogleDriveImage, driveImageUrl } from "@/lib/api";
 import Seo from "@/components/Seo";
+import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 
 function formatDate(iso) {
   if (!iso) return "";
@@ -151,11 +152,11 @@ export default function BlogsListPage() {
   return (
     <div data-testid="blogs-list-page" className="relative text-ivory">
       <Seo
-        title="Blogs · Luxury Real Estate Perspectives from Kolkata & Beyond"
-        description="Editorial insights on Kolkata luxury real estate, New Town & Rajarhat corridors, investor strategy, and global property intelligence — curated by Astittva Marketing."
+        title="Real Estate Blog | Kolkata Property Insights | Astittva"
+        description="Read expert analysis on Kolkata real estate, property investment trends, New Town infrastructure updates, and homebuyer advisory guides by Astittva Marketing."
         path="/blogs"
         keywords="Astittva blogs, Kolkata real estate blog, luxury property insights, New Town Rajarhat editorial, real estate investment articles India"
-        jsonLd={jsonLd}
+        schema={[jsonLd, buildBreadcrumbSchema([{ name: "Home", path: "/" }, { name: "Blog", path: "/blogs" }])]}
       />
 
       {/* ============== HERO ============== */}
@@ -169,11 +170,11 @@ export default function BlogsListPage() {
           >
             <div className="eyebrow-line mb-6 sm:mb-8">
               <span className="text-[10px] tracking-[0.5em] uppercase text-[#5F5F5F]">
-                ASTITTVA Editorial
+                The Astittva Journal · Kolkata Property Insights
               </span>
             </div>
             <h1 className="section-title text-[2rem] sm:text-5xl lg:text-7xl leading-[1.05]">
-              The Astittva Journal
+              Real Estate Blog &amp; Insights
             </h1>
             <p className="mt-6 sm:mt-8 text-muted-fg text-base sm:text-lg max-w-3xl leading-[1.75] font-light">
               Slow-read essays on Kolkata luxury real estate, investor strategy, and the

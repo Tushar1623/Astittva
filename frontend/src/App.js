@@ -24,6 +24,7 @@ const ResaleDetailPage = lazy(() => import("@/pages/ResaleDetailPage"));
 const CareerPage = lazy(() => import("@/pages/CareerPage"));
 const CalculatorsLandingPage = lazy(() => import("@/pages/calculators/CalculatorsLandingPage"));
 const CalculatorDetailPage = lazy(() => import("@/pages/calculators/CalculatorDetailPage"));
+const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 
 const AdminLoginPage = lazy(() => import("@/pages/admin/AdminLoginPage"));
 const AdminLayout = lazy(() => import("@/layouts/AdminLayout"));
@@ -80,6 +81,7 @@ function App() {
                     <Route path="/career" element={<CareerPage />} />
                     <Route path="/about" element={<AboutPage />} />
                     <Route path="/contact" element={<ContactPage />} />
+                    <Route path="*" element={<NotFoundPage />} />
                   </Route>
 
                   {/* Admin authentication */}

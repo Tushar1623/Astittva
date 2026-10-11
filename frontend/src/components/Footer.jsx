@@ -163,7 +163,11 @@ export default function Footer() {
               <ul className="space-y-3.5 text-[14px] text-[#F5EFE7]/90 font-normal">
                 <li><Link to="/" className="hover:text-[#C78B47] transition">Home</Link></li>
                 <li><Link to="/properties" className="hover:text-[#C78B47] transition">Properties</Link></li>
-                <li><Link to="/news" className="hover:text-[#C78B47] transition">News</Link></li>
+                <li><Link to="/resale" className="hover:text-[#C78B47] transition">Resale Homes</Link></li>
+                <li><Link to="/calculators" className="hover:text-[#C78B47] transition">Calculators</Link></li>
+                <li><Link to="/blogs" className="hover:text-[#C78B47] transition">Real Estate Blog</Link></li>
+                <li><Link to="/news" className="hover:text-[#C78B47] transition">Market News</Link></li>
+                <li><Link to="/career" className="hover:text-[#C78B47] transition">Careers</Link></li>
                 <li><Link to="/about" className="hover:text-[#C78B47] transition">About &amp; Contact</Link></li>
                 <li><Link to="/admin/login" className="hover:text-[#C78B47] transition">Admin Portal</Link></li>
               </ul>
@@ -172,9 +176,10 @@ export default function Footer() {
             <div className="md:col-span-2">
               <h4 className="text-[10px] tracking-[0.4em] uppercase text-[#C78B47] mb-6 font-semibold">Markets</h4>
               <ul className="space-y-3.5 text-[14px] text-[#F5EFE7]/90 font-normal">
-                <li>New Town</li>
-                <li>Rajarhat</li>
-                <li>Kolkata</li>
+                <li><Link to="/properties?location=New+Town" className="hover:text-[#C78B47] transition">New Town</Link></li>
+                <li><Link to="/properties?location=Rajarhat" className="hover:text-[#C78B47] transition">Rajarhat</Link></li>
+                <li><Link to="/properties?location=Salt+Lake" className="hover:text-[#C78B47] transition">Salt Lake</Link></li>
+                <li><Link to="/properties" className="hover:text-[#C78B47] transition">Kolkata</Link></li>
                 <li className="text-[#F5EFE7]/55 italic font-serif-display text-xs pt-2">Greater Kolkata · India · Global</li>
               </ul>
             </div>

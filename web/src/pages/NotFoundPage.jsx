@@ -1,81 +1,103 @@
+import React from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
-import { Home, Search, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Home, Building2, Calculator, BookOpen, PhoneCall } from "lucide-react";
+import Seo from "@/components/Seo";
 
-/**
- * NotFoundPage — Shown for any unknown public route (NAV-03).
- * Provides clear recovery actions: return home or browse properties.
- * Never implies the user made an error; simply redirects to value.
- */
 export default function NotFoundPage() {
   return (
-    <>
-      <Helmet>
-        <title>Page Not Found — ASTITTVA MARKETING</title>
-        <meta
-          name="description"
-          content="The page you're looking for isn't here. Browse our property listings or return home."
-        />
-      </Helmet>
+    <div
+      data-testid="not-found-page"
+      className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-28 sm:pt-36 pb-20 flex flex-col justify-center"
+    >
+      <Seo
+        title="Page Not Found | Astittva Marketing"
+        description="The page you are looking for does not exist or has been moved. Explore luxury properties, financial calculators, and Kolkata real estate insights."
+        noIndex={true}
+        path="/404"
+      />
 
-      <main
-        id="main-content"
-        className="min-h-[80vh] flex items-center justify-center px-5"
-        aria-labelledby="not-found-heading"
-      >
-        <div className="text-center max-w-lg mx-auto py-24">
-          {/* Eyebrow */}
-          <p className="overline mb-6">404 — Page Not Found</p>
-
-          {/* Headline */}
-          <h1
-            id="not-found-heading"
-            className="section-title text-4xl sm:text-5xl mb-6"
-          >
-            This page doesn't exist
-          </h1>
-
-          {/* Supporting copy */}
-          <p className="text-[#5F5F5F] text-base leading-relaxed mb-10 max-w-sm mx-auto">
-            The link may have moved or the address may be incorrect. Use the
-            options below to get back on track.
-          </p>
-
-          {/* Divider */}
-          <div className="copper-divider mx-auto mb-10" />
-
-          {/* Recovery actions */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link
-              to="/"
-              className="btn-primary flex items-center gap-2"
-              data-testid="not-found-home-link"
-            >
-              <Home className="w-4 h-4" strokeWidth={1.5} />
-              Return Home
-            </Link>
-            <Link
-              to="/properties"
-              className="btn-outline flex items-center gap-2"
-              data-testid="not-found-properties-link"
-            >
-              <Search className="w-4 h-4" strokeWidth={1.5} />
-              Browse Properties
-            </Link>
-          </div>
-
-          {/* Browser back hint */}
-          <button
-            type="button"
-            onClick={() => window.history.back()}
-            className="mt-8 flex items-center gap-2 text-[#5F5F5F] text-sm mx-auto hover:text-[#B87333] transition-colors"
-            data-testid="not-found-back-button"
-          >
-            <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-            Go back
-          </button>
+      <div className="max-w-3xl mx-auto px-6 text-center">
+        {/* Subtle Brand Eyebrow */}
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#520C16]/[0.06] border border-[#520C16]/15 text-[#520C16] text-[11px] font-semibold tracking-wider uppercase mb-6">
+          <span>Error 404</span>
         </div>
-      </main>
-    </>
+
+        {/* Heading */}
+        <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[#1C1C1C] leading-tight mb-4">
+          Page Not Found
+        </h1>
+
+        <p className="text-[#5F5F5F] font-sans text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-10">
+          The property, analysis, or page you are looking for has either been relocated or is no longer available in our active registry.
+        </p>
+
+        {/* Quick Navigation Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-10 text-left">
+          <Link
+            to="/properties"
+            className="p-4 rounded-[8px] bg-white border border-[#E8DED2] hover:border-[#520C16]/30 hover:shadow-sm transition-all group"
+          >
+            <div className="flex items-center gap-3 mb-1 text-[#520C16]">
+              <Building2 className="w-4 h-4 text-[#B87333]" />
+              <span className="font-serif text-sm font-bold group-hover:text-[#520C16]">Properties</span>
+            </div>
+            <p className="text-[12px] text-[#5F5F5F]">Curated primary residences in Kolkata &amp; New Town</p>
+          </Link>
+
+          <Link
+            to="/resale"
+            className="p-4 rounded-[8px] bg-white border border-[#E8DED2] hover:border-[#520C16]/30 hover:shadow-sm transition-all group"
+          >
+            <div className="flex items-center gap-3 mb-1 text-[#520C16]">
+              <Home className="w-4 h-4 text-[#B87333]" />
+              <span className="font-serif text-sm font-bold group-hover:text-[#520C16]">Resale Homes</span>
+            </div>
+            <p className="text-[12px] text-[#5F5F5F]">Verified secondary market flats and villas</p>
+          </Link>
+
+          <Link
+            to="/calculators"
+            className="p-4 rounded-[8px] bg-white border border-[#E8DED2] hover:border-[#520C16]/30 hover:shadow-sm transition-all group"
+          >
+            <div className="flex items-center gap-3 mb-1 text-[#520C16]">
+              <Calculator className="w-4 h-4 text-[#B87333]" />
+              <span className="font-serif text-sm font-bold group-hover:text-[#520C16]">Calculators</span>
+            </div>
+            <p className="text-[12px] text-[#5F5F5F]">Home loan EMI, Stamp duty, &amp; ROI tools</p>
+          </Link>
+
+          <Link
+            to="/blogs"
+            className="p-4 rounded-[8px] bg-white border border-[#E8DED2] hover:border-[#520C16]/30 hover:shadow-sm transition-all group"
+          >
+            <div className="flex items-center gap-3 mb-1 text-[#520C16]">
+              <BookOpen className="w-4 h-4 text-[#B87333]" />
+              <span className="font-serif text-sm font-bold group-hover:text-[#520C16]">Editorial &amp; Insights</span>
+            </div>
+            <p className="text-[12px] text-[#5F5F5F]">Market trends, RERA guidance, &amp; investment tips</p>
+          </Link>
+
+          <Link
+            to="/contact"
+            className="p-4 rounded-[8px] bg-white border border-[#E8DED2] hover:border-[#520C16]/30 hover:shadow-sm transition-all group col-span-1 sm:col-span-2 md:col-span-2"
+          >
+            <div className="flex items-center gap-3 mb-1 text-[#520C16]">
+              <PhoneCall className="w-4 h-4 text-[#B87333]" />
+              <span className="font-serif text-sm font-bold group-hover:text-[#520C16]">Private Advisory Desk</span>
+            </div>
+            <p className="text-[12px] text-[#5F5F5F]">Connect directly with our Kolkata luxury property advisors</p>
+          </Link>
+        </div>
+
+        {/* Return Home Action */}
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2.5 px-6 py-3 rounded-[4px] bg-[#520C16] text-white text-[11px] font-semibold tracking-widest uppercase hover:bg-[#3D0910] transition-colors shadow-sm"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Return to Homepage</span>
+        </Link>
+      </div>
+    </div>
   );
 }
