@@ -1195,18 +1195,20 @@ function storeResumeInGridFS(db, filename, contentType, buffer) {
   return new Promise((resolve, reject) => {
     try {
       const bucket = new GridFSBucket(db, { bucketName: "career_resumes" });
-      const safeFilename = (filename || "resume.pdf").replace(/[^a-zA-Z0-9._-]/g, "_");
+      const safeFilename = (filename || "resume.pdf")
+        .replace(/[/\\?%*:|"<>]/g, "_")
+        .replace(/[^a-zA-Z0-9._-]/g, "_");
       const uploadStream = bucket.openUploadStream(safeFilename, {
         contentType: contentType || "application/pdf",
         metadata: { uploadedAt: nowUtcIso() },
       });
       const stream = Readable.from(buffer);
-      stream
-        .pipe(uploadStream)
-        .on("error", reject)
-        .on("finish", () => {
-          resolve({ fileId: uploadStream.id, filename: safeFilename });
-        });
+      stream.on("error", (err) => reject(err));
+      uploadStream.on("error", (err) => reject(err));
+      uploadStream.on("finish", () => {
+        resolve({ fileId: uploadStream.id, filename: safeFilename });
+      });
+      stream.pipe(uploadStream);
     } catch (err) {
       reject(err);
     }
@@ -1369,9 +1371,12 @@ app.post("/api/leads/career", async (req, res) => {
         return res.status(400).json({ detail: "Only PDF, DOC, and DOCX files are accepted for resumes." });
       }
 
-      // Strip data URI prefix if present
-      const cleanBase64 = base64.replace(/^data:[^;]+;base64,/, "");
+      // Robust data URI prefix stripping
+      const cleanBase64 = base64.includes(",") ? base64.split(",")[1].trim() : base64.trim();
       const buffer = Buffer.from(cleanBase64, "base64");
+      if (!buffer || buffer.length === 0) {
+        return res.status(400).json({ detail: "Uploaded resume file is empty or invalid." });
+      }
       if (buffer.length > 10 * 1024 * 1024) {
         return res.status(400).json({ detail: "Resume file must be less than 10MB." });
       }
@@ -1381,7 +1386,13 @@ app.post("/api/leads/career", async (req, res) => {
       resumeFilename = stored.filename;
     }
 
+    const insertedId = new ObjectId();
+    if (resumeFileId) {
+      resumeUrl = `/api/admin/leads/career/${insertedId}/resume`;
+    }
+
     const applicationDoc = {
+      _id: insertedId,
       name,
       phone,
       email,
@@ -1400,16 +1411,19 @@ app.post("/api/leads/career", async (req, res) => {
       updatedAt: nowUtcIso(),
     };
 
-    const result = await db.collection("career_applications").insertOne(applicationDoc);
-    const insertedId = result.insertedId;
-
-    if (resumeFileId) {
-      // Set the secure admin download URL
-      const secureDownloadUrl = `/api/admin/leads/career/${insertedId}/resume`;
-      await db.collection("career_applications").updateOne(
-        { _id: insertedId },
-        { $set: { resumeUrl: secureDownloadUrl } }
-      );
+    try {
+      await db.collection("career_applications").insertOne(applicationDoc);
+    } catch (insertErr) {
+      // Roll back GridFS file if document persistence failed
+      if (resumeFileId) {
+        try {
+          const bucket = new GridFSBucket(db, { bucketName: "career_resumes" });
+          await bucket.delete(resumeFileId);
+        } catch (cleanErr) {
+          console.error("Failed to delete orphaned resume on insert error:", cleanErr);
+        }
+      }
+      throw insertErr;
     }
 
     // Career applications are NEVER forwarded to property CRM per requirements.
@@ -1439,7 +1453,29 @@ app.post("/api/leads", async (req, res) => {
       (body.source && body.source.toLowerCase().includes("career"));
 
     if (isCareer) {
+      let resumeFileId = null;
+      let resumeFilename = "";
+      const insertedId = new ObjectId();
+      let resumeUrl = (body.resumeUrl || body.linkedin || "").trim();
+
+      if (body.resume && body.resume.base64) {
+        const { filename, contentType, base64 } = body.resume;
+        const cleanBase64 = base64.includes(",") ? base64.split(",")[1].trim() : base64.trim();
+        const buffer = Buffer.from(cleanBase64, "base64");
+        if (buffer && buffer.length > 0 && buffer.length <= 10 * 1024 * 1024) {
+          try {
+            const stored = await storeResumeInGridFS(db, filename, contentType, buffer);
+            resumeFileId = stored.fileId;
+            resumeFilename = stored.filename;
+            resumeUrl = `/api/admin/leads/career/${insertedId}/resume`;
+          } catch (storageErr) {
+            console.error("Legacy career resume upload error:", storageErr);
+          }
+        }
+      }
+
       const careerDoc = {
+        _id: insertedId,
         name: body.name || `${body.first_name || ""} ${body.last_name || ""}`.trim(),
         phone: body.phone || "",
         email: (body.email || "").toLowerCase().trim(),
@@ -1447,9 +1483,9 @@ app.post("/api/leads", async (req, res) => {
         department: body.department || "Advisory & Client Relations",
         experience: body.experience || "Not specified",
         location: body.location || "Kolkata",
-        resumeUrl: body.resumeUrl || body.linkedin || "",
-        resumeFilename: "",
-        resumeFileId: null,
+        resumeUrl: resumeUrl || "",
+        resumeFilename: resumeFilename || "",
+        resumeFileId: resumeFileId || null,
         coverLetter: body.coverLetter || body.message || "",
         source: body.source || "career-portal-legacy",
         status: "New",
@@ -2288,7 +2324,14 @@ app.get("/api/admin/leads/career/:id/resume", requireStaff, async (req, res) => 
     const filename = appDoc.resumeFilename || file.filename || "applicant-resume.pdf";
     res.setHeader("Content-Type", file.contentType || "application/octet-stream");
     res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(filename)}"`);
-    bucket.openDownloadStream(fileId).pipe(res);
+    const downloadStream = bucket.openDownloadStream(fileId);
+    downloadStream.on("error", (streamErr) => {
+      console.error("Resume stream error:", streamErr);
+      if (!res.headersSent) {
+        res.status(500).json({ detail: "Error streaming resume file" });
+      }
+    });
+    downloadStream.pipe(res);
   } catch (err) {
     console.error("Download resume error:", err);
     return res.status(500).json({ detail: "Failed to download resume" });

@@ -22,10 +22,12 @@ from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depend
 from fastapi.responses import StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorGridFSBucket
 from pydantic import BaseModel, Field, EmailStr, BeforeValidator, ConfigDict
 
 import io
+import base64
+import urllib.parse
 
 from news_service import (
     fetch_topic, fetch_group, fetch_all_classified, latest_fetched_at,
@@ -1426,14 +1428,102 @@ async def delete_property_lead(lead_id: str, _user: dict = Depends(require_admin
 # ---------------------- Career Applications ----------------------
 @api_router.post("/leads/career", status_code=201)
 async def create_career_application(payload: CareerApplicationIn):
-    doc = payload.model_dump()
-    doc["status"] = "New"
-    doc["notes"] = ""
-    doc["createdAt"] = now_utc_iso()
-    doc["updatedAt"] = now_utc_iso()
-    res = await db.career_applications.insert_one(doc)
-    app_id = str(res.inserted_id)
-    return {"id": app_id, "ok": True, "message": "Career application submitted successfully"}
+    name = (payload.name or "").strip()
+    phone = (payload.phone or "").strip()
+    email = (payload.email or "").strip().lower()
+    job_title = (payload.jobTitle or "").strip()
+
+    if not name:
+        raise HTTPException(status_code=400, detail="Full name is required.")
+    if not phone:
+        raise HTTPException(status_code=400, detail="Phone number is required.")
+    if not email:
+        raise HTTPException(status_code=400, detail="Email address is required.")
+    if not job_title:
+        raise HTTPException(status_code=400, detail="Position applying for is required.")
+
+    resume_file_id = None
+    resume_filename = ""
+    resume_url = (payload.resumeUrl or "").strip()
+
+    # Process resume upload if provided (base64)
+    if payload.resume and isinstance(payload.resume, dict) and payload.resume.get("base64"):
+        raw_b64 = str(payload.resume.get("base64", ""))
+        filename = str(payload.resume.get("filename", "resume.pdf"))
+        content_type = str(payload.resume.get("contentType", "application/pdf"))
+
+        raw_ext = filename.split(".")[-1].lower() if "." in filename else ""
+        if raw_ext not in ["pdf", "doc", "docx"]:
+            raise HTTPException(status_code=400, detail="Only PDF, DOC, and DOCX files are accepted for resumes.")
+
+        clean_b64 = raw_b64.split(",", 1)[1].strip() if "," in raw_b64 else raw_b64.strip()
+        try:
+            file_bytes = base64.b64decode(clean_b64)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Malformed base64 resume file data.")
+
+        if not file_bytes or len(file_bytes) == 0:
+            raise HTTPException(status_code=400, detail="Uploaded resume file is empty or invalid.")
+        if len(file_bytes) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="Resume file must be less than 10MB.")
+
+        # Sanitize filename
+        safe_filename = re.sub(r"[/\\?%*:|\"<>]", "_", filename)
+        safe_filename = re.sub(r"[^a-zA-Z0-9._-]", "_", safe_filename)
+
+        fs = AsyncIOMotorGridFSBucket(db, bucket_name="career_resumes")
+        grid_in = fs.open_upload_stream(
+            safe_filename,
+            metadata={"uploadedAt": now_utc_iso(), "contentType": content_type}
+        )
+        await grid_in.write(file_bytes)
+        await grid_in.close()
+
+        resume_file_id = str(grid_in._id)
+        resume_filename = safe_filename
+
+    app_oid = ObjectId()
+    app_id = str(app_oid)
+    if resume_file_id:
+        resume_url = f"/api/admin/leads/career/{app_id}/resume"
+
+    doc = {
+        "_id": app_oid,
+        "name": name,
+        "phone": phone,
+        "email": email,
+        "jobTitle": job_title,
+        "department": (payload.department or "Advisory & Client Relations").strip(),
+        "experience": (payload.experience or "Not specified").strip(),
+        "location": (payload.location or "Kolkata").strip(),
+        "resumeUrl": resume_url,
+        "resumeFilename": resume_filename,
+        "resumeFileId": resume_file_id,
+        "coverLetter": (payload.coverLetter or "").strip(),
+        "source": payload.source or "career-portal",
+        "status": "New",
+        "notes": "",
+        "createdAt": now_utc_iso(),
+        "updatedAt": now_utc_iso(),
+    }
+
+    try:
+        await db.career_applications.insert_one(doc)
+    except Exception as exc:
+        if resume_file_id:
+            try:
+                fs = AsyncIOMotorGridFSBucket(db, bucket_name="career_resumes")
+                await fs.delete(ObjectId(resume_file_id))
+            except Exception:
+                pass
+        logger.error(f"Failed to insert career application: {exc}")
+        raise HTTPException(status_code=500, detail="Failed to submit career application")
+
+    return {
+        "id": app_id,
+        "ok": True,
+        "message": "Application submitted successfully. Our talent team will review your profile.",
+    }
 
 
 @api_router.get("/admin/leads/career")
@@ -1450,7 +1540,9 @@ async def list_career_applications(_user: dict = Depends(require_staff)):
             "department": d.get("department", ""),
             "experience": d.get("experience", ""),
             "location": d.get("location", ""),
-            "resumeUrl": d.get("resumeUrl", ""),
+            "resumeUrl": d.get("resumeUrl") or (f"/api/admin/leads/career/{d['_id']}/resume" if d.get("resumeFileId") else ""),
+            "resumeFilename": d.get("resumeFilename", ""),
+            "hasResumeFile": bool(d.get("resumeFileId") or (d.get("resumeUrl") and "/resume" in str(d.get("resumeUrl")))),
             "coverLetter": d.get("coverLetter", ""),
             "source": d.get("source", "career-portal"),
             "status": d.get("status", "New"),
@@ -1464,7 +1556,12 @@ async def list_career_applications(_user: dict = Depends(require_staff)):
 
 @api_router.get("/admin/leads/career/{app_id}")
 async def get_career_application(app_id: str, _user: dict = Depends(require_staff)):
-    d = await db.career_applications.find_one({"_id": ObjectId(app_id)})
+    try:
+        app_oid = ObjectId(app_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid career application ID")
+
+    d = await db.career_applications.find_one({"_id": app_oid})
     if not d:
         raise HTTPException(status_code=404, detail="Career application not found")
     return {
@@ -1477,7 +1574,9 @@ async def get_career_application(app_id: str, _user: dict = Depends(require_staf
         "department": d.get("department", ""),
         "experience": d.get("experience", ""),
         "location": d.get("location", ""),
-        "resumeUrl": d.get("resumeUrl", ""),
+        "resumeUrl": d.get("resumeUrl") or (f"/api/admin/leads/career/{d['_id']}/resume" if d.get("resumeFileId") else ""),
+        "resumeFilename": d.get("resumeFilename", ""),
+        "hasResumeFile": bool(d.get("resumeFileId") or (d.get("resumeUrl") and "/resume" in str(d.get("resumeUrl")))),
         "coverLetter": d.get("coverLetter", ""),
         "source": d.get("source", "career-portal"),
         "status": d.get("status", "New"),
@@ -1487,24 +1586,86 @@ async def get_career_application(app_id: str, _user: dict = Depends(require_staf
     }
 
 
+@api_router.get("/admin/leads/career/{app_id}/resume")
+async def download_career_resume(app_id: str, _user: dict = Depends(require_staff)):
+    try:
+        app_oid = ObjectId(app_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid career application ID")
+
+    app_doc = await db.career_applications.find_one({"_id": app_oid})
+    if not app_doc:
+        raise HTTPException(status_code=404, detail="Career application not found")
+
+    file_id = app_doc.get("resumeFileId")
+    if not file_id:
+        resume_url = app_doc.get("resumeUrl", "")
+        if resume_url and resume_url.startswith("http"):
+            from fastapi.responses import RedirectResponse
+            return RedirectResponse(url=resume_url)
+        raise HTTPException(status_code=404, detail="No resume file stored for this application")
+
+    fs = AsyncIOMotorGridFSBucket(db, bucket_name="career_resumes")
+    try:
+        grid_out = await fs.open_download_stream(ObjectId(file_id))
+    except Exception:
+        raise HTTPException(status_code=404, detail="Resume file not found in storage")
+
+    content = await grid_out.read()
+    content_type = getattr(grid_out, "content_type", None) or (grid_out.metadata.get("contentType") if grid_out.metadata else None) or "application/pdf"
+    filename = app_doc.get("resumeFilename") or grid_out.filename or "applicant-resume.pdf"
+    encoded_filename = urllib.parse.quote(filename)
+
+    return Response(
+        content=content,
+        media_type=content_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{encoded_filename}"',
+            "Content-Length": str(len(content)),
+        }
+    )
+
+
 @api_router.patch("/admin/leads/career/{app_id}")
 async def update_career_application(app_id: str, body: dict, _user: dict = Depends(require_staff)):
+    try:
+        app_oid = ObjectId(app_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid career application ID")
+
     update_data = {"updatedAt": now_utc_iso()}
     for k in ["status", "notes"]:
         if k in body:
             update_data[k] = body[k]
-    res = await db.career_applications.update_one({"_id": ObjectId(app_id)}, {"$set": update_data})
+    res = await db.career_applications.update_one({"_id": app_oid}, {"$set": update_data})
     if res.matched_count == 0:
         raise HTTPException(status_code=404, detail="Career application not found")
-    return {"ok": True}
+    return {"ok": True, "message": "Career application updated"}
 
 
 @api_router.delete("/admin/leads/career/{app_id}")
 async def delete_career_application(app_id: str, _user: dict = Depends(require_admin)):
-    res = await db.career_applications.delete_one({"_id": ObjectId(app_id)})
+    try:
+        app_oid = ObjectId(app_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid career application ID")
+
+    app_doc = await db.career_applications.find_one({"_id": app_oid})
+    if not app_doc:
+        raise HTTPException(status_code=404, detail="Career application not found")
+
+    file_id = app_doc.get("resumeFileId")
+    if file_id:
+        try:
+            fs = AsyncIOMotorGridFSBucket(db, bucket_name="career_resumes")
+            await fs.delete(ObjectId(file_id))
+        except Exception as e:
+            logger.warning(f"Failed to delete resume file from GridFS: {e}")
+
+    res = await db.career_applications.delete_one({"_id": app_oid})
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Career application not found")
-    return {"ok": True}
+    return {"ok": True, "message": "Career application deleted"}
 
 
 # ---------------------- Blogs ----------------------

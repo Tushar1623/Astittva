@@ -1,13 +1,19 @@
 import axios from "axios";
 
-const RAW_BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const RAW_BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "";
 
-// Ensure all API calls correctly reach the deployed backend
+// Ensure all API calls correctly reach the active backend
 function getBaseURL() {
   if (RAW_BACKEND_URL && RAW_BACKEND_URL.trim() !== "") {
     const cleanUrl = RAW_BACKEND_URL.trim().replace(/\/+$/, "");
     return cleanUrl.endsWith("/api") ? cleanUrl : `${cleanUrl}/api`;
   }
+  // When running in production on astittva.in without an explicit backend env var,
+  // route to the deployed Render backend instead of Hostinger's static origin
+  if (typeof window !== "undefined" && window.location && window.location.hostname.includes("astittva.in")) {
+    return "https://astittva-backend.onrender.com/api";
+  }
+  // When served by Express or local development server, route to /api on the current origin
   return "/api";
 }
 
@@ -26,6 +32,26 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Reject HTML fallback responses (e.g. from static hostings returning index.html with 200 OK for API routes)
+api.interceptors.response.use(
+  (response) => {
+    if (
+      typeof response.data === "string" &&
+      (response.data.trim().startsWith("<!DOCTYPE") || response.data.trim().startsWith("<html"))
+    ) {
+      return Promise.reject({
+        response: {
+          status: 502,
+          data: { detail: "Backend API service unreachable. Please try again shortly." },
+        },
+        message: "Received HTML document instead of JSON API response",
+      });
+    }
+    return response;
+  },
+  (error) => Promise.reject(error)
+);
+
 export function formatApiErrorDetail(detail) {
   if (detail == null) return "Something went wrong. Please try again.";
   if (typeof detail === "string") return detail;
@@ -35,10 +61,57 @@ export function formatApiErrorDetail(detail) {
   return String(detail);
 }
 
-export function fileUrl(path) {
+export function getGoogleDriveFileId(url) {
+  if (!url || typeof url !== "string") return null;
+  const clean = url.trim();
+
+  // 1. Matches drive.google.com/file/d/<id>
+  const fileMatch = clean.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (fileMatch) return fileMatch[1];
+
+  // 2. Matches googleusercontent.com/d/<id> or /d/<id>
+  const dMatch = clean.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if (dMatch) return dMatch[1];
+
+  // 3. Matches query param ?id=<id> or &id=<id> (drive.google.com/open?id=... or /thumbnail?id=...)
+  const idParamMatch = clean.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  if (idParamMatch) return idParamMatch[1];
+
+  // 4. Raw Google Drive file ID (25 to 45 alphanumeric characters with underscores/dashes)
+  if (/^[a-zA-Z0-9_-]{25,45}$/.test(clean)) {
+    return clean;
+  }
+
+  return null;
+}
+
+export function isGoogleDriveImage(url) {
+  return Boolean(getGoogleDriveFileId(url));
+}
+
+export function driveImageUrl(url, width = 1000) {
+  const id = getGoogleDriveFileId(url);
+  if (!id) return "";
+
+  // Direct high-resolution Google Drive thumbnail URL
+  return `https://drive.google.com/thumbnail?id=${id}&sz=w${width || 1000}`;
+}
+
+export function fileUrl(path, width = 1000) {
   if (!path) return "";
-  if (path.startsWith("http")) return path;
-  return `${API}/files/${path}`;
+
+  const driveId = getGoogleDriveFileId(path);
+  if (driveId) {
+    return `https://drive.google.com/thumbnail?id=${driveId}&sz=w${width || 1000}`;
+  }
+
+  // Do NOT request legacy Astittva storage paths anymore.
+  if (!path.startsWith("http")) {
+    return "";
+  }
+
+  // Keep normal external http images only if required.
+  return path;
 }
 
 export default api;

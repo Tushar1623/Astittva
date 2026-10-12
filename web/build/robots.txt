@@ -1,12 +1,18 @@
 # Astittva Marketing — robots.txt
-# Allow all crawlers full access; block only the admin surface.
+# Website: https://astittva.in
+# Real Estate Consultants & Advisory in Kolkata
 
 User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /admin/
 Disallow: /api/admin
+Disallow: /api/admin/
+Disallow: /api/auth
+Disallow: /api/auth/
+Disallow: /dashboard
+Disallow: /dashboard/
 
-# Sitemap — generated dynamically by the backend, includes every published
-# property and every static page.
+# XML Sitemaps
+Sitemap: https://astittva.in/sitemap.xml
 Sitemap: https://astittva.in/api/sitemap.xml

@@ -8,7 +8,12 @@ function getBaseURL() {
     const cleanUrl = RAW_BACKEND_URL.trim().replace(/\/+$/, "");
     return cleanUrl.endsWith("/api") ? cleanUrl : `${cleanUrl}/api`;
   }
-  // When served by Express / Hostinger / local server, always route to /api on the current origin
+  // When running in production on astittva.in without an explicit backend env var,
+  // route to the deployed Render backend instead of Hostinger's static origin
+  if (typeof window !== "undefined" && window.location && window.location.hostname.includes("astittva.in")) {
+    return "https://astittva-backend.onrender.com/api";
+  }
+  // When served by Express or local development server, route to /api on the current origin
   return "/api";
 }
 
@@ -26,6 +31,26 @@ api.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+
+// Reject HTML fallback responses (e.g. from static hostings returning index.html with 200 OK for API routes)
+api.interceptors.response.use(
+  (response) => {
+    if (
+      typeof response.data === "string" &&
+      (response.data.trim().startsWith("<!DOCTYPE") || response.data.trim().startsWith("<html"))
+    ) {
+      return Promise.reject({
+        response: {
+          status: 502,
+          data: { detail: "Backend API service unreachable. Please try again shortly." },
+        },
+        message: "Received HTML document instead of JSON API response",
+      });
+    }
+    return response;
+  },
+  (error) => Promise.reject(error)
+);
 
 export function formatApiErrorDetail(detail) {
   if (detail == null) return "Something went wrong. Please try again.";

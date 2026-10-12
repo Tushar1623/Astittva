@@ -23,6 +23,7 @@ export default function CareerPage() {
     coverLetter: "",
   });
   const [resumeData, setResumeData] = useState(null); // { filename, contentType, base64, size }
+  const [readingFile, setReadingFile] = useState(false);
   const [resumeError, setResumeError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -33,6 +34,7 @@ export default function CareerPage() {
     setResumeError("");
     if (!file) {
       setResumeData(null);
+      setReadingFile(false);
       return;
     }
 
@@ -40,15 +42,18 @@ export default function CareerPage() {
     if (!["pdf", "doc", "docx"].includes(ext)) {
       setResumeError("Please upload a PDF, DOC, or DOCX file.");
       setResumeData(null);
+      setReadingFile(false);
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
       setResumeError("Resume file size must be less than 10MB.");
       setResumeData(null);
+      setReadingFile(false);
       return;
     }
 
+    setReadingFile(true);
     const reader = new FileReader();
     reader.onload = () => {
       setResumeData({
@@ -57,38 +62,44 @@ export default function CareerPage() {
         base64: reader.result,
         size: (file.size / (1024 * 1024)).toFixed(2) + " MB",
       });
+      setReadingFile(false);
     };
     reader.onerror = () => {
       setResumeError("Failed to read file. Please try again.");
+      setReadingFile(false);
     };
     reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
+    if (submitting) return;
+
     setErrorMsg("");
+
+    if (readingFile) {
+      setErrorMsg("Please wait a moment while your resume file is being processed.");
+      return;
+    }
 
     if (!form.name.trim()) {
       setErrorMsg("Full name is required.");
-      setSubmitting(false);
       return;
     }
     if (!form.phone.trim() || form.phone.trim().length < 8) {
       setErrorMsg("Please enter a valid phone number.");
-      setSubmitting(false);
       return;
     }
     if (!form.email.trim() || !form.email.includes("@")) {
       setErrorMsg("Please enter a valid email address.");
-      setSubmitting(false);
       return;
     }
     if (!form.jobTitle.trim()) {
       setErrorMsg("Position applying for is required.");
-      setSubmitting(false);
       return;
     }
+
+    setSubmitting(true);
 
     try {
       const payload = {
@@ -104,11 +115,15 @@ export default function CareerPage() {
         ...(resumeData ? { resume: resumeData } : {}),
       };
 
-      await api.post("/leads/career", payload);
+      const res = await api.post("/leads/career", payload);
+      // Guard against non-JSON / HTML fallback responses
+      if (!res.data || typeof res.data !== "object" || (!res.data.ok && !res.data.id)) {
+        throw new Error("Unexpected server response. Please try submitting again.");
+      }
       setSubmitted(true);
       toast.success("Application submitted successfully. Our talent acquisition team will review your profile.");
     } catch (err) {
-      const msg = formatApiErrorDetail(err.response?.data?.detail) || "Failed to submit application. Please try again.";
+      const msg = formatApiErrorDetail(err.response?.data?.detail) || err.message || "Failed to submit application. Please try again.";
       setErrorMsg(msg);
       toast.error(msg);
     } finally {
@@ -374,6 +389,8 @@ export default function CareerPage() {
                       coverLetter: "",
                     });
                     setResumeData(null);
+                    setReadingFile(false);
+                    setResumeError("");
                   }}
                   className="font-sans text-[12.5px] font-semibold uppercase tracking-[0.1em] text-[#B87333] hover:underline"
                 >
