@@ -2721,12 +2721,29 @@ if (activeBuildPath) {
   console.log(`[Static] Serving React frontend build from: ${activeBuildPath}`);
   app.use(express.static(activeBuildPath));
 
-  // Catch-all non-API routes to index.html for client-side routing
+  // Route allowlist for legitimate application routes
+  const VALID_APP_ROUTE_REGEX = /^\/(properties|resale|blogs|news|market-intelligence|calculators|about|contact|career|admin)($|\/.*)/i;
+
+  // SPA Route Handler: return index.html (200 OK) for valid routes, or 404 for unknown routes
   app.get("*", (req, res, next) => {
     if (req.path.startsWith("/api") || req.path.startsWith("/healthz")) {
       return next();
     }
-    res.sendFile(path.join(activeBuildPath, "index.html"));
+
+    const isRoot = req.path === "/" || req.path === "";
+    const isValidRoute = isRoot || VALID_APP_ROUTE_REGEX.test(req.path);
+
+    if (isValidRoute) {
+      return res.sendFile(path.join(activeBuildPath, "index.html"));
+    }
+
+    // Soft-404 Prevention: return genuine HTTP 404 status code
+    res.status(404);
+    const custom404 = path.join(activeBuildPath, "404.html");
+    if (fs.existsSync(custom404)) {
+      return res.sendFile(custom404);
+    }
+    return res.sendFile(path.join(activeBuildPath, "index.html"));
   });
 } else {
   console.warn("[Static] Warning: No compiled frontend build found. Run 'npm run build' to generate static assets.");

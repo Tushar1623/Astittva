@@ -1,21 +1,23 @@
 # ----------------------------------------------------------------------
 # Astittva Marketing Apache Configuration (.htaccess)
-# Hostinger Static React SPA Deployment with XML Sitemap Delivery
+# Hostinger Static React SPA Deployment with Real 404 & XML Delivery
 # ----------------------------------------------------------------------
 
 # 1. Correct MIME Types
 <IfModule mod_mime.c>
   AddType application/xml .xml
   AddType text/xml .xml
+  AddType text/plain .txt
   AddType image/webp .webp
   AddType image/png .png
   AddType image/jpeg .jpg .jpeg
+  AddType image/svg+xml .svg
 </IfModule>
 
 # 2. Character Encoding
 AddDefaultCharset UTF-8
 
-# 3. HTTP Security & Crawlability Headers
+# 3. HTTP Headers & Caching
 <IfModule mod_headers.c>
   # Cache control for sitemap and robots.txt
   <FilesMatch "^(sitemap\.xml|robots\.txt)$">
@@ -29,7 +31,10 @@ AddDefaultCharset UTF-8
   </FilesMatch>
 </IfModule>
 
-# 4. URL Rewriting & Routing
+# 4. Custom Error Documents (True HTTP 404)
+ErrorDocument 404 /404.html
+
+# 5. URL Rewriting & Soft-404 Prevention
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
@@ -40,11 +45,22 @@ AddDefaultCharset UTF-8
   # Rewrite /api/sitemap.xml to /sitemap.xml directly
   RewriteRule ^api/sitemap\.xml$ sitemap.xml [L]
 
+  # Directly serve physical robots.txt
+  RewriteRule ^robots\.txt$ robots.txt [L]
+
+  # Directly serve 404 page
+  RewriteRule ^404\.html$ 404.html [L]
+
   # Serve existing physical files and directories directly
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
-  # SPA Fallback: send all other route requests to index.html
+  # Allowlist of legitimate application routes -> route to index.html with 200 OK
+  RewriteCond %{REQUEST_URI} ^/$ [OR]
+  RewriteCond %{REQUEST_URI} ^/(properties|resale|blogs|news|market-intelligence|calculators|about|contact|career|admin)(/.*)?$
   RewriteRule ^ index.html [L]
+
+  # Any unknown path not in the route allowlist returns real HTTP 404 via 404.html
+  RewriteRule ^ 404.html [R=404,L]
 </IfModule>
