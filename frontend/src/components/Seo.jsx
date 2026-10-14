@@ -28,15 +28,19 @@ export default function Seo({
   noIndex = false,
   jsonLd,
   schema,
-  keywords,
   publishedTime,
   modifiedTime,
   author,
 }) {
-  // Ensure path is clean and canonical URL is properly formed
-  const cleanPath = path.startsWith("http")
+  // Ensure path is clean and canonical URL is properly formed (strip query params and hashes for canonical)
+  const rawPath = path.startsWith("http")
     ? path
     : `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  const pathWithoutQuery = rawPath.split("?")[0].split("#")[0];
+  const cleanCanonical =
+    pathWithoutQuery === `${SITE_URL}` || pathWithoutQuery === `${SITE_URL}/`
+      ? `${SITE_URL}/`
+      : pathWithoutQuery.replace(/\/+$/, "");
 
   // Clean title: replace HTML entities if accidentally passed
   const cleanTitle = (title || SITE_NAME)
@@ -72,8 +76,7 @@ export default function Seo({
       {/* Standard SEO */}
       <title>{fullTitle}</title>
       {description && <meta name="description" content={description} />}
-      {keywords && <meta name="keywords" content={keywords} />}
-      <link rel="canonical" href={cleanPath} />
+      <link rel="canonical" href={cleanCanonical} />
 
       {/* Robots Directive */}
       <meta
@@ -90,7 +93,7 @@ export default function Seo({
       <meta property="og:type" content={type} />
       <meta property="og:title" content={fullTitle} />
       {description && <meta property="og:description" content={description} />}
-      <meta property="og:url" content={cleanPath} />
+      <meta property="og:url" content={cleanCanonical} />
       <meta property="og:image" content={ogImage} />
       <meta property="og:image:alt" content={fullTitle} />
       <meta property="og:locale" content="en_IN" />

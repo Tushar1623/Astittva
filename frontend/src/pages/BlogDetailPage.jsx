@@ -114,7 +114,6 @@ export default function BlogDetailPage() {
         title={`${seoTitle} | Astittva Marketing`}
         description={seoDesc}
         path={`/blogs/${blog.slug}`}
-        keywords={blog.seo_keywords}
         image={img || undefined}
         type="article"
         publishedTime={blog.publish_date || blog.created_at}

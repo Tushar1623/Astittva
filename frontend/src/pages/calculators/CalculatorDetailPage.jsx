@@ -99,7 +99,6 @@ function CalculatorInner({ calculator }) {
         title={`${calculator.name} | Astittva Marketing`}
         description={`${calculator.description} Calculate online for free with real-time financial math for Kolkata properties.`}
         path={`/calculators/${calculator.slug}`}
-        keywords={`${calculator.name}, Kolkata real estate calculator, ${calculator.categoryLabel}, property financial tools`}
         schema={[calcSchema, buildBreadcrumbSchema(breadcrumbItems)]}
       />
 

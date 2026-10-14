@@ -10,11 +10,11 @@ import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 
 // Per-property dynamic SEO: title/description/canonical/OG/Twitter + RealEstateListing JSON-LD.
 function PropertySeo({ property, id }) {
-  const title = `${property.project_name} | ${property.bedrooms || property.property_type || "Apartment"} in ${property.location || property.city || "Kolkata"} | Astittva Marketing`;
+  const loc = property.location || property.city || "Kolkata";
+  const title = `${property.project_name} in ${loc} | Astittva Marketing`;
   const priceTxt = property.price_label || (property.starting_price ? `₹${property.starting_price.toLocaleString("en-IN")}` : "");
   const description =
-    `Explore ${property.project_name}, a ${property.bedrooms ? property.bedrooms + " " : ""}${property.property_type || "residential property"} in ${property.location || property.city || "Kolkata"} by ${property.builder || "Astittva Marketing partner developers"}. ${priceTxt ? "Starting " + priceTxt + ". " : ""}` +
-    `View floor plans, amenities, RERA details and schedule an exclusive site visit.`;
+    `Explore ${property.project_name}${property.location ? ` in ${property.location}` : ""}, Kolkata by ${property.builder || "Astittva Marketing"}. ${priceTxt ? `Starting ${priceTxt}. ` : ""}Verified details, floor plans, and site visits.`;
 
   const driveImg = (property.images || []).find(isGoogleDriveImage);
   const anyHttpImg = (property.images || []).find((img) => typeof img === "string" && img.startsWith("http"));
@@ -88,11 +88,10 @@ function PropertySeo({ property, id }) {
   return (
     <Seo
       title={title}
-      description={description.slice(0, 300)}
+      description={description}
       path={`/properties/${id}`}
       type="product"
       image={image}
-      keywords={`${property.project_name}, ${property.builder || ""}, ${property.location || ""}, ${property.city || ""}, ${property.property_type || ""}, ${property.property_category || ""}, real estate Kolkata`}
       schema={[listingJsonLd, buildBreadcrumbSchema(breadcrumbs)]}
     />
   );

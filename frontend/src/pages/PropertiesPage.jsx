@@ -168,8 +168,7 @@ export default function PropertiesPage() {
       <Seo
         title={pageTitle}
         description={pageDescription}
-        path={location ? `/properties?location=${encodeURIComponent(location)}` : "/properties"}
-        keywords={`properties for sale Kolkata, New Town flats, Rajarhat apartments, luxury homes Kolkata${location ? `, properties in ${location}` : ""}`}
+        path="/properties"
         schema={buildBreadcrumbSchema(breadcrumbs)}
       />
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">

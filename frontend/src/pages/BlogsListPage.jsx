@@ -152,10 +152,9 @@ export default function BlogsListPage() {
   return (
     <div data-testid="blogs-list-page" className="relative text-ivory">
       <Seo
-        title="Real Estate Blog | Kolkata Property Insights | Astittva"
+        title="Real Estate Blog | Property Insights Kolkata | Astittva"
         description="Read expert analysis on Kolkata real estate, property investment trends, New Town infrastructure updates, and homebuyer advisory guides by Astittva Marketing."
         path="/blogs"
-        keywords="Astittva blogs, Kolkata real estate blog, luxury property insights, New Town Rajarhat editorial, real estate investment articles India"
         schema={[jsonLd, buildBreadcrumbSchema([{ name: "Home", path: "/" }, { name: "Blog", path: "/blogs" }])]}
       />
 

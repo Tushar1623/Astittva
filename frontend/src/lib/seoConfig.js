@@ -7,26 +7,27 @@ export const SITE_URL = "https://astittva.in";
 export const SITE_NAME = "Astittva Marketing";
 export const SITE_TAGLINE = "Luxury Real Estate Advisory & Property Consultants in Kolkata";
 
-export const DEFAULT_OG_IMAGE =
-  "https://customer-assets.emergentagent.com/job_astitva-luxury-1/artifacts/c212hx9z_ASTITTVA%20MARKETING%20FINAL.png";
+export const DEFAULT_OG_IMAGE = "https://astittva.in/images/astittva-social-preview.png";
+export const BRAND_LOGO_URL = "https://astittva.in/images/brand-logo.png";
 
 export const COMPANY_INFO = {
   name: "Astittva Marketing",
   legalName: "Astittva Marketing Private Limited",
   url: SITE_URL,
-  logo: DEFAULT_OG_IMAGE,
-  telephone: "+91 98300 00000",
-  email: "advisory@astittva.in",
+  logo: BRAND_LOGO_URL,
+  image: DEFAULT_OG_IMAGE,
+  telephone: "+91 92303 74700",
+  email: "sales@astittva.in",
   address: {
-    streetAddress: "Action Area II, New Town",
-    addressLocality: "Kolkata",
+    streetAddress: "PS IXL Building, 5th Floor, Room 511, Biswa Bangla Sarani, Atghara",
+    addressLocality: "New Town, Kolkata",
     addressRegion: "West Bengal",
-    postalCode: "700156",
+    postalCode: "700136",
     addressCountry: "IN",
   },
   geo: {
-    latitude: 22.5800,
-    longitude: 88.4600,
+    latitude: 22.6214,
+    longitude: 88.4552,
   },
   areaServed: [
     "Kolkata",
@@ -34,8 +35,6 @@ export const COMPANY_INFO = {
     "Rajarhat",
     "Salt Lake",
     "EM Bypass",
-    "Alipore",
-    "Ballygunge",
     "Action Area I",
     "Action Area II",
     "Action Area III",
@@ -58,9 +57,9 @@ export function getOrganizationSchema() {
     legalName: COMPANY_INFO.legalName,
     url: SITE_URL,
     logo: COMPANY_INFO.logo,
-    image: COMPANY_INFO.logo,
+    image: COMPANY_INFO.image,
     description:
-      "Astittva Marketing is a premier real estate consultancy and luxury property advisory firm based in Kolkata, specializing in residential and commercial investments in New Town, Rajarhat, and Salt Lake.",
+      "Astittva Marketing is a real estate consultancy and property advisory firm based in Kolkata, specializing in residential and commercial investments in New Town, Rajarhat, and Salt Lake.",
     telephone: COMPANY_INFO.telephone,
     email: COMPANY_INFO.email,
     priceRange: COMPANY_INFO.priceRange,

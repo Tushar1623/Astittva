@@ -10,10 +10,9 @@ export default function CalculatorsLandingPage() {
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-24 sm:pt-28 pb-20">
       <Seo
-        title="Property Calculators | EMI, ROI & Investment Tools | Astittva"
-        description="Free real estate financial calculators for Kolkata buyers and investors: Home Loan EMI, Affordability, Rental Yield, ROI, West Bengal Stamp Duty & Area Converter."
+        title="Property Calculators | EMI & ROI Tools | Astittva Marketing"
+        description="Free property calculators for Kolkata buyers: Home Loan EMI, Affordability, Rental Yield, ROI, West Bengal Stamp Duty and Area Converter by Astittva."
         path="/calculators"
-        keywords="property calculators Kolkata, home loan EMI calculator, rental yield calculator India, stamp duty West Bengal calculator, real estate investment tools"
         schema={buildBreadcrumbSchema([{ name: "Home", path: "/" }, { name: "Calculators", path: "/calculators" }])}
       />
 

@@ -80,12 +80,12 @@ export default function AboutPage({ scrollToContact = false }) {
   const isContactRoute = location.pathname === "/contact" || scrollToContact;
 
   const pageTitle = isContactRoute
-    ? "Contact Astittva Marketing | Real Estate Consultants in Kolkata"
-    : "About Astittva Marketing | Real Estate Consultants";
+    ? "Contact Astittva Marketing | Property Advisory Kolkata"
+    : "About Astittva Marketing | Property Consultants in Kolkata";
 
   const pageDescription = isContactRoute
-    ? "Schedule a private consultation with Astittva Marketing. Connect with our property advisors for Kolkata, New Town, and Rajarhat real estate."
-    : "Learn about Astittva Marketing, Kolkata's trusted real estate consultancy. Expert guidance for residential purchases, commercial investments, and developer marketing.";
+    ? "Contact Astittva Marketing for real estate advisory in Kolkata, New Town and Rajarhat. Schedule a consultation with our experienced property consultants."
+    : "Learn about Astittva Marketing, trusted real estate advisory in Kolkata. Expert guidance for residential purchases and investments across New Town and Rajarhat.";
 
   const pagePath = isContactRoute ? "/contact" : "/about";
 
@@ -99,7 +99,6 @@ export default function AboutPage({ scrollToContact = false }) {
         title={pageTitle}
         description={pageDescription}
         path={pagePath}
-        keywords="About Astittva Marketing, contact Astittva, luxury real estate advisory Kolkata, real estate consultation"
         schema={[getOrganizationSchema(), buildBreadcrumbSchema(breadcrumbs)]}
       />
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">

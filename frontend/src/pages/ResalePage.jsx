@@ -174,10 +174,9 @@ export default function ResalePage() {
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-[90px] sm:pt-[105px] lg:pt-[115px]">
       <Seo
-        title="Resale Properties in Kolkata | Flats & Homes | Astittva Marketing"
-        description="Discover verified resale flats and apartments in Kolkata, New Town, and Rajarhat. Transparent pricing, clear titles, and ready-to-move secondary market inventory."
+        title="Resale Properties in Kolkata | Astittva Marketing"
+        description="Discover verified resale flats in Kolkata, New Town and Rajarhat with Astittva Marketing. Transparent pricing, clear titles, and ready-to-move homes."
         path="/resale"
-        keywords="resale properties Kolkata, resale flats New Town, resale apartments Rajarhat, ready to move flats Kolkata, secondary real estate market"
         schema={buildBreadcrumbSchema([{ name: "Home", path: "/" }, { name: "Resale", path: "/resale" }])}
       />
 

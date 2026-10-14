@@ -1,21 +1,50 @@
-RewriteEngine On
-RewriteBase /
+# ----------------------------------------------------------------------
+# Astittva Marketing Apache Configuration (.htaccess)
+# Hostinger Static React SPA Deployment with XML Sitemap Delivery
+# ----------------------------------------------------------------------
 
-# Pass through existing files or directories
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^ - [L]
+# 1. Correct MIME Types
+<IfModule mod_mime.c>
+  AddType application/xml .xml
+  AddType text/xml .xml
+  AddType image/webp .webp
+  AddType image/png .png
+  AddType image/jpeg .jpg .jpeg
+</IfModule>
 
-# Ridhi Bhoomi sub-routing: rewrite any non-file under /ridhi-bhoomi to its index.html
-RewriteCond %{REQUEST_URI} ^/ridhi-bhoomi/ [OR]
-RewriteCond %{REQUEST_URI} ^/riddhi-bhumi/
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(ridhi-bhoomi|riddhi-bhumi)/.*$ /ridhi-bhoomi/index.html [L]
+# 2. Character Encoding
+AddDefaultCharset UTF-8
 
-RewriteRule ^index\.html$ - [L]
+# 3. HTTP Security & Crawlability Headers
+<IfModule mod_headers.c>
+  # Cache control for sitemap and robots.txt
+  <FilesMatch "^(sitemap\.xml|robots\.txt)$">
+    Header set Cache-Control "public, max-age=3600, stale-while-revalidate=86400"
+  </FilesMatch>
 
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
+  # Allow search engines and social platforms to access preview images
+  <FilesMatch "\.(png|jpg|jpeg|webp|ico|svg)$">
+    Header set Access-Control-Allow-Origin "*"
+    Header set Cache-Control "public, max-age=2592000, immutable"
+  </FilesMatch>
+</IfModule>
 
-RewriteRule . /index.html [L]
+# 4. URL Rewriting & Routing
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Directly serve physical sitemap.xml without SPA index.html fallback
+  RewriteRule ^sitemap\.xml$ sitemap.xml [L]
+
+  # Rewrite /api/sitemap.xml to /sitemap.xml directly
+  RewriteRule ^api/sitemap\.xml$ sitemap.xml [L]
+
+  # Serve existing physical files and directories directly
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # SPA Fallback: send all other route requests to index.html
+  RewriteRule ^ index.html [L]
+</IfModule>

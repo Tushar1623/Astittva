@@ -43,7 +43,8 @@ export function openSocialLink(e, link) {
 
 export const EMAIL = "sales@astittva.in";
 
-export const LOGO_URL = "https://customer-assets.emergentagent.com/job_astitva-luxury-1/artifacts/c212hx9z_ASTITTVA%20MARKETING%20FINAL.png";
+export const LOGO_URL = "/images/brand-logo.png";
+export const BRAND_LOGO_ABSOLUTE = "https://astittva.in/images/brand-logo.png";
 
 export const BRAND_NAME = "ASTITTVA MARKETING";
 export const BRAND_SHORT = "ASTITTVA";

@@ -219,10 +219,9 @@ function NewsGrid({ articles, loading, max = 12 }) {
 function SEO() {
   return (
     <Seo
-      title="Kolkata Real Estate Market Intelligence & News | Astittva"
-      description="Stay informed with curated real estate market intelligence, infrastructure milestones, and economic insights across Kolkata and Eastern India."
+      title="Real Estate Market Intelligence | Astittva Marketing"
+      description="Stay informed with Kolkata real estate market intelligence, infrastructure milestones, and property trends across New Town, Rajarhat, and Salt Lake."
       path="/news"
-      keywords="Kolkata real estate news, India property market trends, real estate investment news India, luxury property news, New Town infrastructure updates, Rajarhat property updates"
       schema={buildBreadcrumbSchema([{ name: "Home", path: "/" }, { name: "Market Intelligence", path: "/news" }])}
     />
   );

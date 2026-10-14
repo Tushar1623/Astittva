@@ -186,8 +186,8 @@ export default function ResaleDetailPage() {
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-[90px] sm:pt-[105px] lg:pt-[115px]">
       <Seo
-        title={`${property.title} | ${property.bedrooms ? property.bedrooms + " BHK " : ""}Resale Flat in ${property.locality || property.location || "Kolkata"} | Astittva`}
-        description={`Explore ${property.title}, a verified ${property.bedrooms ? property.bedrooms + " BHK " : ""}${property.propertyType || "resale property"} in ${property.locality || property.location || "Kolkata"}. Area: ${property.area || ""} ${property.areaUnit || "sq.ft."}. Listed at ${formatPriceINR(property.price)} with title verification by Astittva Marketing.`}
+        title={`${property.title} in ${property.locality || property.location || "Kolkata"} | Astittva Marketing`}
+        description={`Explore ${property.title}, a verified ${property.bedrooms ? property.bedrooms + " BHK " : ""}${property.propertyType || "resale property"} in ${property.locality || property.location || "Kolkata"}, listed at ${formatPriceINR(property.price)} with title verification by Astittva Marketing.`}
         path={`/resale/${property.id}`}
         type="product"
         image={gallery[0]}
