@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, ShieldCheck, Sparkles, Building2, Compass, ChevronRight, MapPin, Globe2, Award, TrendingUp, BadgeCheck, Handshake, Briefcase, MessageCircle, Check, ChevronDown, Loader2 } from "lucide-react";
-import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, driveImageFallback } from "@/lib/api";
 import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY } from "@/lib/site";
 import CinematicHero from "@/components/CinematicHero";
@@ -366,6 +366,11 @@ export default function HomePage() {
                             src={imgSrc}
                             alt={p.project_name}
                             onError={(e) => {
+                              const currentSrc = e.currentTarget.src || "";
+                              if (driveImg && currentSrc.includes("googleusercontent.com")) {
+                                e.currentTarget.src = driveImageFallback(driveImg, 1000);
+                                return;
+                              }
                               e.currentTarget.onerror = null;
                               e.currentTarget.src = "/images/luxe/luxury_villa.webp";
                             }}

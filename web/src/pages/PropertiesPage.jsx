@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, MapPin, Filter, X, SlidersHorizontal } from "lucide-react";
-import api, { fileUrl } from "@/lib/api";
+import api, { isGoogleDriveImage, driveImageUrl, driveImageFallback } from "@/lib/api";
 import Seo from "@/components/Seo";
+import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 
 // ---------- Filter option catalogues (per Astittva brand brief) ----------
 const LOCATIONS = [
@@ -62,10 +63,10 @@ function FilterSelect({ label, value, onChange, options, allLabel, testId }) {
 
 // Distinct luxury fallback images so the grid never repeats when properties have no uploads.
 const FALLBACK_IMAGES = [
-  "/images/luxe/luxury_villa.jpg",
-  "/images/luxe/property_tower.jpg",
-  "/images/luxe/property_villa_garden.jpg",
-  "/images/luxe/property_heritage_estate.jpg",
+  "/images/luxe/luxury_villa.webp",
+  "/images/luxe/property_tower.webp",
+  "/images/luxe/property_villa_garden.webp",
+  "/images/luxe/property_heritage_estate.webp",
 ];
 
 function pickFallback(id) {
@@ -142,13 +143,33 @@ export default function PropertiesPage() {
     </div>
   );
 
+  const pageTitle = location
+    ? `Properties in ${location} Kolkata | Astittva Marketing`
+    : "Properties in Kolkata | Flats & Homes | Astittva Marketing";
+
+  const pageDescription = location
+    ? `Explore verified residential and commercial properties in ${location}, Kolkata with Astittva Marketing. Filter by builder, budget, and possession stage.`
+    : "Browse curated residential properties, luxury flats, and apartments in Kolkata, New Town, and Rajarhat. Filter by budget, builder, and possession stage.";
+
+  const pageH1 = location
+    ? `Properties in ${location}, Kolkata`
+    : "Properties in Kolkata";
+
+  const breadcrumbs = [
+    { name: "Home", path: "/" },
+    { name: "Properties", path: "/properties" },
+  ];
+  if (location) {
+    breadcrumbs.push({ name: location, path: `/properties?location=${encodeURIComponent(location)}` });
+  }
+
   return (
     <div data-testid="properties-page" className="relative pt-28 pb-16 sm:pt-32 sm:pb-24 text-ivory">
       <Seo
-        title="Luxury Properties for Sale in Kolkata · New Town · Rajarhat"
-        description="Browse Astittva Marketing's curated portfolio of luxury residential, commercial and investment properties across New Town, Rajarhat, Salt Lake, Alipore and other premium Kolkata destinations. Filter by location, builder, budget and category."
+        title={pageTitle}
+        description={pageDescription}
         path="/properties"
-        keywords="properties for sale Kolkata, New Town flats, Rajarhat apartments, luxury homes Kolkata, PS Group Merlin Siddha Shrachi properties"
+        schema={buildBreadcrumbSchema(breadcrumbs)}
       />
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         <motion.div
@@ -157,7 +178,7 @@ export default function PropertiesPage() {
         >
           <div className="overline mb-4">Curated Portfolio</div>
           <h1 className="font-display font-light text-3xl sm:text-5xl lg:text-6xl text-ivory tracking-tight">
-            Properties
+            {pageH1}
           </h1>
           <p className="text-ivory/55 font-light mt-4 max-w-2xl text-sm sm:text-base">
             Every listing is verified, RERA-compliant where applicable, and curated by our advisory desk.
@@ -307,12 +328,28 @@ export default function PropertiesPage() {
               >
                 <Link to={`/properties/${p.id}`}>
                   <div className="aspect-[4/3] overflow-hidden relative">
-                    <img
-                      loading="lazy"
-                      src={p.images?.[0] ? fileUrl(p.images[0]) : pickFallback(p.id)}
-                      alt={p.project_name}
-                      className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
-                    />
+                    {(() => {
+                      const driveImg = (p.images || []).find(isGoogleDriveImage);
+                      const anyHttpImg = (p.images || []).find((img) => typeof img === "string" && img.startsWith("http"));
+                      const imgSrc = driveImg ? driveImageUrl(driveImg, 1000) : (anyHttpImg || pickFallback(p.id));
+                      return (
+                        <img
+                          loading="lazy"
+                          src={imgSrc}
+                          alt={`${p.project_name} - ${p.bedrooms || p.property_type || "Residential property"} in ${p.location || p.city || "Kolkata"}`}
+                          className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
+                          onError={(e) => {
+                            const currentSrc = e.currentTarget.src || "";
+                            if (driveImg && currentSrc.includes("googleusercontent.com")) {
+                              e.currentTarget.src = driveImageFallback(driveImg, 1000);
+                              return;
+                            }
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = pickFallback(p.id);
+                          }}
+                        />
+                      );
+                    })()}
                     {p.is_featured && (
                       <div className="absolute top-4 left-4 bg-copper text-charcoal text-[10px] tracking-[0.3em] uppercase px-3 py-1.5">
                         Featured

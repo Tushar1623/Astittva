@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, MapPin } from "lucide-react";
-import { isGoogleDriveImage, driveImageUrl } from "@/lib/api";
+import { isGoogleDriveImage, driveImageUrl, driveImageFallback } from "@/lib/api";
 
 const FALLBACK_IMAGES = [
   "/images/luxe/luxury_villa.webp",
@@ -51,6 +51,11 @@ export default function PropertyCard({
           src={imageSrc}
           alt={`${p.project_name} - ${p.bedrooms || p.property_type || "Luxury Property"} in ${p.location ? `${p.location}, ${p.city}` : p.city || "Kolkata"}`}
           onError={(e) => {
+            const currentSrc = e.currentTarget.src || "";
+            if (driveImg && currentSrc.includes("googleusercontent.com")) {
+              e.currentTarget.src = driveImageFallback(driveImg, 1000);
+              return;
+            }
             e.currentTarget.onerror = null;
             e.currentTarget.src = pickPropertyFallback(p.id);
           }}

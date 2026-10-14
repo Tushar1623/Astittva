@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Calendar, ArrowLeft, ArrowUpRight } from "lucide-react";
-import api, { isGoogleDriveImage, driveImageUrl } from "@/lib/api";
+import api, { isGoogleDriveImage, driveImageUrl, driveImageFallback } from "@/lib/api";
 import Seo from "@/components/Seo";
 import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import { sanitizeBlogHtml } from "@/lib/sanitize";
@@ -191,6 +191,11 @@ export default function BlogDetailPage() {
                 src={img}
                 alt={blog.title}
                 onError={(e) => {
+                  const currentSrc = e.currentTarget.src || "";
+                  if (isGoogleDriveImage(blog.featured_image) && currentSrc.includes("googleusercontent.com")) {
+                    e.currentTarget.src = driveImageFallback(blog.featured_image, 1200);
+                    return;
+                  }
                   e.currentTarget.style.display = "none";
                 }}
                 className="w-full h-full object-cover"

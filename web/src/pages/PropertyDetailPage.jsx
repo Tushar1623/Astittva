@@ -2,29 +2,42 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MapPin, Building2, Calendar, BadgeCheck, Home, ArrowLeft, Phone, MessageCircle } from "lucide-react";
-import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, driveImageFallback } from "@/lib/api";
 import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY } from "@/lib/site";
 import Seo from "@/components/Seo";
+import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 
 // Per-property dynamic SEO: title/description/canonical/OG/Twitter + RealEstateListing JSON-LD.
 function PropertySeo({ property, id }) {
-  const title = `${property.project_name} by ${property.builder || "—"} · ${property.location || property.city || "Kolkata"}`;
+  const loc = property.location || property.city || "Kolkata";
+  const title = `${property.project_name} in ${loc} | Astittva Marketing`;
   const priceTxt = property.price_label || (property.starting_price ? `₹${property.starting_price.toLocaleString("en-IN")}` : "");
   const description =
-    `${property.project_name} — ${property.property_category || "luxury"} ${property.property_type || "residential"} by ${property.builder || "a trusted developer"} ` +
-    `in ${property.location || property.city || "Kolkata"}. ` +
-    `${priceTxt ? priceTxt + ". " : ""}` +
-    `${property.bedrooms ? property.bedrooms + " BHK · " : ""}` +
-    `${property.area_sqft ? property.area_sqft + " sq ft · " : ""}` +
-    `${property.availability || ""}. ` +
-    `Schedule a private site visit with Astittva Marketing.`;
+    `Explore ${property.project_name}${property.location ? ` in ${property.location}` : ""}, Kolkata by ${property.builder || "Astittva Marketing"}. ${priceTxt ? `Starting ${priceTxt}. ` : ""}Verified details, floor plans, and site visits.`;
+
   const driveImg = (property.images || []).find(isGoogleDriveImage);
-  const image = driveImg ? driveImageUrl(driveImg) : undefined;
+  const anyHttpImg = (property.images || []).find((img) => typeof img === "string" && img.startsWith("http"));
+  const image = driveImg ? driveImageUrl(driveImg) : (anyHttpImg || undefined);
+
+  const breadcrumbs = [
+    { name: "Home", path: "/" },
+    { name: "Properties", path: "/properties" },
+  ];
+  if (property.location) {
+    breadcrumbs.push({
+      name: property.location,
+      path: `/properties?location=${encodeURIComponent(property.location)}`,
+    });
+  }
+  breadcrumbs.push({
+    name: property.project_name,
+    path: `/properties/${id}`,
+  });
 
   const listingJsonLd = {
     "@context": "https://schema.org",
-    "@type": "Residence",
+    "@type": "SingleFamilyResidence",
     name: property.project_name,
     description,
     url: `https://astittva.in/properties/${id}`,
@@ -75,12 +88,11 @@ function PropertySeo({ property, id }) {
   return (
     <Seo
       title={title}
-      description={description.slice(0, 300)}
+      description={description}
       path={`/properties/${id}`}
       type="product"
       image={image}
-      keywords={`${property.project_name}, ${property.builder || ""}, ${property.location || ""}, ${property.city || ""}, ${property.property_type || ""}, ${property.property_category || ""}, real estate Kolkata`}
-      jsonLd={listingJsonLd}
+      schema={[listingJsonLd, buildBreadcrumbSchema(breadcrumbs)]}
     />
   );
 }
@@ -145,6 +157,23 @@ export default function PropertyDetailPage() {
     <div data-testid="property-detail-page" className="pt-28 pb-24">
       <PropertySeo property={property} id={id} />
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+        {/* Breadcrumb Navigation */}
+        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-xs text-ivory/50 mb-6">
+          <Link to="/" className="hover:text-copper transition-colors">Home</Link>
+          <span>/</span>
+          <Link to="/properties" className="hover:text-copper transition-colors">Properties</Link>
+          {property.location && (
+            <>
+              <span>/</span>
+              <Link to={`/properties?location=${encodeURIComponent(property.location)}`} className="hover:text-copper transition-colors">
+                {property.location}
+              </Link>
+            </>
+          )}
+          <span>/</span>
+          <span className="text-copper font-medium">{property.project_name}</span>
+        </nav>
+
         <Link to="/properties" className="inline-flex items-center gap-2 text-copper text-xs tracking-[0.3em] uppercase mb-8 hover:text-rose-gold">
           <ArrowLeft className="w-4 h-4" /> Back to Properties
         </Link>
@@ -156,9 +185,15 @@ export default function PropertyDetailPage() {
               <img
                 loading="lazy"
                 src={isGoogleDriveImage(images[activeImg]) ? driveImageUrl(images[activeImg], 1200) : images[activeImg]}
-                alt={property.project_name}
+                alt={`${property.project_name} - ${property.bedrooms || property.property_type || "Luxury apartment"} in ${property.location || property.city || "Kolkata"}`}
                 className="w-full h-full object-cover"
                 onError={(e) => {
+                  const currentSrc = e.currentTarget.src || "";
+                  const activeImgItem = images[activeImg];
+                  if (activeImgItem && isGoogleDriveImage(activeImgItem) && currentSrc.includes("googleusercontent.com")) {
+                    e.currentTarget.src = driveImageFallback(activeImgItem, 1200);
+                    return;
+                  }
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = "/images/luxe/luxury_villa.webp";
                 }}
@@ -181,9 +216,14 @@ export default function PropertyDetailPage() {
                   <img
                     loading="lazy"
                     src={isGoogleDriveImage(img) ? driveImageUrl(img, 400) : img}
-                    alt=""
+                    alt={`${property.project_name} gallery preview ${i + 1}`}
                     className="absolute inset-0 w-full h-full object-cover"
                     onError={(e) => {
+                      const currentSrc = e.currentTarget.src || "";
+                      if (isGoogleDriveImage(img) && currentSrc.includes("googleusercontent.com")) {
+                        e.currentTarget.src = driveImageFallback(img, 400);
+                        return;
+                      }
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = "/images/luxe/luxury_villa.webp";
                     }}
@@ -234,7 +274,7 @@ export default function PropertyDetailPage() {
 
             {property.amenities?.length > 0 && (
               <div className="mt-12">
-                <h3 className="overline mb-5">Amenities</h3>
+                <h2 className="overline mb-5">Amenities</h2>
                 <div className="flex flex-wrap gap-2">
                   {property.amenities.map((a) => (
                     <span key={a} className="border border-copper/25 text-ivory/80 text-xs px-4 py-2 tracking-wider">{a}</span>
@@ -245,7 +285,7 @@ export default function PropertyDetailPage() {
 
             {property.google_maps_url && (
               <div className="mt-12">
-                <h3 className="overline mb-5">Location</h3>
+                <h2 className="overline mb-5">Location</h2>
                 <div className="aspect-video border border-copper/15">
                   <iframe
                     title="map"
@@ -256,6 +296,46 @@ export default function PropertyDetailPage() {
                 </div>
               </div>
             )}
+
+            {/* Internal Linking & Next Steps */}
+            <div className="mt-12 pt-8 border-t border-copper/15">
+              <h2 className="overline mb-4">Advisory &amp; Financial Planning</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Link
+                  to="/calculators/home-loan-emi"
+                  className="p-4 border border-copper/20 bg-charcoal-2/30 hover:border-copper/50 transition-colors group"
+                >
+                  <div className="text-copper text-xs tracking-widest uppercase font-medium mb-1 group-hover:text-rose-gold">
+                    Home Loan EMI Calculator &rarr;
+                  </div>
+                  <p className="text-ivory/60 text-xs">
+                    Calculate monthly EMI, interest, and repayment schedule for {property.project_name}.
+                  </p>
+                </Link>
+                <Link
+                  to="/calculators/stamp-duty-registration"
+                  className="p-4 border border-copper/20 bg-charcoal-2/30 hover:border-copper/50 transition-colors group"
+                >
+                  <div className="text-copper text-xs tracking-widest uppercase font-medium mb-1 group-hover:text-rose-gold">
+                    West Bengal Stamp Duty Calculator &rarr;
+                  </div>
+                  <p className="text-ivory/60 text-xs">
+                    Estimate registration fees and West Bengal stamp duty costs.
+                  </p>
+                </Link>
+              </div>
+              {property.location && (
+                <div className="mt-4 text-xs text-ivory/50">
+                  <span>Looking for other projects nearby? </span>
+                  <Link
+                    to={`/properties?location=${encodeURIComponent(property.location)}`}
+                    className="text-copper underline hover:text-rose-gold ml-1"
+                  >
+                    View more properties in {property.location}
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Enquiry */}

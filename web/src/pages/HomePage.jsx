@@ -2,11 +2,12 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, ShieldCheck, Sparkles, Building2, Compass, ChevronRight, MapPin, Globe2, Award, TrendingUp, BadgeCheck, Handshake, Briefcase, MessageCircle, Check, ChevronDown, Loader2 } from "lucide-react";
-import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, driveImageFallback } from "@/lib/api";
 import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY } from "@/lib/site";
 import CinematicHero from "@/components/CinematicHero";
 import Seo from "@/components/Seo";
+import { getOrganizationSchema, getWebSiteSchema } from "@/lib/seoConfig";
 
 const TEXTURE = "https://static.prod-images.emergentagent.com/jobs/50ac1e2c-4ee3-4d48-ad5e-fd37063ae3c0/images/1f5da7f44ad5aab6c1f6ab3c12df3ec89723084c1042e95749a6b4658dcffcc6.png";
 
@@ -125,10 +126,10 @@ export default function HomePage() {
   return (
     <div data-testid="home-page">
       <Seo
-        title="Astittva Marketing — Luxury Real Estate Advisory, Property Consultants & Investment Advisory in Kolkata"
-        description="Astittva Marketing is a luxury real estate advisory and property consultancy in Kolkata. We curate verified residential, commercial and investment properties across New Town, Rajarhat, Salt Lake, Alipore and partner with India's most trusted developers to deliver opportunities for the discerning investor."
+        title="Astittva Marketing | Property Consultants in Kolkata"
+        description="Explore properties in Kolkata, New Town, Rajarhat and Salt Lake with Astittva Marketing. Get guidance for buying and investing in real estate."
         path="/"
-        keywords="luxury real estate Kolkata, property consultants Kolkata, investment advisory Kolkata, real estate advisory, New Town properties, Rajarhat apartments, Astittva Marketing, premium real estate Kolkata"
+        schema={[getOrganizationSchema(), getWebSiteSchema()]}
       />
       {/* ===================== HERO ===================== */}
       <section data-testid="hero-section" className="relative min-h-[640px] h-[100svh] sm:min-h-[760px] sm:h-screen w-full overflow-hidden bg-[#FAF8F5]">
@@ -365,6 +366,11 @@ export default function HomePage() {
                             src={imgSrc}
                             alt={p.project_name}
                             onError={(e) => {
+                              const currentSrc = e.currentTarget.src || "";
+                              if (driveImg && currentSrc.includes("googleusercontent.com")) {
+                                e.currentTarget.src = driveImageFallback(driveImg, 1000);
+                                return;
+                              }
                               e.currentTarget.onerror = null;
                               e.currentTarget.src = "/images/luxe/luxury_villa.webp";
                             }}

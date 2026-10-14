@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Calendar, ArrowLeft, ArrowUpRight } from "lucide-react";
-import api, { fileUrl } from "@/lib/api";
+import api, { isGoogleDriveImage, driveImageUrl, driveImageFallback } from "@/lib/api";
 import Seo from "@/components/Seo";
+import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import { sanitizeBlogHtml } from "@/lib/sanitize";
 
 function formatDate(iso) {
@@ -21,8 +22,9 @@ function formatDate(iso) {
 
 function blogImage(src) {
   if (!src) return "";
+  if (isGoogleDriveImage(src)) return driveImageUrl(src, 1200);
   if (src.startsWith("http")) return src;
-  return fileUrl(src);
+  return "";
 }
 
 export default function BlogDetailPage() {
@@ -100,16 +102,24 @@ export default function BlogDetailPage() {
     mainEntityOfPage: `https://astittva.in/blogs/${blog.slug}`,
   };
 
+  const blogBreadcrumbs = [
+    { name: "Home", path: "/" },
+    { name: "Blog", path: "/blogs" },
+    { name: blog.title, path: `/blogs/${blog.slug}` },
+  ];
+
   return (
     <div data-testid="blog-detail-page" className="relative text-ivory">
       <Seo
-        title={seoTitle}
+        title={`${seoTitle} | Astittva Marketing`}
         description={seoDesc}
         path={`/blogs/${blog.slug}`}
-        keywords={blog.seo_keywords}
         image={img || undefined}
         type="article"
-        jsonLd={jsonLd}
+        publishedTime={blog.publish_date || blog.created_at}
+        modifiedTime={blog.updated_at || blog.publish_date || blog.created_at}
+        author={blog.author || "Astittva Editorial"}
+        schema={[jsonLd, buildBreadcrumbSchema(blogBreadcrumbs)]}
       />
 
       {/* ============== HERO ============== */}
@@ -120,6 +130,15 @@ export default function BlogDetailPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
           >
+            {/* Breadcrumb Navigation */}
+            <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-xs text-[#737373] mb-6 font-sans">
+              <Link to="/" className="hover:text-copper transition-colors">Home</Link>
+              <span>/</span>
+              <Link to="/blogs" className="hover:text-copper transition-colors">The Journal</Link>
+              <span>/</span>
+              <span className="text-copper font-medium truncate max-w-[280px] sm:max-w-md">{blog.title}</span>
+            </nav>
+
             <Link
               to="/blogs"
               data-testid="back-to-blogs"
@@ -171,6 +190,14 @@ export default function BlogDetailPage() {
               <img
                 src={img}
                 alt={blog.title}
+                onError={(e) => {
+                  const currentSrc = e.currentTarget.src || "";
+                  if (isGoogleDriveImage(blog.featured_image) && currentSrc.includes("googleusercontent.com")) {
+                    e.currentTarget.src = driveImageFallback(blog.featured_image, 1200);
+                    return;
+                  }
+                  e.currentTarget.style.display = "none";
+                }}
                 className="w-full h-full object-cover"
               />
             </motion.div>
@@ -189,6 +216,19 @@ export default function BlogDetailPage() {
             data-testid="blog-body"
             dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(blog.body) }}
           />
+
+          {/* Contextual Internal Linking */}
+          <div className="mt-12 p-6 rounded-[8px] bg-white border border-[#E8DED2] text-[#1C1C1C]">
+            <h3 className="font-serif text-lg font-bold mb-2">Planning a property investment in Kolkata?</h3>
+            <p className="text-sm text-[#5F5F5F] mb-4">
+              Explore verified new launches, check home loan affordability, or schedule a 1-on-1 consultation with our senior advisory team.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/properties" className="btn-primary text-xs py-2 px-4">Browse Properties</Link>
+              <Link to="/calculators/home-loan-emi" className="btn-outline text-xs py-2 px-4">EMI Calculator</Link>
+              <Link to="/contact" className="btn-outline text-xs py-2 px-4">Book Consultation</Link>
+            </div>
+          </div>
 
           <div className="mt-16 pt-10 border-t border-[#E8DED2] flex flex-wrap items-center justify-between gap-4">
             <Link

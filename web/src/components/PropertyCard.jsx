@@ -1,13 +1,13 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, MapPin } from "lucide-react";
-import { fileUrl } from "@/lib/api";
+import { isGoogleDriveImage, driveImageUrl, driveImageFallback } from "@/lib/api";
 
 const FALLBACK_IMAGES = [
-  "/images/luxe/luxury_villa.jpg",
-  "/images/luxe/property_tower.jpg",
-  "/images/luxe/property_villa_garden.jpg",
-  "/images/luxe/property_heritage_estate.jpg",
+  "/images/luxe/luxury_villa.webp",
+  "/images/luxe/property_tower.webp",
+  "/images/luxe/property_villa_garden.webp",
+  "/images/luxe/property_heritage_estate.webp",
 ];
 
 export function pickPropertyFallback(id) {
@@ -28,9 +28,9 @@ export default function PropertyCard({
     testId ||
     (variant === "featured" ? `project-card-${p.id}` : `property-card-${p.id}`);
 
-  const imageSrc = p.images?.[0]
-    ? fileUrl(p.images[0])
-    : pickPropertyFallback(p.id);
+  const driveImg = (p.images || []).find(isGoogleDriveImage);
+  const anyHttpImg = (p.images || []).find((img) => typeof img === "string" && img.startsWith("http"));
+  const imageSrc = driveImg ? driveImageUrl(driveImg, 1000) : (anyHttpImg || pickPropertyFallback(p.id));
 
   const price =
     p.price_label ||
@@ -49,7 +49,16 @@ export default function PropertyCard({
         <img
           loading="lazy"
           src={imageSrc}
-          alt={p.project_name}
+          alt={`${p.project_name} - ${p.bedrooms || p.property_type || "Luxury Property"} in ${p.location ? `${p.location}, ${p.city}` : p.city || "Kolkata"}`}
+          onError={(e) => {
+            const currentSrc = e.currentTarget.src || "";
+            if (driveImg && currentSrc.includes("googleusercontent.com")) {
+              e.currentTarget.src = driveImageFallback(driveImg, 1000);
+              return;
+            }
+            e.currentTarget.onerror = null;
+            e.currentTarget.src = pickPropertyFallback(p.id);
+          }}
           className="w-full h-full object-cover transition-transform duration-[1.8s] ease-out group-hover:scale-105"
         />
         {p.property_category && (

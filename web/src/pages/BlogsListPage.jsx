@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowUpRight, Calendar, BookOpen } from "lucide-react";
-import api, { fileUrl } from "@/lib/api";
+import api, { isGoogleDriveImage, driveImageUrl, driveImageFallback } from "@/lib/api";
 import Seo from "@/components/Seo";
+import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 
 function formatDate(iso) {
   if (!iso) return "";
@@ -20,8 +21,9 @@ function formatDate(iso) {
 
 function blogImage(src) {
   if (!src) return "";
+  if (isGoogleDriveImage(src)) return driveImageUrl(src);
   if (src.startsWith("http")) return src;
-  return fileUrl(src);
+  return "";
 }
 
 function BlogCard({ blog, idx }) {
@@ -46,6 +48,14 @@ function BlogCard({ blog, idx }) {
               loading="lazy"
               src={img}
               alt={blog.title}
+              onError={(e) => {
+                const currentSrc = e.currentTarget.src || "";
+                if (isGoogleDriveImage(blog.featured_image) && currentSrc.includes("googleusercontent.com")) {
+                  e.currentTarget.src = driveImageFallback(blog.featured_image, 1000);
+                  return;
+                }
+                e.currentTarget.style.display = "none";
+              }}
               className="w-full h-full object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"
             />
           ) : (
@@ -147,11 +157,10 @@ export default function BlogsListPage() {
   return (
     <div data-testid="blogs-list-page" className="relative text-ivory">
       <Seo
-        title="Blogs · Luxury Real Estate Perspectives from Kolkata & Beyond"
-        description="Editorial insights on Kolkata luxury real estate, New Town & Rajarhat corridors, investor strategy, and global property intelligence — curated by Astittva Marketing."
+        title="Real Estate Blog | Property Insights Kolkata | Astittva"
+        description="Read expert analysis on Kolkata real estate, property investment trends, New Town infrastructure updates, and homebuyer advisory guides by Astittva Marketing."
         path="/blogs"
-        keywords="Astittva blogs, Kolkata real estate blog, luxury property insights, New Town Rajarhat editorial, real estate investment articles India"
-        jsonLd={jsonLd}
+        schema={[jsonLd, buildBreadcrumbSchema([{ name: "Home", path: "/" }, { name: "Blog", path: "/blogs" }])]}
       />
 
       {/* ============== HERO ============== */}
@@ -165,11 +174,11 @@ export default function BlogsListPage() {
           >
             <div className="eyebrow-line mb-6 sm:mb-8">
               <span className="text-[10px] tracking-[0.5em] uppercase text-[#5F5F5F]">
-                ASTITTVA Editorial
+                The Astittva Journal · Kolkata Property Insights
               </span>
             </div>
             <h1 className="section-title text-[2rem] sm:text-5xl lg:text-7xl leading-[1.05]">
-              The Astittva Journal
+              Real Estate Blog &amp; Insights
             </h1>
             <p className="mt-6 sm:mt-8 text-muted-fg text-base sm:text-lg max-w-3xl leading-[1.75] font-light">
               Slow-read essays on Kolkata luxury real estate, investor strategy, and the
