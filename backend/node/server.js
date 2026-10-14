@@ -578,9 +578,8 @@ Disallow: /api/auth/
 Disallow: /dashboard
 Disallow: /dashboard/
 
-# XML Sitemaps
+# XML Sitemap
 Sitemap: https://astittva.in/sitemap.xml
-Sitemap: https://astittva.in/api/sitemap.xml
 `;
   res.set({
     "Content-Type": "text/plain; charset=utf-8",
@@ -2719,7 +2718,7 @@ app.all(["/api/*", "/healthz/*"], (req, res) => {
 
 if (activeBuildPath) {
   console.log(`[Static] Serving React frontend build from: ${activeBuildPath}`);
-  app.use(express.static(activeBuildPath));
+  app.use(express.static(activeBuildPath, { redirect: false, index: false }));
 
   // Route allowlist for legitimate application routes
   const VALID_APP_ROUTE_REGEX = /^\/(properties|resale|blogs|news|market-intelligence|calculators|about|contact|career|admin)($|\/.*)/i;
@@ -2734,6 +2733,15 @@ if (activeBuildPath) {
     const isValidRoute = isRoot || VALID_APP_ROUTE_REGEX.test(req.path);
 
     if (isValidRoute) {
+      const cleanPath = req.path.replace(/^\/+|\/+$/g, "");
+      const nestedPath = path.join(activeBuildPath, cleanPath, "index.html");
+      const flatPath = path.join(activeBuildPath, `${cleanPath}.html`);
+      if (cleanPath && fs.existsSync(nestedPath)) {
+        return res.sendFile(nestedPath);
+      }
+      if (cleanPath && fs.existsSync(flatPath)) {
+        return res.sendFile(flatPath);
+      }
       return res.sendFile(path.join(activeBuildPath, "index.html"));
     }
 

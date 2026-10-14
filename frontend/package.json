@@ -19,7 +19,7 @@
   },
   "scripts": {
     "start": "craco start",
-    "build": "node scripts/generate_sitemap.js && craco build",
+    "build": "node scripts/generate_sitemap.js && craco build && node scripts/prerender_routes.js",
     "test": "craco test"
   },
   "browserslist": {

@@ -199,13 +199,16 @@ export default function Footer() {
                   <Mail className="w-4 h-4 text-[#C78B47] shrink-0" strokeWidth={1.5} />
                   <a href={`mailto:${EMAIL}`} className="hover:text-[#C78B47] transition">{EMAIL}</a>
                 </li>
+                <li className="pt-1 text-[13px] text-[#C78B47] font-medium tracking-wide">
+                  WBRERA Registration No: [FILL IN]
+                </li>
               </ul>
             </div>
           </div>
 
           {/* Bottom champagne divider strip */}
           <div className="mt-16 sm:mt-20 pt-7 border-t border-[#C78B47]/25 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-[#F5EFE7]/75 text-xs tracking-wider">© {new Date().getFullYear()} <span className="text-[#F5EFE7] font-semibold tracking-[0.1em]">Astittva Marketing</span> · All rights reserved.</p>
+            <p className="text-[#F5EFE7]/75 text-xs tracking-wider">© {new Date().getFullYear()} <span className="text-[#F5EFE7] font-semibold tracking-[0.1em]">Astittva Marketing</span> · All rights reserved. · <span className="text-[#C78B47]">WBRERA Registration No: [FILL IN]</span></p>
             <p className="text-[#F5EFE7]/75 text-[10px] tracking-[0.4em] uppercase">Crafted with conviction · Luxury Real Estate Advisory</p>
           </div>
         </div>

@@ -93,14 +93,7 @@ export function driveImageUrl(url, width = 1000) {
   const id = getGoogleDriveFileId(url);
   if (!id) return "";
 
-  // Direct high-resolution Google CDN image URL
-  // lh3.googleusercontent.com avoids 302 redirects, cookie dependencies, and Drive rate limits
-  return `https://lh3.googleusercontent.com/d/${id}=w${width || 1000}`;
-}
-
-export function driveImageFallback(url, width = 1000) {
-  const id = getGoogleDriveFileId(url);
-  if (!id) return "";
+  // Direct high-resolution Google Drive thumbnail URL
   return `https://drive.google.com/thumbnail?id=${id}&sz=w${width || 1000}`;
 }
 
@@ -109,7 +102,7 @@ export function fileUrl(path, width = 1000) {
 
   const driveId = getGoogleDriveFileId(path);
   if (driveId) {
-    return `https://lh3.googleusercontent.com/d/${driveId}=w${width || 1000}`;
+    return `https://drive.google.com/thumbnail?id=${driveId}&sz=w${width || 1000}`;
   }
 
   // Do NOT request legacy Astittva storage paths anymore.

@@ -287,6 +287,16 @@ export default function AboutPage({ scrollToContact = false }) {
                   </p>
                 </div>
 
+                {/* Regulatory / WBRERA Registration */}
+                <div className="border-l-2 border-[#C89A55] pl-4 sm:pl-4.5 py-0.5">
+                  <div className="text-[10px] font-semibold tracking-[0.15em] text-[#B4773F] uppercase mb-1">
+                    Regulatory Compliance
+                  </div>
+                  <p className="text-[13px] sm:text-[13.5px] text-[#625653] font-medium leading-[1.5]">
+                    WBRERA Registration No: [FILL IN]
+                  </p>
+                </div>
+
                 {/* WhatsApp / Direct Advisory Button */}
                 <div className="pt-2">
                   <a

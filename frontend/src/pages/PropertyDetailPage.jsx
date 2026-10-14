@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MapPin, Building2, Calendar, BadgeCheck, Home, ArrowLeft, Phone, MessageCircle } from "lucide-react";
-import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, driveImageFallback } from "@/lib/api";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
 import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY } from "@/lib/site";
 import Seo from "@/components/Seo";
@@ -188,12 +188,6 @@ export default function PropertyDetailPage() {
                 alt={`${property.project_name} - ${property.bedrooms || property.property_type || "Luxury apartment"} in ${property.location || property.city || "Kolkata"}`}
                 className="w-full h-full object-cover"
                 onError={(e) => {
-                  const currentSrc = e.currentTarget.src || "";
-                  const activeImgItem = images[activeImg];
-                  if (activeImgItem && isGoogleDriveImage(activeImgItem) && currentSrc.includes("googleusercontent.com")) {
-                    e.currentTarget.src = driveImageFallback(activeImgItem, 1200);
-                    return;
-                  }
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = "/images/luxe/luxury_villa.webp";
                 }}
@@ -219,11 +213,6 @@ export default function PropertyDetailPage() {
                     alt={`${property.project_name} gallery preview ${i + 1}`}
                     className="absolute inset-0 w-full h-full object-cover"
                     onError={(e) => {
-                      const currentSrc = e.currentTarget.src || "";
-                      if (isGoogleDriveImage(img) && currentSrc.includes("googleusercontent.com")) {
-                        e.currentTarget.src = driveImageFallback(img, 400);
-                        return;
-                      }
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = "/images/luxe/luxury_villa.webp";
                     }}

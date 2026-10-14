@@ -7,7 +7,7 @@ export const SITE_URL = "https://astittva.in";
 export const SITE_NAME = "Astittva Marketing";
 export const SITE_TAGLINE = "Luxury Real Estate Advisory & Property Consultants in Kolkata";
 
-export const DEFAULT_OG_IMAGE = "https://astittva.in/images/astittva-social-preview.png";
+export const DEFAULT_OG_IMAGE = "https://astittva.in/og-image.png";
 export const BRAND_LOGO_URL = "https://astittva.in/images/brand-logo.png";
 
 export const COMPANY_INFO = {

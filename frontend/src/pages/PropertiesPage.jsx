@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, MapPin, Filter, X, SlidersHorizontal } from "lucide-react";
-import api, { isGoogleDriveImage, driveImageUrl, driveImageFallback } from "@/lib/api";
+import api, { isGoogleDriveImage, driveImageUrl } from "@/lib/api";
 import Seo from "@/components/Seo";
 import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 
@@ -339,11 +339,6 @@ export default function PropertiesPage() {
                           alt={`${p.project_name} - ${p.bedrooms || p.property_type || "Residential property"} in ${p.location || p.city || "Kolkata"}`}
                           className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
                           onError={(e) => {
-                            const currentSrc = e.currentTarget.src || "";
-                            if (driveImg && currentSrc.includes("googleusercontent.com")) {
-                              e.currentTarget.src = driveImageFallback(driveImg, 1000);
-                              return;
-                            }
                             e.currentTarget.onerror = null;
                             e.currentTarget.src = pickFallback(p.id);
                           }}
