@@ -70,8 +70,8 @@ function App() {
                     <Route path="/" element={<HomePage />} />
                     <Route path="/properties" element={<PropertiesPage />} />
                     <Route path="/properties/:id" element={<PropertyDetailPage />} />
-                    <Route path="/news" element={<Navigate to="/blogs" replace />} />
-                    <Route path="/market-intelligence" element={<Navigate to="/blogs" replace />} />
+                    <Route path="/news" element={<MarketIntelligencePage />} />
+                    <Route path="/market-intelligence" element={<Navigate to="/news" replace />} />
                     <Route path="/blogs" element={<BlogsListPage />} />
                     <Route path="/blogs/:slug" element={<BlogDetailPage />} />
                     <Route path="/resale" element={<ResalePage />} />

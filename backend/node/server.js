@@ -2589,6 +2589,24 @@ app.delete("/api/users/:id", requireAdmin, async (req, res) => {
 // ---------------------------------------------------------------------------
 // News / Market Intelligence
 // ---------------------------------------------------------------------------
+function dedupeAndSortArticles(articles) {
+  const seen = new Set();
+  const deduped = [];
+  for (const a of articles) {
+    if (!a || !a.title) continue;
+    const key = (a.link || a.title).trim().toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(a);
+  }
+  deduped.sort((a, b) => {
+    const da = a.published ? new Date(a.published).getTime() : 0;
+    const db = b.published ? new Date(b.published).getTime() : 0;
+    return db - da;
+  });
+  return deduped;
+}
+
 app.get("/api/news/trending", async (req, res) => {
   try {
     const cacheKey = "news:trending";
@@ -2602,15 +2620,27 @@ app.get("/api/news/trending", async (req, res) => {
     }
 
     const db = getDb();
-    const cache = await db.collection("news_cache").findOne({ topic: "trending" });
-    const result = { articles: cache?.articles ? cache.articles.slice(0, 12) : [] };
+    const trendingDoc = await db.collection("news_cache").findOne({ topic: "trending" });
+    let articles = Array.isArray(trendingDoc?.articles) ? trendingDoc.articles : [];
+
+    // Also get top Kolkata/West Bengal news if trending has few items
+    if (articles.length < 12) {
+      const localDocs = await db.collection("news_cache").find({ topic: { $in: ["kolkata", "new_town", "rajarhat", "west_bengal"] } }).toArray();
+      localDocs.forEach((d) => {
+        if (Array.isArray(d.articles)) articles = articles.concat(d.articles);
+      });
+    }
+
+    const sorted = dedupeAndSortArticles(articles).slice(0, 12);
+    const result = { articles: sorted };
     cacheSet(cacheKey, result, 900); // 15 min TTL
     res.set({
       "X-Cache": "MISS",
       "Cache-Control": "public, max-age=600, stale-while-revalidate=1200",
     });
     return res.json(result);
-  } catch {
+  } catch (err) {
+    console.error("[News] Error fetching trending news:", err.message);
     return res.json({ articles: [] });
   }
 });
@@ -2630,19 +2660,38 @@ app.get("/api/news/all", async (req, res) => {
     const db = getDb();
     const caches = await db.collection("news_cache").find().toArray();
     let allArticles = [];
+    let latestFetchedAt = null;
+
     caches.forEach((c) => {
       if (Array.isArray(c.articles)) allArticles = allArticles.concat(c.articles);
+      if (c.fetched_at && (!latestFetchedAt || c.fetched_at > latestFetchedAt)) {
+        latestFetchedAt = c.fetched_at;
+      }
     });
-    const result = { articles: allArticles, count: allArticles.length };
+
+    const sorted = dedupeAndSortArticles(allArticles);
+    const limit = 100;
+    const capped = sorted.slice(0, limit);
+    const result = {
+      articles: capped,
+      last_updated: latestFetchedAt || new Date().toISOString(),
+      count: capped.length,
+    };
+
     cacheSet(cacheKey, result, 900); // 15 min TTL
     res.set({
       "X-Cache": "MISS",
       "Cache-Control": "public, max-age=600, stale-while-revalidate=1200",
     });
     return res.json(result);
-  } catch {
-    return res.json({ articles: [], count: 0 });
+  } catch (err) {
+    console.error("[News] Error fetching all news:", err.message);
+    return res.json({ articles: [], last_updated: new Date().toISOString(), count: 0 });
   }
+});
+
+app.get("/api/news", (req, res) => {
+  res.redirect(301, "/api/news/all");
 });
 
 // ---------------------------------------------------------------------------
