@@ -166,7 +166,6 @@ export default function Footer() {
                 <li><Link to="/resale" className="hover:text-[#C78B47] transition">Resale Homes</Link></li>
                 <li><Link to="/calculators" className="hover:text-[#C78B47] transition">Calculators</Link></li>
                 <li><Link to="/blogs" className="hover:text-[#C78B47] transition">Real Estate Blog</Link></li>
-                <li><Link to="/news" className="hover:text-[#C78B47] transition">Market News</Link></li>
                 <li><Link to="/career" className="hover:text-[#C78B47] transition">Careers</Link></li>
                 <li><Link to="/about" className="hover:text-[#C78B47] transition">About &amp; Contact</Link></li>
                 <li><Link to="/admin/login" className="hover:text-[#C78B47] transition">Admin Portal</Link></li>

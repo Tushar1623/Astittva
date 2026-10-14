@@ -10,7 +10,6 @@ import CalculatorIcon from "@/components/calculators/CalculatorIcon";
 const primaryNav = [
   { to: "/", label: "Home" },
   { to: "/properties", label: "Properties" },
-  { to: "/news", label: "News" },
   { to: "/blogs", label: "Blogs" },
   { to: "/resale", label: "Resale" },
   { to: "/calculators", label: "Calculators", isDropdown: true },

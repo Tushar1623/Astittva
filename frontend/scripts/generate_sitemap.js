@@ -17,7 +17,6 @@ const STATIC_URLS = [
   { path: "/resale", changefreq: "daily", priority: "0.9" },
   { path: "/calculators", changefreq: "weekly", priority: "0.85" },
   { path: "/blogs", changefreq: "daily", priority: "0.8" },
-  { path: "/news", changefreq: "daily", priority: "0.8" },
   { path: "/about", changefreq: "monthly", priority: "0.7" },
   { path: "/contact", changefreq: "monthly", priority: "0.7" },
   { path: "/career", changefreq: "monthly", priority: "0.6" },
@@ -94,7 +93,10 @@ ${urls.join("\n")}
 }
 
 async function main() {
-  const xml = await getSitemapXml();
+  let xml = await getSitemapXml();
+
+  // Ensure /news is never included in the indexable sitemap
+  xml = xml.replace(/<url>[\s\S]*?<loc>[^<]*\/news<\/loc>[\s\S]*?<\/url>\n?/g, "");
 
   const destinations = [
     path.resolve(__dirname, "../public/sitemap.xml"),
