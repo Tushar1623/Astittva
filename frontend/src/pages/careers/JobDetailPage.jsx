@@ -1,27 +1,23 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import {
   Briefcase,
   MapPin,
   Clock,
-  Building,
-  CheckCircle2,
-  Calendar,
-  IndianRupee,
-  Share2,
   ArrowLeft,
   ArrowRight,
-  ShieldCheck,
-  Award,
+  Share2,
+  CheckCircle2,
+  Building,
   Sparkles,
-  Mail,
-  Phone,
+  IndianRupee,
+  Calendar,
+  Award,
+  ShieldCheck,
+  ExternalLink,
 } from "lucide-react";
 import Seo from "@/components/Seo";
-import { buildBreadcrumbSchema } from "@/lib/seoConfig";
-import api, { formatApiErrorDetail } from "@/lib/api";
-import { LOGO_URL, EMAIL, PHONE_DISPLAY, OFFICE_ADDRESS } from "@/lib/site";
+import api from "@/lib/api";
 import { toast } from "sonner";
 
 export default function JobDetailPage() {
@@ -34,7 +30,8 @@ export default function JobDetailPage() {
 
   useEffect(() => {
     let isMounted = true;
-    async function loadJob() {
+
+    async function fetchJobDetail() {
       try {
         setLoading(true);
         setError("");
@@ -47,76 +44,69 @@ export default function JobDetailPage() {
           console.error("Failed to load job details:", err);
           setError(
             err.response?.status === 404
-              ? "This job opening was not found or is no longer accepting applications."
-              : formatApiErrorDetail(err.response?.data?.detail)
+              ? "This job opening is either filled, archived, or no longer available."
+              : "Unable to load job vacancy details. Please try again later."
           );
         }
       } finally {
         if (isMounted) setLoading(false);
       }
     }
-    loadJob();
+
+    if (slug) fetchJobDetail();
+
     return () => {
       isMounted = false;
     };
   }, [slug]);
 
-  const handleShare = async () => {
-    const url = window.location.href;
+  const handleShare = () => {
     if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${job?.title} | Astittva Careers`,
+      navigator
+        .share({
+          title: `${job?.title || "Career Opening"} | Astittva Marketing`,
           text: `Explore this career opportunity at Astittva Marketing in Kolkata: ${job?.title}`,
-          url,
-        });
-      } catch {
-        // User cancelled share
-      }
+          url: window.location.href,
+        })
+        .catch(() => {});
     } else {
-      navigator.clipboard.writeText(url);
+      navigator.clipboard.writeText(window.location.href);
       toast.success("Job link copied to clipboard!");
     }
   };
 
-  const breadcrumbs = useMemo(
-    () => [
-      { name: "Home", url: "https://astittva.in/" },
-      { name: "Careers", url: "https://astittva.in/career" },
-      { name: "Job Openings", url: "https://astittva.in/careers/jobs" },
-      { name: job?.title || "Job Detail", url: `https://astittva.in/careers/jobs/${slug}` },
-    ],
-    [job?.title, slug]
-  );
-
-  // Schema.org JobPosting JSON-LD
-  const jobPostingSchema = useMemo(() => {
+  // Build Schema.org JobPosting Structured Data JSON-LD
+  const generateJobPostingSchema = () => {
     if (!job) return null;
 
-    const responsibilitiesText = Array.isArray(job.responsibilities)
-      ? job.responsibilities.join(". ")
-      : "";
-    const requirementsText = Array.isArray(job.requirements)
-      ? job.requirements.join(". ")
-      : "";
-    const fullDescription = `${job.description || ""} ${
-      responsibilitiesText ? `Responsibilities: ${responsibilitiesText}. ` : ""
-    }${requirementsText ? `Requirements: ${requirementsText}.` : ""}`.trim();
+    const baseSalary =
+      job.salaryRange?.isDisclosed && job.salaryRange?.min > 0
+        ? {
+            "@type": "MonetaryAmount",
+            currency: job.salaryRange.currency || "INR",
+            value: {
+              "@type": "QuantitativeValue",
+              minValue: job.salaryRange.min,
+              maxValue: job.salaryRange.max || job.salaryRange.min,
+              unitText: job.salaryRange.period === "monthly" ? "MONTH" : "YEAR",
+            },
+          }
+        : undefined;
 
-    const schema = {
-      "@context": "https://schema.org",
+    return {
+      "@context": "https://schema.org/",
       "@type": "JobPosting",
       title: job.title,
-      description: fullDescription || job.title,
+      description: job.description || `${job.title} at Astittva Marketing Kolkata`,
       identifier: {
         "@type": "PropertyValue",
         name: "Astittva Marketing",
-        value: job.slug,
+        value: job.id || job._id,
       },
-      datePosted: job.postedAt || job.createdAt || "2026-10-15T00:00:00Z",
+      datePosted: job.postedAt || job.createdAt || new Date().toISOString(),
       validThrough:
         job.expiresAt ||
-        new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString(),
+        new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
       employmentType:
         job.employmentType === "Part-time"
           ? "PART_TIME"
@@ -129,36 +119,40 @@ export default function JobDetailPage() {
         "@type": "Organization",
         name: "Astittva Marketing",
         sameAs: "https://astittva.in",
-        logo: LOGO_URL,
+        logo: "https://astittva.in/logo192.png",
       },
       jobLocation: {
         "@type": "Place",
         address: {
           "@type": "PostalAddress",
-          streetAddress: "New Town",
+          streetAddress: "Action Area II, New Town",
           addressLocality: "Kolkata",
           addressRegion: "West Bengal",
-          postalCode: "700156",
+          postalCode: "700135",
           addressCountry: "IN",
         },
       },
+      jobLocationType: job.workplaceType === "Remote" ? "TELECOMMUTE" : undefined,
+      applicantLocationRequirements:
+        job.workplaceType === "Remote"
+          ? {
+              "@type": "Country",
+              name: "India",
+            }
+          : undefined,
+      baseSalary,
+      responsibilities: Array.isArray(job.responsibilities)
+        ? job.responsibilities.join("; ")
+        : undefined,
+      qualifications: Array.isArray(job.requirements)
+        ? job.requirements.join("; ")
+        : undefined,
+      experienceRequirements: {
+        "@type": "OccupationalExperienceRequirements",
+        monthsOfExperience: (job.experienceMinYears || 2) * 12,
+      },
     };
-
-    if (job.salaryRange?.isDisclosed && job.salaryRange?.min > 0) {
-      schema.baseSalary = {
-        "@type": "MonetaryAmount",
-        currency: "INR",
-        value: {
-          "@type": "QuantitativeValue",
-          minValue: job.salaryRange.min,
-          maxValue: job.salaryRange.max,
-          unitText: job.salaryRange.period === "monthly" ? "MONTH" : "YEAR",
-        },
-      };
-    }
-
-    return schema;
-  }, [job]);
+  };
 
   if (loading) {
     return (
@@ -172,20 +166,20 @@ export default function JobDetailPage() {
   if (error || !job) {
     return (
       <div className="min-h-screen bg-charcoal text-ivory pt-32 pb-20 px-4 max-w-xl mx-auto text-center">
-        <div className="bg-[#181818] border border-copper/20 rounded-xl p-8 shadow-xl">
+        <div className="luxury-card rounded-[8px] p-8 shadow-sm">
           <Briefcase className="w-10 h-10 text-copper/40 mx-auto mb-3" />
           <h1 className="text-xl font-display text-ivory mb-2">Opening Not Available</h1>
           <p className="text-sm text-ivory/60 mb-6 font-sans">{error || "This vacancy could not be found."}</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               to="/careers/jobs"
-              className="px-4 py-2 text-xs uppercase tracking-wider text-ivory border border-copper/40 rounded-lg hover:bg-copper/10 transition-colors w-full sm:w-auto"
+              className="px-4 py-2 text-xs uppercase tracking-wider text-ivory border border-copper/40 rounded-[4px] hover:bg-copper/10 transition-colors w-full sm:w-auto font-semibold"
             >
               Browse All Openings
             </Link>
             <Link
               to="/career"
-              className="px-4 py-2 text-xs uppercase tracking-wider text-charcoal font-semibold bg-copper hover:bg-copper/90 rounded-lg transition-colors w-full sm:w-auto"
+              className="px-4 py-2 text-xs uppercase tracking-[0.12em] text-white font-semibold bg-copper hover:bg-copper-light rounded-[4px] transition-colors w-full sm:w-auto shadow-sm"
             >
               General Application
             </Link>
@@ -195,42 +189,42 @@ export default function JobDetailPage() {
     );
   }
 
+  const jobSchema = generateJobPostingSchema();
+
   return (
-    <div className="min-h-screen bg-charcoal text-ivory pt-24 pb-20">
+    <div className="min-h-screen bg-charcoal pt-24 pb-20">
       <Seo
-        title={`${job.title} | Careers at Astittva Marketing Kolkata`}
-        description={`Apply for ${job.title} in ${job.location} with Astittva Marketing. ${
-          job.description ? job.description.slice(0, 150) + "..." : "Join Kolkata's premier luxury real estate advisory firm."
-        }`}
-        canonical={`https://astittva.in/careers/jobs/${job.slug}`}
-        jsonLd={[buildBreadcrumbSchema(breadcrumbs), jobPostingSchema].filter(Boolean)}
+        title={`${job.title} | Career Openings | Astittva Marketing Kolkata`}
+        description={job.description ? job.description.slice(0, 160) : `Apply for ${job.title} at Astittva Marketing Kolkata.`}
+        path={`/careers/jobs/${job.slug}`}
+        jsonLd={jobSchema}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back link */}
+      <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pt-6">
+        {/* Back Link */}
         <div className="mb-6">
           <Link
             to="/careers/jobs"
-            className="inline-flex items-center gap-2 text-xs text-copper hover:text-copper/80 font-mono tracking-wider uppercase transition-colors"
+            className="inline-flex items-center gap-2 text-xs text-copper hover:underline font-semibold uppercase tracking-[0.12em] transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back to All Positions
           </Link>
         </div>
 
         {/* Hero Card */}
-        <div className="bg-[#181818] border border-copper/30 rounded-2xl p-6 sm:p-10 mb-8 shadow-2xl backdrop-blur-md">
+        <div className="luxury-card rounded-[8px] p-6 sm:p-10 mb-8 shadow-sm">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="max-w-3xl">
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 {job.isFeatured && (
-                  <span className="px-3 py-1 rounded-full text-[11px] font-mono tracking-wider uppercase bg-copper/20 border border-copper/40 text-copper font-medium flex items-center gap-1.5">
+                  <span className="px-3 py-1 rounded-[3px] text-[11px] font-mono tracking-wider uppercase bg-copper/15 border border-copper/30 text-copper font-medium flex items-center gap-1.5">
                     <Sparkles className="w-3 h-3" /> Featured Role
                   </span>
                 )}
-                <span className="px-3 py-1 rounded-full text-[11px] font-mono tracking-wider uppercase bg-white/5 border border-white/10 text-ivory/80">
+                <span className="px-3 py-1 rounded-[3px] text-[11px] font-mono tracking-wider uppercase bg-charcoal border border-copper/20 text-ivory/80">
                   {job.department}
                 </span>
-                <span className="px-3 py-1 rounded-full text-[11px] font-mono tracking-wider uppercase bg-white/5 border border-white/10 text-ivory/80">
+                <span className="px-3 py-1 rounded-[3px] text-[11px] font-mono tracking-wider uppercase bg-charcoal border border-copper/20 text-ivory/80">
                   {job.employmentType}
                 </span>
               </div>
@@ -253,12 +247,12 @@ export default function JobDetailPage() {
                   <Briefcase className="w-4 h-4 text-copper shrink-0" />
                   <span>
                     {job.experienceMinYears && job.experienceMaxYears
-                      ? `${job.experienceMinYears} - ${job.experienceMaxYears} Years Exp.`
+                      ? `${job.experienceMinYears} - ${job.experienceMaxYears} Years Experience`
                       : job.experienceLevel}
                   </span>
                 </div>
                 {job.salaryRange?.isDisclosed && job.salaryRange?.min > 0 && (
-                  <div className="flex items-center gap-1.5 text-copper font-medium">
+                  <div className="flex items-center gap-2 text-copper font-medium">
                     <IndianRupee className="w-4 h-4 shrink-0" />
                     <span>
                       ₹{(job.salaryRange.min / 100000).toFixed(1)}L - ₹{(job.salaryRange.max / 100000).toFixed(1)}L PA
@@ -268,19 +262,18 @@ export default function JobDetailPage() {
               </div>
             </div>
 
-            {/* CTA action buttons */}
+            {/* Action CTAs */}
             <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
               <Link
                 to={`/careers/jobs/${job.slug}/apply`}
-                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-copper hover:bg-copper/90 text-charcoal font-semibold text-xs tracking-wider uppercase shadow-xl transition-all"
+                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-[4px] bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.15em] transition-colors shadow-sm"
               >
-                Apply for this Position <ArrowRight className="w-4 h-4" />
+                Apply For This Position <ArrowRight className="w-4 h-4" />
               </Link>
-
               <button
                 type="button"
                 onClick={handleShare}
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-copper/30 hover:border-copper text-xs font-mono tracking-wider uppercase text-ivory hover:text-copper transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[4px] border border-copper/30 hover:border-copper text-ivory/80 hover:text-white text-xs font-semibold uppercase tracking-[0.15em] transition-colors"
               >
                 <Share2 className="w-4 h-4" /> Share Position
               </button>
@@ -294,7 +287,7 @@ export default function JobDetailPage() {
           <div className="lg:col-span-2 space-y-8">
             {/* Role Overview */}
             {job.description && (
-              <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 sm:p-8">
+              <div className="luxury-card rounded-[8px] p-6 sm:p-8">
                 <h2 className="text-xl font-display text-ivory mb-4 flex items-center gap-2">
                   <Award className="w-5 h-5 text-copper" /> Role Overview
                 </h2>
@@ -306,7 +299,7 @@ export default function JobDetailPage() {
 
             {/* Key Responsibilities */}
             {Array.isArray(job.responsibilities) && job.responsibilities.length > 0 && (
-              <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 sm:p-8">
+              <div className="luxury-card rounded-[8px] p-6 sm:p-8">
                 <h2 className="text-xl font-display text-ivory mb-4 flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-copper" /> Key Responsibilities
                 </h2>
@@ -323,7 +316,7 @@ export default function JobDetailPage() {
 
             {/* Requirements & Qualifications */}
             {Array.isArray(job.requirements) && job.requirements.length > 0 && (
-              <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 sm:p-8">
+              <div className="luxury-card rounded-[8px] p-6 sm:p-8">
                 <h2 className="text-xl font-display text-ivory mb-4 flex items-center gap-2">
                   <Briefcase className="w-5 h-5 text-copper" /> Candidate Requirements
                 </h2>
@@ -340,7 +333,7 @@ export default function JobDetailPage() {
 
             {/* Benefits & Perks */}
             {Array.isArray(job.benefits) && job.benefits.length > 0 && (
-              <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 sm:p-8">
+              <div className="luxury-card rounded-[8px] p-6 sm:p-8">
                 <h2 className="text-xl font-display text-ivory mb-4 flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-copper" /> What We Offer
                 </h2>
@@ -359,78 +352,68 @@ export default function JobDetailPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Apply Card */}
-            <div className="bg-[#181818] border border-copper/30 rounded-xl p-6 text-center shadow-xl">
+            <div className="luxury-card rounded-[8px] p-6 text-center shadow-sm">
               <h3 className="text-lg font-display text-ivory mb-2">Ready to Apply?</h3>
               <p className="text-xs text-ivory/60 leading-relaxed mb-5 font-sans">
                 Submit your CV and portfolio directly to our talent acquisition team. We typically respond within 3 business days.
               </p>
               <Link
                 to={`/careers/jobs/${job.slug}/apply`}
-                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-copper hover:bg-copper/90 text-charcoal font-semibold text-xs tracking-wider uppercase transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[4px] bg-copper hover:bg-copper-light text-white font-semibold text-xs tracking-[0.15em] uppercase transition-colors shadow-sm"
               >
-                Submit Application <ArrowRight className="w-4 h-4" />
+                Apply For This Role <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
 
-            {/* Position Summary Meta */}
-            <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 space-y-4 text-xs font-sans">
-              <h4 className="text-sm font-display text-ivory border-b border-copper/15 pb-2">
-                Position Details
+            {/* At a Glance Box */}
+            <div className="luxury-card rounded-[8px] p-6 space-y-4 text-xs font-sans">
+              <h4 className="text-xs font-mono uppercase tracking-widest text-copper border-b border-copper/15 pb-2">
+                Position Snapshot
               </h4>
-              <div className="flex justify-between py-1">
-                <span className="text-ivory/50">Department</span>
+
+              <div className="flex items-center justify-between">
+                <span className="text-ivory/60">Department</span>
                 <span className="text-ivory font-medium">{job.department}</span>
               </div>
-              <div className="flex justify-between py-1">
-                <span className="text-ivory/50">Location</span>
+              <div className="flex items-center justify-between">
+                <span className="text-ivory/60">Work Location</span>
                 <span className="text-ivory font-medium">{job.location}</span>
               </div>
-              <div className="flex justify-between py-1">
-                <span className="text-ivory/50">Employment</span>
-                <span className="text-ivory font-medium">{job.employmentType}</span>
-              </div>
-              <div className="flex justify-between py-1">
-                <span className="text-ivory/50">Workplace</span>
+              <div className="flex items-center justify-between">
+                <span className="text-ivory/60">Arrangement</span>
                 <span className="text-ivory font-medium">{job.workplaceType}</span>
               </div>
-              <div className="flex justify-between py-1">
-                <span className="text-ivory/50">Experience</span>
+              <div className="flex items-center justify-between">
+                <span className="text-ivory/60">Employment</span>
+                <span className="text-ivory font-medium">{job.employmentType}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-ivory/60">Experience</span>
                 <span className="text-ivory font-medium">
                   {job.experienceMinYears && job.experienceMaxYears
-                    ? `${job.experienceMinYears}-${job.experienceMaxYears} yrs`
+                    ? `${job.experienceMinYears} - ${job.experienceMaxYears} Yrs`
                     : job.experienceLevel}
                 </span>
               </div>
-              <div className="flex justify-between py-1">
-                <span className="text-ivory/50">Posted</span>
-                <span className="text-ivory font-medium">
-                  {job.postedAt ? new Date(job.postedAt).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "Active"}
-                </span>
-              </div>
+              {job.salaryRange?.isDisclosed && job.salaryRange?.min > 0 && (
+                <div className="flex items-center justify-between text-copper font-medium">
+                  <span>Compensation</span>
+                  <span>₹{(job.salaryRange.min / 100000).toFixed(1)}L - ₹{(job.salaryRange.max / 100000).toFixed(1)}L</span>
+                </div>
+              )}
             </div>
 
-            {/* Direct HR Support Card */}
-            <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 text-xs text-ivory/70 space-y-3 font-sans">
-              <h4 className="text-sm font-display text-ivory">Recruitment Queries</h4>
-              <p className="leading-relaxed text-ivory/60">
-                Have questions regarding this role or our hiring process? Reach out directly to our HR desk.
-              </p>
-              <div className="pt-2 space-y-2">
-                <a
-                  href={`mailto:${EMAIL}?subject=Inquiry regarding ${encodeURIComponent(job.title)}`}
-                  className="flex items-center gap-2 text-copper hover:text-copper/80 transition-colors"
-                >
-                  <Mail className="w-3.5 h-3.5 shrink-0" />
-                  <span>{EMAIL}</span>
-                </a>
-                <a
-                  href={`tel:${PHONE_DISPLAY.replace(/[^0-9+]/g, "")}`}
-                  className="flex items-center gap-2 text-copper hover:text-copper/80 transition-colors"
-                >
-                  <Phone className="w-3.5 h-3.5 shrink-0" />
-                  <span>{PHONE_DISPLAY}</span>
-                </a>
+            {/* Advisory Practice Highlights */}
+            <div className="luxury-card rounded-[8px] p-6 text-xs text-ivory/70 space-y-3 font-sans">
+              <div className="flex items-center gap-2 text-copper font-medium uppercase tracking-wider text-[11px]">
+                <ShieldCheck className="w-4 h-4" /> Why Astittva?
               </div>
+              <p>
+                We represent Kolkata’s most prestigious residential enclaves in New Town, Rajarhat, and EM Bypass.
+              </p>
+              <p>
+                Consultants enjoy clear commission structures, marketing back-office support, verified developer mandates, and professional executive training.
+              </p>
             </div>
           </div>
         </div>

@@ -29,18 +29,18 @@ export default function ApplicationSuccessPage() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3 }}
-          className="bg-[#181818] border border-copper/30 rounded-2xl p-8 sm:p-12 shadow-2xl text-center backdrop-blur-md"
+          className="luxury-card rounded-[8px] p-8 sm:p-12 shadow-sm text-center"
         >
-          {/* Animated Success Icon */}
+          {/* Success Icon */}
           <div className="w-16 h-16 rounded-full bg-copper/15 border border-copper/40 flex items-center justify-center mx-auto mb-6">
             <CheckCircle2 className="w-8 h-8 text-copper" />
           </div>
 
-          <span className="text-xs uppercase tracking-widest text-copper font-mono font-medium">
-            Application Received
+          <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-copper block mb-2">
+            APPLICATION LOGGED
           </span>
 
-          <h1 className="text-2xl sm:text-3xl font-display font-medium text-ivory mt-2 mb-3">
+          <h1 className="text-2xl sm:text-3xl font-display font-medium text-ivory mb-3">
             Thank You, {applicantName || "Candidate"}!
           </h1>
 
@@ -51,8 +51,8 @@ export default function ApplicationSuccessPage() {
 
           {/* Reference Number Box */}
           {referenceNumber && (
-            <div className="bg-charcoal border border-copper/40 rounded-xl p-5 max-w-md mx-auto mb-8 shadow-inner">
-              <span className="text-[11px] uppercase tracking-wider text-ivory/50 font-mono block mb-1">
+            <div className="bg-charcoal-2/60 border border-copper/30 rounded-[6px] p-5 max-w-md mx-auto mb-8 shadow-inner">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-ivory/50 font-mono block mb-1">
                 Your Application Reference Number
               </span>
               <div className="flex items-center justify-center gap-3">
@@ -62,13 +62,13 @@ export default function ApplicationSuccessPage() {
                 <button
                   type="button"
                   onClick={copyRefNumber}
-                  className="p-1.5 rounded-lg text-ivory/60 hover:text-copper hover:bg-white/5 transition-colors"
+                  className="p-1.5 rounded text-ivory/60 hover:text-copper hover:bg-copper/10 transition-colors"
                   title="Copy Reference Number"
                 >
                   <Copy className="w-4 h-4" />
                 </button>
               </div>
-              <p className="text-[11px] text-ivory/40 mt-2">
+              <p className="text-[11px] text-ivory/50 mt-2">
                 Please quote this reference number in any communication regarding your application.
               </p>
             </div>
@@ -98,9 +98,9 @@ export default function ApplicationSuccessPage() {
                   2
                 </span>
                 <div>
-                  <h4 className="font-medium text-ivory">Introductory Discussion</h4>
+                  <h4 className="font-medium text-ivory">Direct Interview Invitation</h4>
                   <p className="text-ivory/50 text-xs mt-0.5">
-                    Shortlisted candidates are contacted via phone or email for an introductory discovery conversation.
+                    Shortlisted candidates receive an email invitation to interview with our practice directors at our Kolkata offices.
                   </p>
                 </div>
               </div>
@@ -110,27 +110,26 @@ export default function ApplicationSuccessPage() {
                   3
                 </span>
                 <div>
-                  <h4 className="font-medium text-ivory">In-Person Consultation</h4>
+                  <h4 className="font-medium text-ivory">Mutual Evaluation &amp; Offer</h4>
                   <p className="text-ivory/50 text-xs mt-0.5">
-                    A face-to-face meeting at our New Town office with senior leadership to assess mutual alignment.
+                    Clear performance milestones, commission structures, and career roadmaps tailored to your strengths.
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Actions */}
+          {/* Action CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               to="/careers/jobs"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg border border-copper/40 hover:border-copper text-xs uppercase font-mono tracking-wider text-ivory hover:text-copper transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-[4px] bg-copper hover:bg-copper-light text-white font-semibold text-xs tracking-[0.15em] uppercase transition-colors shadow-sm"
             >
-              <Briefcase className="w-4 h-4" /> View More Vacancies
+              Explore Other Positions <ArrowRight className="w-4 h-4" />
             </Link>
-
             <Link
               to="/"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-copper hover:bg-copper/90 text-charcoal font-semibold text-xs uppercase tracking-wider transition-colors shadow-lg"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-[4px] border border-copper/30 hover:border-copper text-ivory/80 hover:text-white text-xs font-semibold uppercase tracking-[0.15em] transition-colors"
             >
               <Home className="w-4 h-4" /> Return to Homepage
             </Link>

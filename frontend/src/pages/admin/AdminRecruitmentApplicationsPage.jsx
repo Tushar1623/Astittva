@@ -3,25 +3,21 @@ import { useSearchParams, Link } from "react-router-dom";
 import {
   Users,
   Search,
-  Filter,
-  FileText,
   Download,
-  Clock,
+  Eye,
   CheckCircle2,
-  AlertCircle,
+  Clock,
   X,
   Phone,
   Mail,
   Linkedin,
   Globe,
   Briefcase,
-  IndianRupee,
-  Building,
   Calendar,
+  FileText,
   MessageSquare,
-  History,
-  Send,
-  Eye,
+  Building,
+  RefreshCw,
 } from "lucide-react";
 import api, { formatApiErrorDetail } from "@/lib/api";
 import { toast } from "sonner";
@@ -36,14 +32,14 @@ const STAGES = [
   "Withdrawn",
 ];
 
-const STATUS_COLORS = {
-  New: "bg-blue-900/30 text-blue-300 border-blue-500/40",
-  "Under Review": "bg-amber-900/30 text-amber-300 border-amber-500/40",
-  Shortlisted: "bg-emerald-900/30 text-emerald-300 border-emerald-500/40",
-  "Interview Scheduled": "bg-purple-900/30 text-purple-300 border-purple-500/40",
-  Selected: "bg-green-900/30 text-green-300 border-green-500/40",
-  Rejected: "bg-red-900/30 text-red-300 border-red-500/40",
-  Withdrawn: "bg-zinc-800 text-zinc-400 border-zinc-600/40",
+const STATUS_BADGE_CLASSES = {
+  New: "border-blue-500/40 text-blue-700 bg-blue-500/10",
+  "Under Review": "border-amber-500/40 text-amber-700 bg-amber-500/10",
+  Shortlisted: "border-emerald-500/40 text-emerald-700 bg-emerald-500/10",
+  "Interview Scheduled": "border-purple-500/40 text-purple-700 bg-purple-500/10",
+  Selected: "border-green-600/40 text-green-700 bg-green-600/10",
+  Rejected: "border-red-500/40 text-red-700 bg-red-500/10",
+  Withdrawn: "border-zinc-500/40 text-zinc-600 bg-zinc-500/10",
 };
 
 export default function AdminRecruitmentApplicationsPage() {
@@ -58,7 +54,7 @@ export default function AdminRecruitmentApplicationsPage() {
 
   // Filters
   const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "All");
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "ALL");
   const [jobIdFilter, setJobIdFilter] = useState(searchParams.get("jobId") || "All");
 
   // Selected Candidate for slide-over drawer
@@ -95,7 +91,7 @@ export default function AdminRecruitmentApplicationsPage() {
       const res = await api.get("/admin/recruitment/applications", {
         params: {
           search: search.trim() || undefined,
-          status: statusFilter !== "All" ? statusFilter : undefined,
+          status: statusFilter !== "ALL" ? statusFilter : undefined,
           jobId: jobIdFilter !== "All" ? jobIdFilter : undefined,
           limit: 100,
         },
@@ -110,7 +106,6 @@ export default function AdminRecruitmentApplicationsPage() {
     }
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const timer = setTimeout(fetchApplications, 250);
     return () => clearTimeout(timer);
@@ -118,9 +113,9 @@ export default function AdminRecruitmentApplicationsPage() {
 
   // Open candidate details if `id` parameter is in URL
   useEffect(() => {
-    const directId = searchParams.get("id");
-    if (directId) {
-      openCandidateDrawer(directId);
+    const candidateId = searchParams.get("id");
+    if (candidateId && (!selectedApp || selectedApp.id !== candidateId)) {
+      openCandidateDrawer(candidateId);
     }
   }, [searchParams]);
 
@@ -198,46 +193,73 @@ export default function AdminRecruitmentApplicationsPage() {
 
   const handleDownloadResume = (appId) => {
     const token = localStorage.getItem("astitva_token");
-    window.open(`/api/admin/recruitment/applications/${appId}/resume?token=${token}`, "_blank");
+    const resumeUrl = `/api/admin/recruitment/applications/${appId}/resume`;
+    window.open(`${resumeUrl}?token=${encodeURIComponent(token || "")}`, "_blank");
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 font-sans">
+    <div data-testid="admin-recruitment-applications-page" className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-copper/15 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-copper/15">
         <div>
-          <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-copper">
-            Hiring Pipeline
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-display text-ivory mt-1">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-copper">
+              RECRUITMENT CONSOLE
+            </span>
+            <span className="text-ivory/30">•</span>
+            <span className="text-[10px] tracking-[0.2em] uppercase text-ivory/50">
+              CANDIDATE PIPELINE
+            </span>
+          </div>
+          <h1 className="font-display font-light text-3xl sm:text-4xl text-ivory">
             Candidate Applications
           </h1>
+          <p className="text-ivory/55 text-sm mt-1">
+            Review candidate submissions, update pipeline stages, take recruiter notes, and access uploaded resumes.
+          </p>
         </div>
 
-        <div className="text-xs font-mono text-ivory/60 bg-charcoal px-3 py-1.5 rounded-lg border border-copper/25">
-          Total Candidates: <strong className="text-copper">{total}</strong>
+        <div className="flex items-center gap-3">
+          <div className="text-xs font-mono text-ivory/70 bg-charcoal-2/40 px-3.5 py-2 rounded-[4px] border border-copper/20">
+            Total Candidates: <strong className="text-copper">{total}</strong>
+          </div>
+          <button
+            onClick={fetchApplications}
+            disabled={loading}
+            title="Refresh"
+            className="p-2 border border-copper/20 hover:border-copper/40 text-ivory/70 hover:text-copper rounded-[4px] transition-colors"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          </button>
         </div>
       </div>
 
-      {/* Filter Toolbar */}
-      <div className="bg-[#181818] border border-copper/20 rounded-xl p-4 shadow-lg flex flex-col md:flex-row items-center gap-4">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-copper/60" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search candidates by name, email, phone, company, reference #..."
-            className="w-full pl-10 pr-4 py-2 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
-          />
+      {/* Filter and Search Bar */}
+      <div className="bg-charcoal-2/40 border border-copper/15 p-4 rounded-[6px] mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+        {/* Status Tabs */}
+        <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
+          {["ALL", ...STAGES].map((st) => (
+            <button
+              key={st}
+              onClick={() => setStatusFilter(st)}
+              className={`px-3 py-1.5 rounded-[4px] text-xs font-medium tracking-[0.08em] uppercase transition-all ${
+                statusFilter === st
+                  ? "bg-copper text-white font-semibold shadow-sm"
+                  : "bg-charcoal/50 text-ivory/70 hover:text-ivory hover:bg-charcoal"
+              }`}
+            >
+              {st}
+              {st === "ALL" ? ` (${total})` : ""}
+            </button>
+          ))}
         </div>
 
+        {/* Vacancy Dropdown & Search Input */}
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          {/* Job Filter */}
           <select
             value={jobIdFilter}
             onChange={(e) => setJobIdFilter(e.target.value)}
-            className="px-3.5 py-2 bg-charcoal border border-copper/30 rounded-lg text-xs text-ivory focus:outline-none focus:border-copper max-w-[200px] truncate"
+            className="h-9 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper max-w-[200px] truncate"
           >
             <option value="All">All Job Openings</option>
             {jobsList.map((j) => (
@@ -247,135 +269,116 @@ export default function AdminRecruitmentApplicationsPage() {
             ))}
           </select>
 
-          {/* Stage Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3.5 py-2 bg-charcoal border border-copper/30 rounded-lg text-xs text-ivory focus:outline-none focus:border-copper"
-          >
-            <option value="All">All Stages</option>
-            {STAGES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+          <div className="relative w-full md:w-64">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ivory/40" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search candidate or ref #..."
+              className="w-full h-9 pl-9 pr-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper"
+            />
+          </div>
         </div>
       </div>
 
-      {/* Applications Table */}
-      <div className="bg-[#181818] border border-copper/20 rounded-xl overflow-hidden shadow-xl">
-        {loading ? (
-          <div className="p-12 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-copper border-t-transparent mb-3" />
-            <p className="text-xs uppercase tracking-widest text-copper/60 font-mono">Loading Candidates…</p>
-          </div>
-        ) : error ? (
-          <div className="p-8 text-center text-red-300 text-sm">{error}</div>
-        ) : applications.length === 0 ? (
-          <div className="p-12 text-center text-ivory/50 space-y-3 font-sans">
-            <Users className="w-10 h-10 text-copper/40 mx-auto" />
-            <p className="text-base text-ivory">No candidate applications found matching filters.</p>
-          </div>
-        ) : (
+      {/* Candidates Table */}
+      {loading ? (
+        <div className="text-ivory/50 text-center py-20 tracking-[0.3em] uppercase text-xs">
+          Loading Candidates…
+        </div>
+      ) : error ? (
+        <div className="text-center py-16 border border-copper/20 bg-charcoal-2/30 rounded-[8px] text-red-600 text-sm">
+          {error}
+        </div>
+      ) : applications.length === 0 ? (
+        <div className="text-center py-20 border border-copper/15 bg-charcoal-2/20 text-ivory/60 italic rounded-[6px]">
+          {statusFilter === "ALL" && !search
+            ? "No candidate applications received yet."
+            : "No candidates matched your search/filter criteria."}
+        </div>
+      ) : (
+        <div className="border border-copper/15 rounded-[6px] overflow-hidden bg-charcoal-2/20">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-charcoal/80 border-b border-copper/15 text-ivory/50 font-mono uppercase tracking-wider text-[11px]">
-                  <th className="py-3 px-4">Ref #</th>
-                  <th className="py-3 px-4">Applicant &amp; Role</th>
-                  <th className="py-3 px-4">Contact Info</th>
-                  <th className="py-3 px-4">Experience</th>
-                  <th className="py-3 px-4">Stage</th>
-                  <th className="py-3 px-4">Resume</th>
-                  <th className="py-3 px-4">Date</th>
-                  <th className="py-3 px-4 text-right">Action</th>
+            <table className="w-full text-sm">
+              <thead className="bg-charcoal-2/80 text-ivory/60 text-[10px] tracking-[0.22em] uppercase border-b border-copper/15">
+                <tr>
+                  <th className="text-left p-4 font-normal">Ref #</th>
+                  <th className="text-left p-4 font-normal">Candidate &amp; Role</th>
+                  <th className="text-left p-4 font-normal hidden md:table-cell">Contact</th>
+                  <th className="text-left p-4 font-normal hidden lg:table-cell">Experience</th>
+                  <th className="text-left p-4 font-normal">Stage</th>
+                  <th className="text-center p-4 font-normal">Resume</th>
+                  <th className="text-right p-4 font-normal">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-copper/10 font-sans">
+              <tbody>
                 {applications.map((app) => (
                   <tr
                     key={app.id}
                     onClick={() => openCandidateDrawer(app.id)}
-                    className="hover:bg-white/[0.03] transition-colors cursor-pointer"
+                    className="border-t border-copper/10 hover:bg-charcoal-2/40 transition-colors cursor-pointer"
                   >
-                    {/* Ref */}
-                    <td className="py-3.5 px-4 font-mono font-bold text-copper">
+                    {/* Ref # */}
+                    <td className="p-4 font-mono font-bold text-copper text-xs whitespace-nowrap">
                       {app.referenceNumber}
                     </td>
 
-                    {/* Applicant & Role */}
-                    <td className="py-3.5 px-4">
+                    {/* Candidate & Role */}
+                    <td className="p-4">
                       <div className="font-medium text-ivory text-sm">{app.name}</div>
-                      <div className="text-[11px] text-ivory/50 font-sans mt-0.5 truncate max-w-[200px]">
-                        {app.jobTitle}
-                      </div>
+                      <div className="text-xs text-ivory/50 truncate max-w-[200px] mt-0.5">{app.jobTitle}</div>
                     </td>
 
-                    {/* Contact Info */}
-                    <td className="py-3.5 px-4 text-ivory/70 space-y-0.5">
-                      <div className="flex items-center gap-1.5">
-                        <Mail className="w-3 h-3 text-copper/60 shrink-0" />
-                        <span className="truncate max-w-[180px]">{app.email}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Phone className="w-3 h-3 text-copper/60 shrink-0" />
-                        <span>{app.phone}</span>
-                      </div>
+                    {/* Contact */}
+                    <td className="p-4 text-xs text-ivory/70 hidden md:table-cell">
+                      <div>{app.email}</div>
+                      <div className="text-ivory/45 text-[11px] font-mono">{app.phone}</div>
                     </td>
 
-                    {/* Experience & Company */}
-                    <td className="py-3.5 px-4 text-ivory/70">
-                      <div>{app.experienceYears ? `${app.experienceYears} yrs` : "Not specified"}</div>
-                      <div className="text-[11px] text-ivory/40 truncate max-w-[150px]">
-                        {app.currentCompany || "—"}
-                      </div>
+                    {/* Experience */}
+                    <td className="p-4 text-xs text-ivory/70 hidden lg:table-cell">
+                      <div>{app.experienceYears} Years</div>
+                      <div className="text-[11px] text-ivory/45 truncate max-w-[150px]">{app.currentCompany || "—"}</div>
                     </td>
 
                     {/* Stage Badge */}
-                    <td className="py-3.5 px-4">
+                    <td className="p-4">
                       <span
-                        className={`inline-block px-2.5 py-0.5 rounded text-[10px] font-mono tracking-wider uppercase border font-medium ${
-                          STATUS_COLORS[app.status] || "bg-zinc-800 text-zinc-300 border-zinc-700"
+                        className={`text-[10px] tracking-[0.15em] uppercase px-2.5 py-1 rounded-[3px] border font-medium ${
+                          STATUS_BADGE_CLASSES[app.status] || "border-copper/30 text-copper"
                         }`}
                       >
                         {app.status}
                       </span>
                     </td>
 
-                    {/* Resume Icon */}
-                    <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
+                    {/* Resume Action */}
+                    <td className="p-4 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       {app.hasResume ? (
                         <button
                           type="button"
                           onClick={() => handleDownloadResume(app.id)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-copper/10 hover:bg-copper/20 border border-copper/30 text-copper font-mono text-[11px] transition-colors"
-                          title="Download Resume"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.1em] text-[#C89A55] hover:text-white bg-[#C89A55]/15 hover:bg-[#C89A55] rounded-[3px] border border-[#C89A55]/30 transition-all"
+                          title="Stream Resume PDF"
                         >
-                          <Download className="w-3 h-3" />
+                          <Download className="w-3.5 h-3.5" />
                           <span>PDF</span>
                         </button>
                       ) : (
-                        <span className="text-ivory/30 font-mono">—</span>
+                        <span className="text-ivory/30 text-xs italic">—</span>
                       )}
                     </td>
 
-                    {/* Date */}
-                    <td className="py-3.5 px-4 font-mono text-ivory/50 text-[11px]">
-                      {app.createdAt
-                        ? new Date(app.createdAt).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })
-                        : "—"}
-                    </td>
-
-                    {/* Action */}
-                    <td className="py-3.5 px-4 text-right">
+                    {/* View Action */}
+                    <td className="p-4 text-right whitespace-nowrap">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           openCandidateDrawer(app.id);
                         }}
-                        className="p-1.5 rounded text-ivory/60 hover:text-copper hover:bg-white/5 transition-colors"
+                        className="p-1.5 text-ivory/60 hover:text-copper hover:bg-copper/10 rounded transition-colors"
                         title="View Full Profile"
                       >
                         <Eye className="w-4 h-4" />
@@ -386,46 +389,47 @@ export default function AdminRecruitmentApplicationsPage() {
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Candidate Slide-Over Drawer */}
+      {/* CANDIDATE DETAILS MODAL */}
       {selectedApp && (
-        <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm flex justify-end">
-          <div className="w-full max-w-2xl bg-[#181818] border-l border-copper/30 h-full overflow-y-auto p-6 sm:p-8 space-y-6 shadow-2xl flex flex-col justify-between">
-            <div>
-              {/* Drawer Header */}
-              <div className="flex items-start justify-between border-b border-copper/15 pb-4 mb-6">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono text-xs font-bold text-copper tracking-wider">
-                      {selectedApp.referenceNumber}
-                    </span>
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-mono tracking-wider uppercase border ${
-                        STATUS_COLORS[selectedApp.status] || "bg-zinc-800 text-zinc-300 border-zinc-700"
-                      }`}
-                    >
-                      {selectedApp.status}
-                    </span>
-                  </div>
-                  <h2 className="text-xl sm:text-2xl font-display text-ivory">{selectedApp.name}</h2>
-                  <p className="text-xs text-ivory/60 mt-0.5">Applied for: {selectedApp.jobTitle}</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#FAF8F5] border border-copper/30 rounded-[10px] max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8 text-ivory">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-copper/15 pb-5 mb-6">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-mono text-xs font-bold text-copper tracking-wider">
+                    {selectedApp.referenceNumber}
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-[3px] text-[10px] font-mono tracking-wider uppercase border ${
+                      STATUS_BADGE_CLASSES[selectedApp.status] || "border-copper/30 text-copper"
+                    }`}
+                  >
+                    {selectedApp.status}
+                  </span>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={closeCandidateDrawer}
-                  className="p-1.5 rounded-lg text-ivory/50 hover:text-ivory hover:bg-white/5 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <h2 className="font-display text-2xl text-ivory mt-1">{selectedApp.name}</h2>
+                <p className="text-xs text-ivory/60 mt-0.5">Applied for: <strong className="text-copper">{selectedApp.jobTitle}</strong></p>
               </div>
 
-              {/* Status Transition Control Box */}
-              <div className="bg-charcoal border border-copper/30 rounded-xl p-4 mb-6 space-y-3">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-copper block">
-                  Update Candidate Pipeline Stage
+              <button
+                type="button"
+                onClick={closeCandidateDrawer}
+                className="p-2 text-ivory/60 hover:text-copper transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="space-y-6">
+              {/* Stage Transition Control Box */}
+              <div className="bg-charcoal-2/60 border border-copper/25 rounded-[6px] p-5 space-y-3">
+                <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-copper block">
+                  Update Candidate Stage
                 </span>
 
                 <form onSubmit={handleUpdateStatus} className="space-y-3">
@@ -433,7 +437,7 @@ export default function AdminRecruitmentApplicationsPage() {
                     <select
                       value={newStatus}
                       onChange={(e) => setNewStatus(e.target.value)}
-                      className="px-3 py-2 bg-[#181818] border border-copper/40 rounded-lg text-xs text-ivory focus:outline-none focus:border-copper"
+                      className="h-10 px-3 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
                     >
                       {STAGES.map((s) => (
                         <option key={s} value={s}>
@@ -445,7 +449,7 @@ export default function AdminRecruitmentApplicationsPage() {
                     <button
                       type="submit"
                       disabled={updatingStatus || newStatus === selectedApp.status}
-                      className="px-4 py-2 bg-copper hover:bg-copper/90 text-charcoal font-semibold text-xs uppercase tracking-wider rounded-lg transition-colors disabled:opacity-40"
+                      className="h-10 px-4 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.15em] rounded-[4px] transition-colors disabled:opacity-40"
                     >
                       {updatingStatus ? "Updating…" : "Change Status"}
                     </button>
@@ -455,187 +459,133 @@ export default function AdminRecruitmentApplicationsPage() {
                     type="text"
                     value={statusReason}
                     onChange={(e) => setStatusReason(e.target.value)}
-                    placeholder="Reason or audit note for status update (optional)..."
-                    className="w-full px-3 py-1.5 bg-[#181818] border border-copper/20 rounded-lg text-xs text-ivory/80 placeholder-ivory/30 focus:outline-none focus:border-copper"
+                    placeholder="Optional note / reason for stage transition..."
+                    className="w-full px-3 py-2 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper"
                   />
                 </form>
               </div>
 
-              {/* Candidate Info Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                <div className="bg-charcoal/70 p-3.5 rounded-lg border border-copper/15 space-y-1">
-                  <span className="text-[11px] text-ivory/40 uppercase font-mono block">Contact Email</span>
-                  <a
-                    href={`mailto:${selectedApp.email}`}
-                    className="text-xs text-copper hover:underline flex items-center gap-1.5 font-medium"
-                  >
-                    <Mail className="w-3.5 h-3.5" />
-                    <span>{selectedApp.email}</span>
-                  </a>
+              {/* Candidate Contact & Professional Details */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 rounded-[6px] bg-charcoal-2/40 border border-copper/15 text-xs">
+                <div>
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">Email</span>
+                  <p className="text-ivory font-medium">{selectedApp.email}</p>
                 </div>
-
-                <div className="bg-charcoal/70 p-3.5 rounded-lg border border-copper/15 space-y-1">
-                  <span className="text-[11px] text-ivory/40 uppercase font-mono block">Phone Number</span>
-                  <a
-                    href={`tel:${selectedApp.phone}`}
-                    className="text-xs text-copper hover:underline flex items-center gap-1.5 font-medium"
-                  >
-                    <Phone className="w-3.5 h-3.5" />
-                    <span>{selectedApp.phone}</span>
-                  </a>
+                <div>
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">Phone</span>
+                  <p className="text-ivory font-medium">{selectedApp.phone}</p>
                 </div>
-
-                <div className="bg-charcoal/70 p-3.5 rounded-lg border border-copper/15 space-y-1">
-                  <span className="text-[11px] text-ivory/40 uppercase font-mono block">Total Experience</span>
-                  <span className="text-xs text-ivory font-medium">
-                    {selectedApp.experienceYears ? `${selectedApp.experienceYears} Years` : "Not specified"}
-                  </span>
+                <div>
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">Total Experience</span>
+                  <p className="text-ivory font-medium">{selectedApp.experienceYears} Years</p>
                 </div>
-
-                <div className="bg-charcoal/70 p-3.5 rounded-lg border border-copper/15 space-y-1">
-                  <span className="text-[11px] text-ivory/40 uppercase font-mono block">Current Company</span>
-                  <span className="text-xs text-ivory font-medium">
-                    {selectedApp.currentCompany || "Not specified"}
-                  </span>
+                <div>
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">Current Organization</span>
+                  <p className="text-ivory font-medium">{selectedApp.currentCompany || "Not specified"}</p>
                 </div>
-
-                <div className="bg-charcoal/70 p-3.5 rounded-lg border border-copper/15 space-y-1">
-                  <span className="text-[11px] text-ivory/40 uppercase font-mono block">Compensation</span>
-                  <span className="text-xs text-ivory font-medium">
-                    Current: {selectedApp.currentCtc || "—"} | Exp: {selectedApp.expectedCtc || "—"}
-                  </span>
+                <div>
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">Current CTC</span>
+                  <p className="text-ivory font-medium">{selectedApp.currentCtc || "Not disclosed"}</p>
                 </div>
-
-                <div className="bg-charcoal/70 p-3.5 rounded-lg border border-copper/15 space-y-1">
-                  <span className="text-[11px] text-ivory/40 uppercase font-mono block">Notice Period</span>
-                  <span className="text-xs text-ivory font-medium">
-                    {selectedApp.noticePeriodDays ? `${selectedApp.noticePeriodDays} Days` : "Immediate"}
-                  </span>
+                <div>
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">Expected CTC</span>
+                  <p className="text-ivory font-medium">{selectedApp.expectedCtc || "Not disclosed"}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">Notice Period</span>
+                  <p className="text-ivory font-medium">{selectedApp.noticePeriodDays} Days</p>
+                </div>
+                <div>
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">Submission Date</span>
+                  <p className="text-ivory font-medium">{selectedApp.createdAt ? new Date(selectedApp.createdAt).toLocaleString("en-IN") : "—"}</p>
                 </div>
               </div>
 
-              {/* External Profile Links */}
-              <div className="flex flex-wrap gap-3 mb-6">
-                {selectedApp.linkedin && (
-                  <a
-                    href={selectedApp.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-950/40 border border-blue-500/30 text-blue-300 text-xs font-mono hover:bg-blue-950/60 transition-colors"
-                  >
-                    <Linkedin className="w-3.5 h-3.5" /> LinkedIn Profile
-                  </a>
-                )}
-                {selectedApp.portfolioUrl && (
-                  <a
-                    href={selectedApp.portfolioUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-copper/10 border border-copper/30 text-copper text-xs font-mono hover:bg-copper/20 transition-colors"
-                  >
-                    <Globe className="w-3.5 h-3.5" /> Portfolio / Website
-                  </a>
-                )}
+              {/* Resume Download Action */}
+              <div className="p-4 rounded-[6px] bg-charcoal-2/40 border border-copper/15 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-0.5">Resume Attachment</span>
+                  <p className="text-xs text-ivory font-medium">{selectedApp.resumeFilename || "Resume document"}</p>
+                </div>
                 {selectedApp.hasResume && (
                   <button
                     type="button"
                     onClick={() => handleDownloadResume(selectedApp.id)}
-                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-copper text-charcoal font-semibold text-xs uppercase tracking-wider hover:bg-copper/90 transition-colors ml-auto shadow-md"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.12em] rounded-[4px] transition-colors"
                   >
-                    <Download className="w-3.5 h-3.5" /> Download Resume
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download PDF</span>
                   </button>
                 )}
               </div>
 
-              {/* Cover Statement */}
+              {/* Cover Note */}
               {selectedApp.coverNote && (
-                <div className="bg-charcoal/70 border border-copper/15 rounded-xl p-4 mb-6">
-                  <h4 className="text-xs font-mono uppercase tracking-wider text-copper mb-2">
-                    Candidate Cover Statement
-                  </h4>
-                  <p className="text-xs sm:text-sm text-ivory/80 leading-relaxed whitespace-pre-line font-sans">
-                    {selectedApp.coverNote}
-                  </p>
+                <div className="p-5 rounded-[6px] bg-charcoal-2/40 border border-copper/15 text-xs">
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-2">Cover Note / Candidate Message</span>
+                  <p className="text-ivory/80 whitespace-pre-wrap leading-relaxed">{selectedApp.coverNote}</p>
                 </div>
               )}
 
-              {/* Recruiter Private Notes */}
-              <div className="bg-charcoal/70 border border-copper/15 rounded-xl p-4 mb-6 space-y-4">
-                <h4 className="text-xs font-mono uppercase tracking-wider text-copper flex items-center gap-2">
-                  <MessageSquare className="w-3.5 h-3.5" /> Recruiter Internal Notes
-                </h4>
-
-                <form onSubmit={handleAddNote} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
-                    placeholder="Add recruiter observation, interview outcome, or salary expectation note..."
-                    className="flex-1 px-3 py-2 bg-[#181818] border border-copper/25 rounded-lg text-xs text-ivory focus:outline-none focus:border-copper"
-                  />
-                  <button
-                    type="submit"
-                    disabled={addingNote || !newNote.trim()}
-                    className="px-4 py-2 bg-copper hover:bg-copper/90 text-charcoal font-bold text-xs uppercase rounded-lg transition-colors disabled:opacity-40"
-                  >
-                    Add
-                  </button>
-                </form>
-
-                {Array.isArray(selectedApp.notes) && selectedApp.notes.length > 0 ? (
-                  <div className="space-y-2 pt-2">
-                    {selectedApp.notes.map((n, idx) => (
-                      <div key={idx} className="p-2.5 rounded bg-[#181818] border border-copper/10 text-xs">
-                        <div className="flex items-center justify-between text-ivory/40 text-[10px] font-mono mb-1">
-                          <span>{n.author || "Recruiter"}</span>
-                          <span>{n.createdAt ? new Date(n.createdAt).toLocaleString("en-IN") : ""}</span>
-                        </div>
-                        <p className="text-ivory/80 leading-relaxed font-sans">{n.note}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-[11px] text-ivory/40 italic font-sans">No recruiter notes recorded yet.</p>
-                )}
-              </div>
-
-              {/* Status Audit History Timeline */}
-              {Array.isArray(selectedApp.statusHistory) && selectedApp.statusHistory.length > 0 && (
-                <div className="bg-charcoal/70 border border-copper/15 rounded-xl p-4 space-y-3">
-                  <h4 className="text-xs font-mono uppercase tracking-wider text-copper flex items-center gap-2">
-                    <History className="w-3.5 h-3.5" /> Pipeline Audit Trail
-                  </h4>
-
+              {/* Stage Transition History */}
+              {selectedApp.statusHistory && selectedApp.statusHistory.length > 0 && (
+                <div className="p-5 rounded-[6px] bg-charcoal-2/40 border border-copper/15 text-xs space-y-3">
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block">Stage Transition Audit Log</span>
                   <div className="space-y-2">
                     {selectedApp.statusHistory.map((h, idx) => (
-                      <div key={idx} className="text-xs flex items-start gap-2.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-copper mt-1.5 shrink-0" />
+                      <div key={idx} className="flex items-start justify-between gap-3 text-xs border-b border-copper/10 pb-2 last:border-0">
                         <div>
-                          <div className="font-mono text-[11px] text-ivory">
-                            <span className="text-copper">{h.toStatus}</span>
-                            <span className="text-ivory/40 ml-2">by {h.changedBy || "system"}</span>
-                          </div>
-                          {h.reason && <p className="text-ivory/60 text-[11px] mt-0.5">{h.reason}</p>}
-                          <span className="text-[10px] text-ivory/40 font-mono block">
-                            {h.changedAt ? new Date(h.changedAt).toLocaleString("en-IN") : ""}
-                          </span>
+                          <span className="font-semibold text-ivory">{h.toStatus}</span>
+                          {h.reason && <p className="text-[11px] text-ivory/60 mt-0.5">{h.reason}</p>}
+                        </div>
+                        <div className="text-right text-[10px] text-ivory/45 font-mono">
+                          {h.changedAt ? new Date(h.changedAt).toLocaleString("en-IN") : ""}
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* Drawer Footer */}
-            <div className="pt-4 border-t border-copper/15 mt-6 flex justify-end">
-              <button
-                type="button"
-                onClick={closeCandidateDrawer}
-                className="px-5 py-2 rounded-lg border border-copper/30 text-xs font-mono uppercase text-ivory/70 hover:text-ivory hover:border-copper"
-              >
-                Close Drawer
-              </button>
+              {/* Recruiter Notes Section */}
+              <div className="p-5 rounded-[6px] bg-charcoal-2/40 border border-copper/15 text-xs space-y-4">
+                <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-copper block">
+                  Private Recruiter Notes
+                </span>
+
+                <form onSubmit={handleAddNote} className="space-y-3">
+                  <textarea
+                    rows={2}
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    placeholder="Add an internal interview evaluation, feedback, or candidate note..."
+                    className="w-full p-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper"
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={addingNote || !newNote.trim()}
+                      className="px-4 py-1.5 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.12em] rounded-[4px] transition-colors disabled:opacity-40"
+                    >
+                      {addingNote ? "Adding…" : "Add Private Note"}
+                    </button>
+                  </div>
+                </form>
+
+                {selectedApp.notes && selectedApp.notes.length > 0 && (
+                  <div className="space-y-2 pt-2 border-t border-copper/15">
+                    {selectedApp.notes.map((n, idx) => (
+                      <div key={idx} className="p-3 bg-charcoal rounded-[4px] border border-copper/10 text-xs">
+                        <p className="text-ivory/90 whitespace-pre-wrap">{n.note}</p>
+                        <div className="flex items-center justify-between text-[10px] text-ivory/45 font-mono mt-2">
+                          <span>By: {n.author || "Recruiter"}</span>
+                          <span>{n.createdAt ? new Date(n.createdAt).toLocaleString("en-IN") : ""}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

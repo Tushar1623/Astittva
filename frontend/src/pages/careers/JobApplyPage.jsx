@@ -1,24 +1,20 @@
 import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   Briefcase,
-  MapPin,
+  ArrowLeft,
+  ArrowRight,
   UploadCloud,
   FileText,
   X,
-  ArrowLeft,
-  ArrowRight,
   CheckCircle2,
   AlertCircle,
-  Building,
+  ShieldCheck,
   User,
-  Mail,
   Phone,
+  Mail,
   Linkedin,
   Globe,
-  IndianRupee,
-  Clock,
   Sparkles,
 } from "lucide-react";
 import Seo from "@/components/Seo";
@@ -33,6 +29,7 @@ export default function JobApplyPage() {
   const [jobLoading, setJobLoading] = useState(true);
   const [jobError, setJobError] = useState("");
 
+  // Candidate Form State
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -43,38 +40,42 @@ export default function JobApplyPage() {
     currentCompany: "",
     currentCtc: "",
     expectedCtc: "",
-    noticePeriodDays: "",
+    noticePeriodDays: "30",
     coverNote: "",
   });
 
-  const [resumeFile, setResumeFile] = useState(null); // { filename, contentType, base64, size }
+  // Resume File State
+  const [resumeFile, setResumeFile] = useState(null);
   const [fileError, setFileError] = useState("");
   const [readingFile, setReadingFile] = useState(false);
+
+  // Submission State
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState("");
-  const [duplicateWarning, setDuplicateWarning] = useState(null); // { referenceNumber, message }
+  const [duplicateWarning, setDuplicateWarning] = useState(null);
 
-  // Load Job info
+  // Fetch target job details
   useEffect(() => {
     let isMounted = true;
+
     async function loadJob() {
       try {
         setJobLoading(true);
+        setJobError("");
         const res = await api.get(`/jobs/${slug}`);
         if (isMounted) setJob(res.data);
       } catch (err) {
         if (isMounted) {
-          setJobError(
-            err.response?.status === 404
-              ? "Job opening not found or no longer accepting applications."
-              : formatApiErrorDetail(err.response?.data?.detail)
-          );
+          console.error("Failed to load job for application:", err);
+          setJobError("This position is no longer accepting applications or does not exist.");
         }
       } finally {
         if (isMounted) setJobLoading(false);
       }
     }
-    loadJob();
+
+    if (slug) loadJob();
+
     return () => {
       isMounted = false;
     };
@@ -82,12 +83,56 @@ export default function JobApplyPage() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    if (duplicateWarning) setDuplicateWarning(null);
+  };
+
+  const processSelectedFile = (file) => {
+    setFileError("");
+    if (!file) return;
+
+    const allowedExtensions = ["pdf", "doc", "docx"];
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (!allowedExtensions.includes(ext)) {
+      setFileError("Only PDF, DOC, or DOCX documents are accepted.");
+      return;
+    }
+
+    const maxSizeInBytes = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSizeInBytes) {
+      setFileError("Resume file size must not exceed 10MB.");
+      return;
+    }
+
+    setReadingFile(true);
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const base64Data = e.target.result;
+      setResumeFile({
+        filename: file.name,
+        contentType: file.type || "application/pdf",
+        sizeBytes: file.size,
+        sizeMb: (file.size / (1024 * 1024)).toFixed(2),
+        base64: base64Data,
+      });
+      setReadingFile(false);
+    };
+
+    reader.onerror = () => {
+      setFileError("Error reading uploaded file. Please try again.");
+      setReadingFile(false);
+    };
+
+    reader.readAsDataURL(file);
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
-    processSelectedFile(file);
+    if (file) processSelectedFile(file);
   };
 
   const handleDragOver = (e) => {
@@ -97,40 +142,7 @@ export default function JobApplyPage() {
   const handleDrop = (e) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
-    processSelectedFile(file);
-  };
-
-  const processSelectedFile = (file) => {
-    setFileError("");
-    if (!file) return;
-
-    const ext = file.name.split(".").pop().toLowerCase();
-    if (!["pdf", "doc", "docx"].includes(ext)) {
-      setFileError("Only PDF, DOC, and DOCX files are accepted.");
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      setFileError("Resume file size must be less than 10MB.");
-      return;
-    }
-
-    setReadingFile(true);
-    const reader = new FileReader();
-    reader.onload = () => {
-      setResumeFile({
-        filename: file.name,
-        contentType: file.type || "application/pdf",
-        base64: reader.result,
-        sizeMb: (file.size / (1024 * 1024)).toFixed(2),
-      });
-      setReadingFile(false);
-    };
-    reader.onerror = () => {
-      setFileError("Failed to read the selected file. Please try again.");
-      setReadingFile(false);
-    };
-    reader.readAsDataURL(file);
+    if (file) processSelectedFile(file);
   };
 
   const removeResume = () => {
@@ -142,42 +154,41 @@ export default function JobApplyPage() {
     e.preventDefault();
     if (submitting || readingFile) return;
 
-    setServerError("");
-    setDuplicateWarning(null);
-
-    // Validation
     if (!formData.name.trim()) {
-      setServerError("Please enter your full name.");
+      toast.error("Please enter your full name.");
       return;
     }
     if (!formData.email.trim() || !formData.email.includes("@")) {
-      setServerError("Please enter a valid email address.");
+      toast.error("Please enter a valid email address.");
       return;
     }
-    if (!formData.phone.trim() || formData.phone.trim().length < 8) {
-      setServerError("Please enter a valid phone number.");
+    if (!formData.phone.trim()) {
+      toast.error("Please enter your contact phone number.");
       return;
     }
     if (!resumeFile && !formData.linkedin.trim()) {
-      setServerError("Please upload your resume file (PDF, DOC, or DOCX) to apply.");
+      toast.error("Please upload your resume (PDF/DOC/DOCX) or provide a LinkedIn profile URL.");
       return;
     }
 
     try {
       setSubmitting(true);
+      setServerError("");
+      setDuplicateWarning(null);
+
       const payload = {
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         phone: formData.phone.trim(),
         linkedin: formData.linkedin.trim(),
         portfolioUrl: formData.portfolioUrl.trim(),
+        coverNote: formData.coverNote.trim(),
         experienceYears: parseFloat(formData.experienceYears) || 0,
         currentCompany: formData.currentCompany.trim(),
         currentCtc: formData.currentCtc.trim(),
         expectedCtc: formData.expectedCtc.trim(),
         noticePeriodDays: parseInt(formData.noticePeriodDays, 10) || 0,
-        coverNote: formData.coverNote.trim(),
-        source: "job-application-portal",
+        source: "careers-job-board",
       };
 
       if (resumeFile) {
@@ -188,9 +199,9 @@ export default function JobApplyPage() {
         };
       }
 
-      const res = await api.post(`/jobs/${job.slug}/apply`, payload);
+      const res = await api.post(`/jobs/${job.id}/apply`, payload);
 
-      toast.success("Application submitted successfully!");
+      toast.success("Application successfully submitted!");
 
       navigate("/careers/application-success", {
         state: {
@@ -201,14 +212,20 @@ export default function JobApplyPage() {
         },
       });
     } catch (err) {
-      console.error("Application submission failed:", err);
+      console.error("Application error:", err);
+
       if (err.response?.status === 409) {
+        const errorDetail = err.response.data?.detail || "You have already applied for this opening in the last 24 hours.";
+        const existingRef = err.response.data?.referenceNumber;
         setDuplicateWarning({
-          referenceNumber: err.response.data?.referenceNumber,
-          message: err.response.data?.detail || "You have already applied for this opening in the last 24 hours.",
+          message: errorDetail,
+          referenceNumber: existingRef,
         });
+        toast.warning("Duplicate application detected.");
       } else {
-        setServerError(formatApiErrorDetail(err.response?.data?.detail));
+        const msg = formatApiErrorDetail(err.response?.data?.detail) || "Failed to submit application. Please try again.";
+        setServerError(msg);
+        toast.error(msg);
       }
     } finally {
       setSubmitting(false);
@@ -219,7 +236,7 @@ export default function JobApplyPage() {
     return (
       <div className="min-h-screen bg-charcoal text-ivory pt-32 pb-20 flex flex-col items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-copper border-t-transparent mb-4" />
-        <p className="text-xs font-mono uppercase tracking-widest text-copper/60">Loading Application Form…</p>
+        <p className="text-xs font-mono uppercase tracking-widest text-copper/60">Loading Role Details…</p>
       </div>
     );
   }
@@ -227,13 +244,13 @@ export default function JobApplyPage() {
   if (jobError || !job) {
     return (
       <div className="min-h-screen bg-charcoal text-ivory pt-32 pb-20 px-4 max-w-xl mx-auto text-center">
-        <div className="bg-[#181818] border border-copper/20 rounded-xl p-8">
+        <div className="luxury-card rounded-[8px] p-8 shadow-sm">
           <Briefcase className="w-10 h-10 text-copper/40 mx-auto mb-3" />
           <h1 className="text-xl font-display text-ivory mb-2">Position Unavailable</h1>
           <p className="text-sm text-ivory/60 mb-6 font-sans">{jobError || "This opening is no longer accessible."}</p>
           <Link
             to="/careers/jobs"
-            className="px-5 py-2.5 text-xs uppercase tracking-wider text-charcoal font-semibold bg-copper hover:bg-copper/90 rounded-lg transition-colors inline-block"
+            className="px-5 py-2.5 text-xs uppercase tracking-[0.12em] text-white font-semibold bg-copper hover:bg-copper-light rounded-[4px] transition-colors inline-block shadow-sm"
           >
             Explore Other Positions
           </Link>
@@ -247,7 +264,7 @@ export default function JobApplyPage() {
       <Seo
         title={`Apply for ${job.title} | Astittva Careers`}
         description={`Submit your application for ${job.title} at Astittva Marketing in Kolkata.`}
-        canonical={`https://astittva.in/careers/jobs/${job.slug}/apply`}
+        path={`/careers/jobs/${job.slug}/apply`}
       />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -255,14 +272,14 @@ export default function JobApplyPage() {
         <div className="mb-6">
           <Link
             to={`/careers/jobs/${job.slug}`}
-            className="inline-flex items-center gap-2 text-xs text-copper hover:text-copper/80 font-mono tracking-wider uppercase transition-colors"
+            className="inline-flex items-center gap-2 text-xs text-copper hover:underline font-semibold uppercase tracking-[0.12em] transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back to Role Details
           </Link>
         </div>
 
-        {/* Application Header */}
-        <div className="bg-[#181818] border border-copper/25 rounded-2xl p-6 sm:p-8 mb-8 shadow-xl">
+        {/* Application Header Card */}
+        <div className="luxury-card rounded-[8px] p-6 sm:p-8 mb-8 shadow-sm">
           <div className="flex flex-wrap items-center gap-2 mb-2 text-xs font-mono text-copper uppercase tracking-wider">
             <span>{job.department}</span>
             <span>•</span>
@@ -275,30 +292,32 @@ export default function JobApplyPage() {
             Apply for <span className="text-copper">{job.title}</span>
           </h1>
 
-          <p className="text-xs sm:text-sm text-ivory/70 font-sans">
-            Please fill out your professional background below. Your details and resume will be securely streamed to our talent team in New Town, Kolkata.
+          <p className="text-xs sm:text-sm text-ivory/60 font-sans leading-relaxed">
+            Please complete the candidate profile form below and attach your resume. All submissions are directly reviewed by our leadership and executive hiring team in Kolkata.
           </p>
         </div>
 
         {/* Duplicate Warning Box */}
         {duplicateWarning && (
-          <div className="bg-amber-950/30 border border-amber-500/40 rounded-xl p-6 mb-8 text-amber-200">
+          <div className="mb-8 p-6 rounded-[8px] bg-amber-500/10 border border-amber-500/30 text-amber-900">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
               <div>
-                <h3 className="text-sm font-semibold text-amber-300 mb-1">Application Already on File</h3>
-                <p className="text-xs sm:text-sm leading-relaxed mb-3">{duplicateWarning.message}</p>
+                <h3 className="font-semibold text-sm text-amber-900 mb-1">Application Already Logged</h3>
+                <p className="text-xs text-amber-800 leading-relaxed mb-3">
+                  {duplicateWarning.message}
+                </p>
                 {duplicateWarning.referenceNumber && (
-                  <p className="text-xs font-mono bg-black/40 px-3 py-1.5 rounded border border-amber-500/30 inline-block">
-                    Reference Number: <span className="text-amber-300 font-bold">{duplicateWarning.referenceNumber}</span>
+                  <p className="text-xs font-mono text-amber-900">
+                    Existing Reference: <strong>{duplicateWarning.referenceNumber}</strong>
                   </p>
                 )}
                 <div className="mt-4 flex gap-3">
                   <Link
                     to="/careers/jobs"
-                    className="text-xs text-amber-300 hover:underline uppercase font-mono tracking-wider"
+                    className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider bg-amber-600 text-white rounded-[4px] shadow-sm hover:bg-amber-700 transition-colors"
                   >
-                    ← Browse other positions
+                    Browse Other Openings
                   </Link>
                 </div>
               </div>
@@ -306,10 +325,9 @@ export default function JobApplyPage() {
           </div>
         )}
 
-        {/* Server Error Alert */}
         {serverError && (
-          <div className="bg-red-950/30 border border-red-500/40 rounded-xl p-4 mb-8 text-red-200 text-xs sm:text-sm flex items-center gap-3">
-            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+          <div className="mb-8 p-4 rounded-[8px] bg-red-950/10 border border-red-500/20 text-red-600 text-xs sm:text-sm flex items-center gap-3">
+            <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
             <span>{serverError}</span>
           </div>
         )}
@@ -317,14 +335,14 @@ export default function JobApplyPage() {
         {/* Application Form */}
         <form onSubmit={handleSubmit} className="space-y-8 font-sans">
           {/* Section 1: Candidate Identity */}
-          <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 sm:p-8 space-y-6">
+          <div className="luxury-card rounded-[8px] p-6 sm:p-8 space-y-6 shadow-sm">
             <h2 className="text-lg font-display text-ivory flex items-center gap-2 border-b border-copper/15 pb-3">
-              <User className="w-4 h-4 text-copper" /> 1. Personal & Contact Information
+              <User className="w-4 h-4 text-copper" /> 1. Personal &amp; Contact Information
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-2">
+                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
                   Full Name <span className="text-copper">*</span>
                 </label>
                 <input
@@ -334,12 +352,12 @@ export default function JobApplyPage() {
                   onChange={handleInputChange}
                   required
                   placeholder="e.g. Arjun Banerjee"
-                  className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-2">
+                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
                   Email Address <span className="text-copper">*</span>
                 </label>
                 <input
@@ -349,12 +367,12 @@ export default function JobApplyPage() {
                   onChange={handleInputChange}
                   required
                   placeholder="e.g. arjun@example.com"
-                  className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-2">
+                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
                   Phone Number <span className="text-copper">*</span>
                 </label>
                 <input
@@ -364,12 +382,12 @@ export default function JobApplyPage() {
                   onChange={handleInputChange}
                   required
                   placeholder="e.g. +91 98301 23456"
-                  className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-2">
+                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
                   LinkedIn Profile URL
                 </label>
                 <input
@@ -378,21 +396,21 @@ export default function JobApplyPage() {
                   value={formData.linkedin}
                   onChange={handleInputChange}
                   placeholder="https://linkedin.com/in/username"
-                  className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper transition-colors"
                 />
               </div>
             </div>
           </div>
 
           {/* Section 2: Experience & Compensation */}
-          <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 sm:p-8 space-y-6">
+          <div className="luxury-card rounded-[8px] p-6 sm:p-8 space-y-6 shadow-sm">
             <h2 className="text-lg font-display text-ivory flex items-center gap-2 border-b border-copper/15 pb-3">
-              <Briefcase className="w-4 h-4 text-copper" /> 2. Professional Experience & Notice
+              <Briefcase className="w-4 h-4 text-copper" /> 2. Professional Experience &amp; Notice
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-2">
+                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
                   Total Experience (Years)
                 </label>
                 <input
@@ -403,95 +421,95 @@ export default function JobApplyPage() {
                   value={formData.experienceYears}
                   onChange={handleInputChange}
                   placeholder="e.g. 4.5"
-                  className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-2">
-                  Current Company / Firm
+                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                  Current Organization
                 </label>
                 <input
                   type="text"
                   name="currentCompany"
                   value={formData.currentCompany}
                   onChange={handleInputChange}
-                  placeholder="e.g. ABC Realty Solutions"
-                  className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper transition-colors"
+                  placeholder="e.g. Kolkata Realty Pvt Ltd"
+                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-2">
+                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
                   Notice Period (Days)
                 </label>
                 <input
                   type="number"
-                  min="0"
                   name="noticePeriodDays"
+                  min="0"
                   value={formData.noticePeriodDays}
                   onChange={handleInputChange}
-                  placeholder="e.g. 30"
-                  className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper transition-colors"
+                  placeholder="30"
+                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-2">
-                  Current CTC (LPA)
+                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                  Current Annual CTC
                 </label>
                 <input
                   type="text"
                   name="currentCtc"
                   value={formData.currentCtc}
                   onChange={handleInputChange}
-                  placeholder="e.g. 6.5 LPA"
-                  className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper transition-colors"
+                  placeholder="e.g. 6 LPA"
+                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-2">
-                  Expected CTC (LPA)
+                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                  Expected Annual CTC
                 </label>
                 <input
                   type="text"
                   name="expectedCtc"
                   value={formData.expectedCtc}
                   onChange={handleInputChange}
-                  placeholder="e.g. 9 LPA"
-                  className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper transition-colors"
+                  placeholder="e.g. 8.5 LPA"
+                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-2">
-                  Portfolio / Work Link
+                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                  Portfolio / Website URL
                 </label>
                 <input
                   type="url"
                   name="portfolioUrl"
                   value={formData.portfolioUrl}
                   onChange={handleInputChange}
-                  placeholder="https://..."
-                  className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper transition-colors"
+                  placeholder="https://mywork.dev"
+                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper transition-colors"
                 />
               </div>
             </div>
           </div>
 
           {/* Section 3: Resume Upload */}
-          <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 sm:p-8 space-y-4">
+          <div className="luxury-card rounded-[8px] p-6 sm:p-8 space-y-4 shadow-sm">
             <h2 className="text-lg font-display text-ivory flex items-center gap-2 border-b border-copper/15 pb-3">
               <UploadCloud className="w-4 h-4 text-copper" /> 3. Upload Resume / Curriculum Vitae <span className="text-copper">*</span>
             </h2>
 
             <p className="text-xs text-ivory/60">
-              Accepted formats: <strong className="text-ivory/80">PDF, DOC, DOCX</strong> up to 10MB. Stored securely in our encrypted MongoDB storage.
+              Accepted formats: <strong className="text-ivory">PDF, DOC, DOCX</strong> up to 10MB. Stored securely in our encrypted MongoDB storage.
             </p>
 
             {resumeFile ? (
-              <div className="flex items-center justify-between p-4 bg-charcoal border border-copper/50 rounded-xl">
+              <div className="flex items-center justify-between p-4 bg-charcoal border border-copper/50 rounded-[4px]">
                 <div className="flex items-center gap-3">
                   <FileText className="w-8 h-8 text-copper shrink-0" />
                   <div>
@@ -502,7 +520,7 @@ export default function JobApplyPage() {
                 <button
                   type="button"
                   onClick={removeResume}
-                  className="p-1.5 rounded-lg text-ivory/50 hover:text-red-400 hover:bg-white/5 transition-colors"
+                  className="p-1.5 rounded text-ivory/50 hover:text-red-500 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -511,7 +529,7 @@ export default function JobApplyPage() {
               <div
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
-                className="border-2 border-dashed border-copper/30 hover:border-copper/70 rounded-xl p-8 text-center transition-colors bg-charcoal/50 cursor-pointer"
+                className="border-2 border-dashed border-copper/30 hover:border-copper/70 rounded-[6px] p-8 text-center transition-colors bg-charcoal/50 cursor-pointer"
                 onClick={() => document.getElementById("resume-input")?.click()}
               >
                 <input
@@ -529,11 +547,11 @@ export default function JobApplyPage() {
               </div>
             )}
 
-            {fileError && <p className="text-xs text-red-400 mt-2">{fileError}</p>}
+            {fileError && <p className="text-xs text-red-600 mt-2">{fileError}</p>}
           </div>
 
-          {/* Section 4: Cover Statement */}
-          <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 sm:p-8 space-y-4">
+          {/* Section 4: Candidate Note */}
+          <div className="luxury-card rounded-[8px] p-6 sm:p-8 space-y-4 shadow-sm">
             <h2 className="text-lg font-display text-ivory flex items-center gap-2 border-b border-copper/15 pb-3">
               <Sparkles className="w-4 h-4 text-copper" /> 4. Candidate Note (Optional)
             </h2>
@@ -544,7 +562,7 @@ export default function JobApplyPage() {
               value={formData.coverNote}
               onChange={handleInputChange}
               placeholder="Tell us briefly why you would like to join Astittva Marketing in Kolkata, your experience in New Town/Rajarhat real estate, or any key achievements..."
-              className="w-full px-4 py-3 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper transition-colors leading-relaxed"
+              className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper transition-colors leading-relaxed"
             />
           </div>
 
@@ -557,11 +575,11 @@ export default function JobApplyPage() {
             <button
               type="submit"
               disabled={submitting || readingFile}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-10 py-4 rounded-xl bg-copper hover:bg-copper/90 text-charcoal font-semibold text-xs tracking-wider uppercase shadow-xl transition-all disabled:opacity-50 shrink-0"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-[4px] bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.15em] shadow-sm transition-all disabled:opacity-50 shrink-0"
             >
               {submitting ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-charcoal border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   <span>Submitting Application…</span>
                 </>
               ) : (

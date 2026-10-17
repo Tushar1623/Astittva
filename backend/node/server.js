@@ -2904,6 +2904,7 @@ app.post("/api/admin/recruitment/jobs", requireStaff, async (req, res) => {
     };
 
     await db.collection("job_openings").insertOne(doc);
+    cacheInvalidatePrefix("seo:sitemap");
     return res.status(201).json(serializeJobOpening(doc, true));
   } catch (err) {
     console.error("Create job opening error:", err);
@@ -2988,6 +2989,7 @@ app.patch("/api/admin/recruitment/jobs/:id", requireStaff, async (req, res) => {
     if (body.expiresAt !== undefined) updates.expiresAt = body.expiresAt;
 
     await db.collection("job_openings").updateOne({ _id: existing._id }, { $set: updates });
+    cacheInvalidatePrefix("seo:sitemap");
     const updated = await db.collection("job_openings").findOne({ _id: existing._id });
 
     return res.json(serializeJobOpening(updated, true));
@@ -3012,6 +3014,7 @@ app.delete("/api/admin/recruitment/jobs/:id", requireAdmin, async (req, res) => 
         { _id: job._id },
         { $set: { status: "archived", updatedAt: nowUtcIso(), updatedBy: req.user?.email || "admin" } }
       );
+      cacheInvalidatePrefix("seo:sitemap");
       return res.json({
         ok: true,
         archived: true,
@@ -3020,6 +3023,7 @@ app.delete("/api/admin/recruitment/jobs/:id", requireAdmin, async (req, res) => 
     }
 
     await db.collection("job_openings").deleteOne({ _id: job._id });
+    cacheInvalidatePrefix("seo:sitemap");
     return res.json({ ok: true, message: "Job opening deleted successfully" });
   } catch (err) {
     console.error("Delete job error:", err);

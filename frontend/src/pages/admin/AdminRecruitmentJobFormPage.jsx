@@ -6,11 +6,8 @@ import {
   Save,
   Plus,
   Trash2,
-  Sparkles,
   CheckCircle2,
   AlertCircle,
-  Building,
-  MapPin,
   Calendar,
   IndianRupee,
 } from "lucide-react";
@@ -149,40 +146,30 @@ export default function AdminRecruitmentJobFormPage() {
     e.preventDefault();
     if (saving) return;
 
-    setServerError("");
-
     if (!form.title.trim()) {
-      setServerError("Job title is required.");
+      toast.error("Please enter a job title.");
       return;
     }
 
     try {
       setSaving(true);
+      setServerError("");
+
       const payload = {
-        title: form.title.trim(),
-        slug: form.slug.trim() || undefined,
-        department: form.department.trim(),
-        location: form.location.trim(),
-        employmentType: form.employmentType,
-        workplaceType: form.workplaceType,
-        experienceLevel: form.experienceLevel,
-        experienceMinYears: parseInt(form.experienceMinYears, 10) || 0,
-        experienceMaxYears: parseInt(form.experienceMaxYears, 10) || 0,
-        salaryRange: {
-          min: parseFloat(form.salaryRange.min) || 0,
-          max: parseFloat(form.salaryRange.max) || 0,
-          currency: form.salaryRange.currency || "INR",
-          period: form.salaryRange.period || "yearly",
-          isDisclosed: Boolean(form.salaryRange.isDisclosed),
-        },
-        description: form.description.trim(),
+        ...form,
         responsibilities: form.responsibilities.map((s) => s.trim()).filter(Boolean),
         requirements: form.requirements.map((s) => s.trim()).filter(Boolean),
         benefits: form.benefits.map((s) => s.trim()).filter(Boolean),
         tags: form.tags.split(",").map((s) => s.trim()).filter(Boolean),
-        status: form.status,
-        isFeatured: Boolean(form.isFeatured),
-        expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : null,
+        experienceMinYears: parseInt(form.experienceMinYears, 10) || 0,
+        experienceMaxYears: parseInt(form.experienceMaxYears, 10) || 0,
+        salaryRange: {
+          min: parseInt(form.salaryRange.min, 10) || 0,
+          max: parseInt(form.salaryRange.max, 10) || 0,
+          currency: form.salaryRange.currency || "INR",
+          period: form.salaryRange.period || "yearly",
+          isDisclosed: Boolean(form.salaryRange.isDisclosed),
+        },
       };
 
       if (isEdit) {
@@ -190,13 +177,15 @@ export default function AdminRecruitmentJobFormPage() {
         toast.success("Job opening updated successfully!");
       } else {
         await api.post("/admin/recruitment/jobs", payload);
-        toast.success("New job opening published successfully!");
+        toast.success("Job opening published successfully!");
       }
 
       navigate("/admin/recruitment/jobs");
     } catch (err) {
       console.error("Save job error:", err);
-      setServerError(formatApiErrorDetail(err.response?.data?.detail));
+      const detail = formatApiErrorDetail(err.response?.data?.detail) || "Failed to save job opening";
+      setServerError(detail);
+      toast.error(detail);
     } finally {
       setSaving(false);
     }
@@ -204,66 +193,81 @@ export default function AdminRecruitmentJobFormPage() {
 
   if (loading) {
     return (
-      <div className="p-12 text-center font-mono text-copper/60 text-xs uppercase tracking-widest">
-        Loading Job Opening…
+      <div className="text-ivory/50 text-center py-20 tracking-[0.3em] uppercase text-xs">
+        Loading Vacancy Details…
       </div>
     );
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 font-sans max-w-5xl mx-auto">
+    <div data-testid="admin-recruitment-job-form" className="space-y-8 max-w-5xl">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-copper/15 pb-6">
-        <div>
-          <Link
-            to="/admin/recruitment/jobs"
-            className="inline-flex items-center gap-1.5 text-xs text-copper hover:text-copper/80 font-mono uppercase tracking-wider mb-2"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" /> Back to Vacancies
-          </Link>
-          <h1 className="text-2xl sm:text-3xl font-display text-ivory">
-            {isEdit ? "Edit Job Opening" : "Create New Vacancy"}
-          </h1>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={saving}
-          className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-copper hover:bg-copper/90 text-charcoal font-semibold text-xs uppercase tracking-wider transition-colors shadow-lg disabled:opacity-50"
+      <div>
+        <Link
+          to="/admin/recruitment/jobs"
+          className="inline-flex items-center gap-2 text-ivory/60 hover:text-copper text-xs tracking-[0.25em] uppercase mb-4 transition-colors"
         >
-          {saving ? (
-            <>
-              <div className="w-3.5 h-3.5 border-2 border-charcoal border-t-transparent rounded-full animate-spin" />
-              <span>Saving…</span>
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4" />
-              <span>Save Opening</span>
-            </>
-          )}
-        </button>
+          <ArrowLeft className="w-4 h-4" /> Back to Vacancies
+        </Link>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-copper/15">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-copper">
+                RECRUITMENT CONSOLE
+              </span>
+              <span className="text-ivory/30">•</span>
+              <span className="text-[10px] tracking-[0.2em] uppercase text-ivory/50">
+                VACANCY CONFIGURATOR
+              </span>
+            </div>
+            <h1 className="font-display font-light text-3xl sm:text-4xl text-ivory">
+              {isEdit ? "Edit Vacancy" : "Create New Vacancy"}
+            </h1>
+            <p className="text-ivory/55 text-sm mt-1">
+              Configure role specifications, qualifications, compensation brackets, and publishing visibility.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={saving}
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.15em] rounded-[4px] transition-colors shadow-sm disabled:opacity-50"
+          >
+            {saving ? (
+              <>
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Saving…</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                <span>{isEdit ? "Save Changes" : "Publish Vacancy"}</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {serverError && (
-        <div className="bg-red-950/30 border border-red-500/40 rounded-xl p-4 text-red-200 text-xs sm:text-sm flex items-center gap-3">
-          <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+        <div className="bg-red-950/20 border border-red-500/30 rounded-[6px] p-4 text-red-600 text-xs sm:text-sm flex items-center gap-3">
+          <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{serverError}</span>
         </div>
       )}
 
-      {/* Main Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Core Details */}
-        <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 space-y-4 shadow-xl">
-          <h2 className="text-sm font-display text-ivory uppercase tracking-wider text-copper border-b border-copper/15 pb-2">
-            1. Role Title &amp; Status
+      {/* Main Form Sections */}
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* SECTION 1: Core Details */}
+        <div className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-6">
+          <h2 className="font-display font-light text-xl text-ivory border-b border-copper/15 pb-3">
+            1. Role Title &amp; Publishing Status
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="sm:col-span-2">
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-1.5">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
                 Job Title <span className="text-copper">*</span>
               </label>
               <input
@@ -272,13 +276,13 @@ export default function AdminRecruitmentJobFormPage() {
                 value={form.title}
                 onChange={handleChange}
                 required
-                placeholder="e.g. Senior Real Estate Advisory Specialist"
-                className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory focus:outline-none focus:border-copper"
+                placeholder="e.g. Senior Luxury Real Estate Consultant"
+                className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-1.5">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
                 Custom URL Slug (Optional)
               </label>
               <input
@@ -287,106 +291,94 @@ export default function AdminRecruitmentJobFormPage() {
                 value={form.slug}
                 onChange={handleChange}
                 placeholder="auto-generated-from-title"
-                className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory/80 font-mono focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/20 rounded-[4px] text-xs font-mono text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper"
               />
+              <p className="text-[11px] text-ivory/40 mt-1 font-mono">
+                Live URL: <span className="text-copper">/careers/jobs/{form.slug || "…"}</span>
+              </p>
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-1.5">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
                 Publishing Status
               </label>
               <select
                 name="status"
                 value={form.status}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
               >
-                <option value="published">Published (Visible on site)</option>
-                <option value="draft">Draft (Internal only)</option>
+                <option value="published">Published (Visible on public board)</option>
+                <option value="draft">Draft (Internal preparation)</option>
                 <option value="closed">Closed (No longer accepting apps)</option>
                 <option value="archived">Archived</option>
               </select>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2 pt-2">
-            <input
-              type="checkbox"
-              id="isFeatured"
-              name="isFeatured"
-              checked={form.isFeatured}
-              onChange={handleChange}
-              className="w-4 h-4 accent-copper rounded"
-            />
-            <label htmlFor="isFeatured" className="text-xs text-ivory font-medium cursor-pointer">
-              Mark as Featured Position (Pinned to top of careers page with gold badge)
-            </label>
+            <div className="flex items-center gap-3 pt-2">
+              <input
+                type="checkbox"
+                id="isFeatured"
+                name="isFeatured"
+                checked={form.isFeatured}
+                onChange={handleChange}
+                className="w-4 h-4 accent-[#B87333] rounded"
+              />
+              <label htmlFor="isFeatured" className="text-xs text-ivory cursor-pointer select-none">
+                Mark as <strong className="text-copper">Featured Opportunity</strong> (highlighted on job board)
+              </label>
+            </div>
           </div>
         </div>
 
-        {/* Department & Workplace Specs */}
-        <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 space-y-4 shadow-xl">
-          <h2 className="text-sm font-display text-ivory uppercase tracking-wider text-copper border-b border-copper/15 pb-2">
-            2. Department, Location &amp; Experience
+        {/* SECTION 2: Role Specifications */}
+        <div className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-6">
+          <h2 className="font-display font-light text-xl text-ivory border-b border-copper/15 pb-3">
+            2. Department, Location &amp; Employment Type
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-1.5">
-                Department <span className="text-copper">*</span>
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                Department
               </label>
-              <input
-                type="text"
+              <select
                 name="department"
                 value={form.department}
                 onChange={handleChange}
-                required
-                placeholder="e.g. Sales & Advisory"
-                className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory focus:outline-none focus:border-copper"
-              />
+                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+              >
+                <option value="Sales & Advisory">Sales &amp; Advisory</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Operations">Operations</option>
+                <option value="Legal & Advisory">Legal &amp; Advisory</option>
+                <option value="Finance & Accounting">Finance &amp; Accounting</option>
+              </select>
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-1.5">
-                Location <span className="text-copper">*</span>
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                Location
               </label>
               <input
                 type="text"
                 name="location"
                 value={form.location}
                 onChange={handleChange}
-                required
                 placeholder="e.g. New Town, Kolkata"
-                className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-1.5">
-                Employment Type
-              </label>
-              <select
-                name="employmentType"
-                value={form.employmentType}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory focus:outline-none focus:border-copper"
-              >
-                <option value="Full-time">Full-time</option>
-                <option value="Part-time">Part-time</option>
-                <option value="Contract">Contract</option>
-                <option value="Internship">Internship</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-1.5">
-                Workplace Model
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                Workplace Type
               </label>
               <select
                 name="workplaceType"
                 value={form.workplaceType}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
               >
                 <option value="On-site">On-site</option>
                 <option value="Hybrid">Hybrid</option>
@@ -395,264 +387,312 @@ export default function AdminRecruitmentJobFormPage() {
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-1.5">
-                Min Exp. (Years)
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                Employment Type
+              </label>
+              <select
+                name="employmentType"
+                value={form.employmentType}
+                onChange={handleChange}
+                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+              >
+                <option value="Full-time">Full-time</option>
+                <option value="Part-time">Part-time</option>
+                <option value="Contract">Contract</option>
+                <option value="Internship">Internship</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-2">
+            <div>
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                Seniority / Level
+              </label>
+              <select
+                name="experienceLevel"
+                value={form.experienceLevel}
+                onChange={handleChange}
+                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+              >
+                <option value="Entry Level">Entry Level</option>
+                <option value="Associate">Associate</option>
+                <option value="Mid-Senior Level">Mid-Senior Level</option>
+                <option value="Director / Executive">Director / Executive</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                Min Experience (Years)
               </label>
               <input
                 type="number"
-                min="0"
                 name="experienceMinYears"
+                min="0"
                 value={form.experienceMinYears}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-1.5">
-                Max Exp. (Years)
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                Max Experience (Years)
               </label>
               <input
                 type="number"
-                min="0"
                 name="experienceMaxYears"
+                min="0"
                 value={form.experienceMaxYears}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
               />
             </div>
           </div>
         </div>
 
-        {/* Salary Range */}
-        <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 space-y-4 shadow-xl">
-          <h2 className="text-sm font-display text-ivory uppercase tracking-wider text-copper border-b border-copper/15 pb-2">
-            3. Compensation Package
+        {/* SECTION 3: Compensation & Schema.org Salary */}
+        <div className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-6">
+          <h2 className="font-display font-light text-xl text-ivory border-b border-copper/15 pb-3">
+            3. Compensation &amp; Salary Structure
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-1.5">
-                Min Annual CTC (INR)
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                Min Annual CTC (₹)
               </label>
               <input
                 type="number"
-                min="0"
-                step="50000"
                 value={form.salaryRange.min}
                 onChange={(e) => handleSalaryChange("min", e.target.value)}
                 placeholder="600000"
-                className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-1.5">
-                Max Annual CTC (INR)
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                Max Annual CTC (₹)
               </label>
               <input
                 type="number"
-                min="0"
-                step="50000"
                 value={form.salaryRange.max}
                 onChange={(e) => handleSalaryChange("max", e.target.value)}
                 placeholder="1200000"
-                className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
               />
             </div>
 
-            <div className="flex items-center pt-6">
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-ivory">
-                <input
-                  type="checkbox"
-                  checked={form.salaryRange.isDisclosed}
-                  onChange={(e) => handleSalaryChange("isDisclosed", e.target.checked)}
-                  className="w-4 h-4 accent-copper rounded"
-                />
-                <span>Display salary range publicly on job board</span>
+            <div>
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                Currency
               </label>
+              <input
+                type="text"
+                value={form.salaryRange.currency}
+                onChange={(e) => handleSalaryChange("currency", e.target.value)}
+                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+              />
             </div>
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <input
+              type="checkbox"
+              id="isDisclosed"
+              checked={form.salaryRange.isDisclosed}
+              onChange={(e) => handleSalaryChange("isDisclosed", e.target.checked)}
+              className="w-4 h-4 accent-[#B87333] rounded"
+            />
+            <label htmlFor="isDisclosed" className="text-xs text-ivory cursor-pointer select-none">
+              Disclose compensation publicly (enables Google Jobs structured salary indexing)
+            </label>
           </div>
         </div>
 
-        {/* Role Description */}
-        <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 space-y-4 shadow-xl">
-          <h2 className="text-sm font-display text-ivory uppercase tracking-wider text-copper border-b border-copper/15 pb-2">
+        {/* SECTION 4: Role Overview & Markdown */}
+        <div className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-6">
+          <h2 className="font-display font-light text-xl text-ivory border-b border-copper/15 pb-3">
             4. Role Overview &amp; Description
           </h2>
 
-          <textarea
-            rows={5}
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            placeholder="Write a comprehensive overview of the role, team dynamics, and expectations..."
-            className="w-full px-4 py-3 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory leading-relaxed focus:outline-none focus:border-copper"
-          />
+          <div>
+            <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+              Role Summary &amp; Overview
+            </label>
+            <textarea
+              name="description"
+              rows={4}
+              value={form.description}
+              onChange={handleChange}
+              placeholder="Describe the opportunity, core missions, and daily mandate for this position..."
+              className="w-full p-3.5 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper"
+            />
+          </div>
         </div>
 
-        {/* Responsibilities List */}
-        <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 space-y-4 shadow-xl">
-          <div className="flex items-center justify-between border-b border-copper/15 pb-2">
-            <h2 className="text-sm font-display text-ivory uppercase tracking-wider text-copper">
-              5. Key Responsibilities
-            </h2>
-            <button
-              type="button"
-              onClick={() => handleAddArrayItem("responsibilities")}
-              className="text-xs text-copper hover:underline flex items-center gap-1 font-mono uppercase"
-            >
-              <Plus className="w-3.5 h-3.5" /> Add Item
-            </button>
-          </div>
+        {/* SECTION 5: Responsibilities, Requirements & Benefits */}
+        <div className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-8">
+          <h2 className="font-display font-light text-xl text-ivory border-b border-copper/15 pb-3">
+            5. Detailed Specifications &amp; Benefits
+          </h2>
 
-          <div className="space-y-2">
+          {/* Key Responsibilities */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block">
+                Key Responsibilities
+              </label>
+              <button
+                type="button"
+                onClick={() => handleAddArrayItem("responsibilities")}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-copper hover:text-white transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add Bullet
+              </button>
+            </div>
+
             {form.responsibilities.map((item, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 <input
                   type="text"
                   value={item}
                   onChange={(e) => handleArrayChange("responsibilities", idx, e.target.value)}
-                  placeholder="e.g. Conduct high-touch consultations for HNI buyers in New Town corridor"
-                  className="flex-1 px-4 py-2 bg-charcoal border border-copper/25 rounded-lg text-sm text-ivory focus:outline-none focus:border-copper"
+                  placeholder={`Responsibility #${idx + 1}`}
+                  className="flex-1 px-3.5 py-2.5 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
                 />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveArrayItem("responsibilities", idx)}
-                  className="p-2 text-ivory/40 hover:text-red-400 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {form.responsibilities.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveArrayItem("responsibilities", idx)}
+                    className="p-2 text-ivory/40 hover:text-red-500 rounded hover:bg-red-500/10 transition-colors"
+                    title="Remove item"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
-        </div>
 
-        {/* Requirements List */}
-        <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 space-y-4 shadow-xl">
-          <div className="flex items-center justify-between border-b border-copper/15 pb-2">
-            <h2 className="text-sm font-display text-ivory uppercase tracking-wider text-copper">
-              6. Candidate Requirements
-            </h2>
-            <button
-              type="button"
-              onClick={() => handleAddArrayItem("requirements")}
-              className="text-xs text-copper hover:underline flex items-center gap-1 font-mono uppercase"
-            >
-              <Plus className="w-3.5 h-3.5" /> Add Item
-            </button>
-          </div>
+          {/* Candidate Requirements */}
+          <div className="space-y-3 pt-4 border-t border-copper/15">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block">
+                Required Qualifications &amp; Skills
+              </label>
+              <button
+                type="button"
+                onClick={() => handleAddArrayItem("requirements")}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-copper hover:text-white transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add Bullet
+              </button>
+            </div>
 
-          <div className="space-y-2">
             {form.requirements.map((item, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 <input
                   type="text"
                   value={item}
                   onChange={(e) => handleArrayChange("requirements", idx, e.target.value)}
-                  placeholder="e.g. 3+ years experience in high-end residential sales in Kolkata"
-                  className="flex-1 px-4 py-2 bg-charcoal border border-copper/25 rounded-lg text-sm text-ivory focus:outline-none focus:border-copper"
+                  placeholder={`Requirement #${idx + 1}`}
+                  className="flex-1 px-3.5 py-2.5 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
                 />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveArrayItem("requirements", idx)}
-                  className="p-2 text-ivory/40 hover:text-red-400 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {form.requirements.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveArrayItem("requirements", idx)}
+                    className="p-2 text-ivory/40 hover:text-red-500 rounded hover:bg-red-500/10 transition-colors"
+                    title="Remove item"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
-        </div>
 
-        {/* Benefits List */}
-        <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 space-y-4 shadow-xl">
-          <div className="flex items-center justify-between border-b border-copper/15 pb-2">
-            <h2 className="text-sm font-display text-ivory uppercase tracking-wider text-copper">
-              7. Benefits &amp; Perks
-            </h2>
-            <button
-              type="button"
-              onClick={() => handleAddArrayItem("benefits")}
-              className="text-xs text-copper hover:underline flex items-center gap-1 font-mono uppercase"
-            >
-              <Plus className="w-3.5 h-3.5" /> Add Item
-            </button>
-          </div>
+          {/* Benefits */}
+          <div className="space-y-3 pt-4 border-t border-copper/15">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block">
+                Perks &amp; Benefits
+              </label>
+              <button
+                type="button"
+                onClick={() => handleAddArrayItem("benefits")}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-copper hover:text-white transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add Bullet
+              </button>
+            </div>
 
-          <div className="space-y-2">
             {form.benefits.map((item, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 <input
                   type="text"
                   value={item}
                   onChange={(e) => handleArrayChange("benefits", idx, e.target.value)}
-                  placeholder="e.g. Uncapped incentive model and executive medical coverage"
-                  className="flex-1 px-4 py-2 bg-charcoal border border-copper/25 rounded-lg text-sm text-ivory focus:outline-none focus:border-copper"
+                  placeholder={`Benefit #${idx + 1}`}
+                  className="flex-1 px-3.5 py-2.5 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
                 />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveArrayItem("benefits", idx)}
-                  className="p-2 text-ivory/40 hover:text-red-400 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {form.benefits.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveArrayItem("benefits", idx)}
+                    className="p-2 text-ivory/40 hover:text-red-500 rounded hover:bg-red-500/10 transition-colors"
+                    title="Remove item"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
-        </div>
 
-        {/* Tags & Expiry */}
-        <div className="bg-[#181818] border border-copper/20 rounded-xl p-6 space-y-4 shadow-xl">
-          <h2 className="text-sm font-display text-ivory uppercase tracking-wider text-copper border-b border-copper/15 pb-2">
-            8. Tags &amp; Expiry
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-1.5">
-                Tags (Comma separated)
-              </label>
-              <input
-                type="text"
-                name="tags"
-                value={form.tags}
-                onChange={handleChange}
-                placeholder="Kolkata, Luxury Housing, Advisory, Sales"
-                className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory focus:outline-none focus:border-copper"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 font-mono mb-1.5">
-                Expiry / Close Date (Optional)
-              </label>
-              <input
-                type="date"
-                name="expiresAt"
-                value={form.expiresAt}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 bg-charcoal border border-copper/30 rounded-lg text-sm text-ivory focus:outline-none focus:border-copper"
-              />
-            </div>
+          {/* Tags */}
+          <div className="pt-4 border-t border-copper/15">
+            <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+              Tags / Keywords (comma separated)
+            </label>
+            <input
+              type="text"
+              name="tags"
+              value={form.tags}
+              onChange={handleChange}
+              placeholder="e.g. Luxury Advisory, New Town, High Net Worth, Sales"
+              className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+            />
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4">
+        {/* Bottom Form Actions */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-copper/15">
           <Link
             to="/admin/recruitment/jobs"
-            className="px-6 py-2.5 rounded-lg border border-copper/30 text-ivory/70 hover:text-ivory text-xs uppercase tracking-wider font-mono transition-colors"
+            className="px-5 py-2.5 border border-copper/30 hover:border-copper text-xs font-semibold uppercase tracking-[0.15em] text-ivory/80 hover:text-white rounded-[4px] transition-colors"
           >
             Cancel
           </Link>
-
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 px-8 py-3 rounded-lg bg-copper hover:bg-copper/90 text-charcoal font-semibold text-xs uppercase tracking-wider transition-colors shadow-lg disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.15em] rounded-[4px] transition-colors shadow-sm disabled:opacity-50"
           >
-            {saving ? "Saving…" : "Save Opening"}
+            {saving ? (
+              <>
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Saving…</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                <span>{isEdit ? "Save Changes" : "Publish Vacancy"}</span>
+              </>
+            )}
           </button>
         </div>
       </form>
