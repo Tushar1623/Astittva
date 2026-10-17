@@ -20,12 +20,7 @@ function formatDate(iso) {
   }
 }
 
-function blogImage(src) {
-  if (!src) return "";
-  if (isGoogleDriveImage(src)) return driveImageUrl(src, 1200);
-  if (src.startsWith("http")) return src;
-  return "";
-}
+import { resolveBlogImage, pickBlogFallback } from "@/lib/blogImages";
 
 export default function BlogDetailPage() {
   const { slug } = useParams();
@@ -75,7 +70,7 @@ export default function BlogDetailPage() {
     );
   }
 
-  const img = blogImage(blog.featured_image);
+  const img = resolveBlogImage(blog, 1200);
   const matchedArea = ["New Town", "Rajarhat", "Salt Lake", "EM Bypass", "Kolkata"].find((a) =>
     `${blog.title} ${blog.short_description || ""}`.toLowerCase().includes(a.toLowerCase())
   ) || "Kolkata";
@@ -202,7 +197,8 @@ export default function BlogDetailPage() {
                 src={img}
                 alt={blog.title}
                 onError={(e) => {
-                  e.currentTarget.style.display = "none";
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = pickBlogFallback(blog);
                 }}
                 className="w-full h-full object-cover"
               />

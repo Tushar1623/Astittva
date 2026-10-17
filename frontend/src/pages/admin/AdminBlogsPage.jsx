@@ -1,16 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
+import api, { formatApiErrorDetail } from "@/lib/api";
 import { Plus, Pencil, Trash2, Eye, EyeOff, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
-
-function blogImage(src) {
-  if (!src) return "";
-  if (isGoogleDriveImage(src)) return driveImageUrl(src);
-  if (src.startsWith("http")) return src;
-  return "";
-}
+import { resolveBlogImage, pickBlogFallback } from "@/lib/blogImages";
 
 export default function AdminBlogsPage() {
   const { user } = useAuth();
@@ -102,22 +96,17 @@ export default function AdminBlogsPage() {
                 >
                   <td className="p-4">
                     <div className="flex items-center gap-3">
-                      {blogImage(b.featured_image) ? (
-                        <img
-                          loading="lazy"
-                          src={blogImage(b.featured_image)}
-                          alt=""
-                          className="w-14 h-14 object-cover border border-copper/20"
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                          }}
-                        />
-                      ) : (
-                        <div className="w-14 h-14 bg-charcoal-2 border border-copper/10 flex items-center justify-center text-copper/40 text-[9px] tracking-widest uppercase">
-                          N/A
-                        </div>
-                      )}
-                      <div>
+                      <img
+                        loading="lazy"
+                        src={resolveBlogImage(b, 200)}
+                        alt={b.title}
+                        className="w-14 h-14 object-cover border border-copper/20 rounded-[4px] shrink-0 bg-charcoal-2"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = pickBlogFallback(b);
+                        }}
+                      />
+                      <div className="min-w-0">
                         <div className="text-ivory font-display font-normal max-w-xs truncate">
                           {b.title}
                         </div>

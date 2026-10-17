@@ -19,15 +19,10 @@ function formatDate(iso) {
   }
 }
 
-function blogImage(src) {
-  if (!src) return "";
-  if (isGoogleDriveImage(src)) return driveImageUrl(src);
-  if (src.startsWith("http")) return src;
-  return "";
-}
+import { resolveBlogImage, pickBlogFallback } from "@/lib/blogImages";
 
 function BlogCard({ blog, idx }) {
-  const img = blogImage(blog.featured_image);
+  const img = resolveBlogImage(blog, 900);
   return (
     <motion.article
       initial={{ opacity: 0, y: 22 }}
@@ -43,21 +38,16 @@ function BlogCard({ blog, idx }) {
         className="block"
       >
         <div className="relative aspect-[16/10] overflow-hidden bg-[#F1E9DF]">
-          {img ? (
-            <img
-              loading="lazy"
-              src={img}
-              alt={blog.title}
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-              className="w-full h-full object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-copper/50">
-              <BookOpen className="w-10 h-10" strokeWidth={1.1} />
-            </div>
-          )}
+          <img
+            loading="lazy"
+            src={img}
+            alt={blog.title}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = pickBlogFallback(blog);
+            }}
+            className="w-full h-full object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-[#1C1C1C]/40 via-transparent to-transparent" />
         </div>
       </Link>

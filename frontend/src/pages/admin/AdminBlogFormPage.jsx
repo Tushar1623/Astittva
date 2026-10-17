@@ -27,12 +27,7 @@ function slugify(s) {
     .slice(0, 120);
 }
 
-function blogImage(src) {
-  if (!src) return "";
-  if (isGoogleDriveImage(src)) return driveImageUrl(src);
-  if (src.startsWith("http")) return src;
-  return "";
-}
+import { resolveBlogImage, pickBlogFallback } from "@/lib/blogImages";
 
 export default function AdminBlogFormPage() {
   const { id } = useParams();
@@ -129,7 +124,7 @@ export default function AdminBlogFormPage() {
   }
 
   const currentImageUrl = form.featured_image || driveImageUrlInput;
-  const imgSrc = blogImage(currentImageUrl);
+  const imgSrc = resolveBlogImage({ featured_image: currentImageUrl, slug: form.slug, title: form.title }, 800);
 
   return (
     <div data-testid="admin-blog-form-page">
@@ -309,20 +304,23 @@ export default function AdminBlogFormPage() {
                 <img
                   src={imgSrc}
                   alt="Featured"
-                  className="w-full aspect-[16/10] object-cover border border-copper/20"
+                  className="w-full aspect-[16/10] object-cover border border-copper/20 rounded-[4px]"
                   onError={(e) => {
-                    e.currentTarget.style.display = "none";
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = pickBlogFallback({ slug: form.slug, title: form.title });
                   }}
                 />
-                <button
-                  type="button"
-                  onClick={removeImage}
-                  data-testid="remove-featured-image"
-                  className="absolute top-2 right-2 bg-black/60 text-white p-1.5 hover:bg-red-500/80 transition"
-                  title="Remove image"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
+                {currentImageUrl && (
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    data-testid="remove-featured-image"
+                    className="absolute top-2 right-2 bg-black/60 text-white p-1.5 hover:bg-red-500/80 transition rounded"
+                    title="Remove image"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             ) : (
               <div className="border border-dashed border-copper/25 p-6 text-center text-ivory/50 text-xs tracking-[0.25em] uppercase">
