@@ -13,6 +13,5 @@ Disallow: /api/auth/
 Disallow: /dashboard
 Disallow: /dashboard/
 
-# XML Sitemaps
+# XML Sitemap
 Sitemap: https://astittva.in/sitemap.xml
-Sitemap: https://astittva.in/api/sitemap.xml
