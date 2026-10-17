@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, fileUrl } from "@/lib/api";
+import { pickPropertyFallback } from "@/components/PropertyCard";
 import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
@@ -77,21 +78,20 @@ export default function AdminPropertiesPage() {
                   <td className="p-4">
                     <div className="flex items-center gap-3">
                       {(() => {
+                        const fallback = pickPropertyFallback(p.id);
                         const driveImg = (p.images || []).find(isGoogleDriveImage);
-                        return driveImg ? (
+                        const imgSrc = driveImg ? driveImageUrl(driveImg, 150) : (p.images?.[0] ? fileUrl(p.images[0], 150) : fallback);
+                        return (
                           <img
                             loading="lazy"
-                            src={driveImageUrl(driveImg)}
+                            src={imgSrc}
                             alt=""
-                            className="w-12 h-12 object-cover border border-copper/20"
+                            className="w-12 h-12 object-cover border border-copper/20 rounded-[4px] shrink-0 bg-charcoal-2"
                             onError={(e) => {
-                              e.currentTarget.style.display = "none";
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = fallback;
                             }}
                           />
-                        ) : (
-                          <div className="w-12 h-12 bg-charcoal-2 border border-copper/10 flex items-center justify-center text-copper/40 text-[10px] tracking-widest uppercase">
-                            N/A
-                          </div>
                         );
                       })()}
                       <div>

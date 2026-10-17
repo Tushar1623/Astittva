@@ -260,6 +260,10 @@ export default function ResaleDetailPage() {
                   <img
                     src={isGoogleDriveImage(selectedImg) ? driveImageUrl(selectedImg, 1200) : selectedImg}
                     alt={property.title}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "/images/luxe/luxury_villa.webp";
+                    }}
                     className="w-full h-full object-cover transition-all duration-300"
                   />
                 ) : (
@@ -284,6 +288,10 @@ export default function ResaleDetailPage() {
                       <img
                         src={isGoogleDriveImage(img) ? driveImageUrl(img, 180) : img}
                         alt=""
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = "/images/luxe/luxury_villa.webp";
+                        }}
                         className="w-full h-full object-cover"
                       />
                     </button>

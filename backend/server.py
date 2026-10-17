@@ -20,7 +20,7 @@ from typing import List, Optional, Annotated
 from bson import ObjectId
 
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, UploadFile, File, Header, Query, BackgroundTasks
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorGridFSBucket
@@ -2670,25 +2670,127 @@ async def upload_image(file: UploadFile = File(...), user: dict = Depends(requir
     return {"path": stored_path}
 
 
+# Image Caching & High-Speed Thumbnail Proxy
+IMAGE_CACHE_DIR = ROOT_DIR / ".image_cache"
+IMAGE_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+LUXE_FALLBACK_IMAGES = [
+    "luxury_villa.webp",
+    "property_tower.webp",
+    "property_villa_garden.webp",
+    "property_heritage_estate.webp",
+    "locations_newtown.webp",
+    "locations_rajarhat.webp",
+    "biswa_bangla_gate.webp",
+    "locations_kolkata.webp",
+]
+
+def get_server_fallback_image(seed: str) -> Path:
+    h = sum(ord(c) for c in (seed or "")) % len(LUXE_FALLBACK_IMAGES)
+    filename = LUXE_FALLBACK_IMAGES[h]
+    p1 = ROOT_DIR.parent / "frontend" / "public" / "images" / "luxe" / filename
+    if p1.exists():
+        return p1
+    p2 = ROOT_DIR.parent / "frontend" / "build" / "images" / "luxe" / filename
+    if p2.exists():
+        return p2
+    return p1
+
+
+@api_router.get("/images/thumbnail")
+async def get_image_thumbnail(id: str = Query(...), w: int = Query(600)):
+    if not id or not re.match(r"^[a-zA-Z0-9_-]+$", id):
+        raise HTTPException(status_code=400, detail="Invalid image ID")
+
+    width = max(100, min(w, 1600))
+    cache_file = IMAGE_CACHE_DIR / f"{id}_w{width}.bin"
+    meta_file = IMAGE_CACHE_DIR / f"{id}_w{width}.json"
+
+    if cache_file.exists():
+        media_type = "image/jpeg"
+        try:
+            if meta_file.exists():
+                meta = json.loads(meta_file.read_text(encoding="utf-8"))
+                media_type = meta.get("contentType", media_type)
+        except Exception:
+            pass
+        return FileResponse(
+            str(cache_file),
+            media_type=media_type,
+            headers={"Cache-Control": "public, max-age=2592000, immutable", "X-Cache": "HIT"},
+        )
+
+    urls_to_try = [
+        f"https://lh3.googleusercontent.com/d/{id}=w{width}",
+        f"https://drive.google.com/thumbnail?id={id}&sz=w{width}",
+    ]
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+    }
+
+    for target_url in urls_to_try:
+        try:
+            resp = requests.get(target_url, headers=headers, timeout=3.5, allow_redirects=True)
+            if resp.status_code == 200:
+                ct = resp.headers.get("Content-Type", "image/jpeg")
+                if len(resp.content) > 500 and "text/html" not in ct:
+                    try:
+                        cache_file.write_bytes(resp.content)
+                        meta_file.write_text(json.dumps({"contentType": ct, "isFallback": False}), encoding="utf-8")
+                    except Exception:
+                        pass
+                    return Response(
+                        content=resp.content,
+                        media_type=ct,
+                        headers={"Cache-Control": "public, max-age=2592000, immutable", "X-Cache": "MISS"},
+                    )
+        except Exception:
+            continue
+
+    # Graceful fallback to deterministic local luxury image
+    fb_path = get_server_fallback_image(id)
+    if fb_path.exists():
+        try:
+            cache_file.write_bytes(fb_path.read_bytes())
+            meta_file.write_text(json.dumps({"contentType": "image/webp", "isFallback": True}), encoding="utf-8")
+        except Exception:
+            pass
+        return FileResponse(
+            str(fb_path),
+            media_type="image/webp",
+            headers={"Cache-Control": "public, max-age=86400", "X-Fallback": "true"},
+        )
+
+    return Response(status_code=404)
+
+
 @api_router.get("/files/{path:path}")
 async def serve_file(path: str):
-    """Publicly serve property images (storage paths are unguessable UUIDs).
+    """Publicly serve property images or fallback smoothly for legacy paths."""
+    try:
+        record = await db.files.find_one({"storage_path": path, "is_deleted": False})
+        if record:
+            data, content_type = get_object(path)
+            return StreamingResponse(
+                io.BytesIO(data),
+                media_type=record.get("content_type", content_type),
+                headers={
+                    "Cache-Control": "public, max-age=2592000, stale-while-revalidate=604800",
+                },
+            )
+    except Exception:
+        pass
 
-    Uploaded assets are content-addressed / immutable — we can serve them with
-    an aggressive 30-day cache so browsers and any CDN in front of us don't
-    re-fetch the same bytes on every page view.
-    """
-    record = await db.files.find_one({"storage_path": path, "is_deleted": False})
-    if not record:
-        raise HTTPException(status_code=404, detail="File not found")
-    data, content_type = get_object(path)
-    return StreamingResponse(
-        io.BytesIO(data),
-        media_type=record.get("content_type", content_type),
-        headers={
-            "Cache-Control": "public, max-age=2592000, stale-while-revalidate=604800",
-        },
-    )
+    fb_path = get_server_fallback_image(path)
+    if fb_path.exists():
+        return FileResponse(
+            str(fb_path),
+            media_type="image/webp",
+            headers={"Cache-Control": "public, max-age=2592000, immutable", "X-Fallback": "true"},
+        )
+    raise HTTPException(status_code=404, detail="File not found")
 
 
 # ---------------------- Stats ----------------------

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, fileUrl } from "@/lib/api";
 import { ArrowLeft, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -272,7 +272,7 @@ export default function AdminPropertyFormPage() {
             </div>
             {(() => {
               const driveImages = (form.images || []).filter(
-                (img) => typeof img === "string" && (isGoogleDriveImage(img) || img.startsWith("http"))
+                (img) => typeof img === "string" && img.trim().length > 0
               );
               return (
                 <>
@@ -282,7 +282,7 @@ export default function AdminPropertyFormPage() {
                         <div className="aspect-[4/3] w-full overflow-hidden relative">
                           <img
                             loading="lazy"
-                            src={isGoogleDriveImage(path) ? driveImageUrl(path, 400) : path}
+                            src={isGoogleDriveImage(path) ? driveImageUrl(path, 400) : fileUrl(path, 400)}
                             alt=""
                             className="w-full h-full object-cover"
                             onError={(e) => {

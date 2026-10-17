@@ -2,7 +2,8 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, ShieldCheck, Sparkles, Building2, Compass, ChevronRight, MapPin, Globe2, Award, TrendingUp, BadgeCheck, Handshake, Briefcase, MessageCircle, Check, ChevronDown, Loader2 } from "lucide-react";
-import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, fileUrl } from "@/lib/api";
+import { pickPropertyFallback } from "@/components/PropertyCard";
 import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY } from "@/lib/site";
 import CinematicHero from "@/components/CinematicHero";
@@ -357,9 +358,11 @@ export default function HomePage() {
                   <Link to={`/properties/${p.id}`}>
                     <div className="aspect-[4/3] overflow-hidden bg-[#FAF8F5]">
                       {(() => {
+                        const fallback = pickPropertyFallback(p.id);
                         const driveImg = (p.images || []).find(isGoogleDriveImage);
-                        const anyHttpImg = (p.images || []).find((img) => typeof img === "string" && img.startsWith("http"));
-                        const imgSrc = driveImg ? driveImageUrl(driveImg, 1000) : (anyHttpImg || "/images/luxe/luxury_villa.webp");
+                        const imgSrc = driveImg
+                          ? driveImageUrl(driveImg, 1000)
+                          : (p.images?.[0] ? fileUrl(p.images[0], 1000) : fallback);
                         return (
                           <img
                             loading="lazy"
@@ -367,7 +370,7 @@ export default function HomePage() {
                             alt={p.project_name}
                             onError={(e) => {
                               e.currentTarget.onerror = null;
-                              e.currentTarget.src = "/images/luxe/luxury_villa.webp";
+                              e.currentTarget.src = fallback;
                             }}
                             className="w-full h-full object-cover transition-transform duration-[1.8s] ease-out group-hover:scale-105"
                           />

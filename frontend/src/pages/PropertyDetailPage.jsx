@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MapPin, Building2, Calendar, BadgeCheck, Home, ArrowLeft, Phone, MessageCircle } from "lucide-react";
-import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, fileUrl } from "@/lib/api";
+import { pickPropertyFallback } from "@/components/PropertyCard";
 import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY } from "@/lib/site";
 import Seo from "@/components/Seo";
@@ -16,9 +17,9 @@ function PropertySeo({ property, id }) {
   const description =
     `Explore ${property.project_name}${property.location ? ` in ${property.location}` : ""}, Kolkata by ${property.builder || "Astittva Marketing"}. ${priceTxt ? `Starting ${priceTxt}. ` : ""}Verified details, floor plans, and site visits.`;
 
-  const driveImg = (property.images || []).find(isGoogleDriveImage);
-  const anyHttpImg = (property.images || []).find((img) => typeof img === "string" && img.startsWith("http"));
-  const image = driveImg ? driveImageUrl(driveImg) : (anyHttpImg || undefined);
+  const primaryFallback = pickPropertyFallback(property.id || id);
+  const firstResolved = (property.images || []).map((img) => (typeof img === "string" ? fileUrl(img, 1200) : "")).find(Boolean);
+  const image = firstResolved || primaryFallback;
 
   const breadcrumbs = [
     { name: "Home", path: "/" },
@@ -149,9 +150,12 @@ export default function PropertyDetailPage() {
     );
   }
 
-  const images = (property.images || []).filter(
-    (img) => typeof img === "string" && (isGoogleDriveImage(img) || img.startsWith("http"))
-  );
+  const primaryFallback = pickPropertyFallback(property.id || id);
+  const rawList = Array.isArray(property.images) ? property.images : [];
+  const resolvedImages = rawList
+    .map((img) => (typeof img === "string" ? fileUrl(img, 1200) : ""))
+    .filter(Boolean);
+  const images = resolvedImages.length > 0 ? resolvedImages : [primaryFallback];
 
   return (
     <div data-testid="property-detail-page" className="pt-28 pb-24">
@@ -184,12 +188,12 @@ export default function PropertyDetailPage() {
             {images.length > 0 && images[activeImg] ? (
               <img
                 loading="lazy"
-                src={isGoogleDriveImage(images[activeImg]) ? driveImageUrl(images[activeImg], 1200) : images[activeImg]}
+                src={images[activeImg]}
                 alt={`${property.project_name} - ${property.bedrooms || property.property_type || "Luxury apartment"} in ${property.location || property.city || "Kolkata"}`}
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   e.currentTarget.onerror = null;
-                  e.currentTarget.src = "/images/luxe/luxury_villa.webp";
+                  e.currentTarget.src = primaryFallback;
                 }}
               />
             ) : (
@@ -209,12 +213,12 @@ export default function PropertyDetailPage() {
                 >
                   <img
                     loading="lazy"
-                    src={isGoogleDriveImage(img) ? driveImageUrl(img, 400) : img}
+                    src={img}
                     alt={`${property.project_name} gallery preview ${i + 1}`}
                     className="absolute inset-0 w-full h-full object-cover"
                     onError={(e) => {
                       e.currentTarget.onerror = null;
-                      e.currentTarget.src = "/images/luxe/luxury_villa.webp";
+                      e.currentTarget.src = primaryFallback;
                     }}
                   />
                 </button>

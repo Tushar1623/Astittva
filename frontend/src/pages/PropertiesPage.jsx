@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, MapPin, Filter, X, SlidersHorizontal } from "lucide-react";
-import api, { isGoogleDriveImage, driveImageUrl } from "@/lib/api";
+import api, { isGoogleDriveImage, driveImageUrl, fileUrl } from "@/lib/api";
 import Seo from "@/components/Seo";
 import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 
@@ -329,9 +329,11 @@ export default function PropertiesPage() {
                 <Link to={`/properties/${p.id}`}>
                   <div className="aspect-[4/3] overflow-hidden relative">
                     {(() => {
+                      const fallback = pickFallback(p.id);
                       const driveImg = (p.images || []).find(isGoogleDriveImage);
-                      const anyHttpImg = (p.images || []).find((img) => typeof img === "string" && img.startsWith("http"));
-                      const imgSrc = driveImg ? driveImageUrl(driveImg, 1000) : (anyHttpImg || pickFallback(p.id));
+                      const imgSrc = driveImg
+                        ? driveImageUrl(driveImg, 1000)
+                        : (p.images?.[0] ? fileUrl(p.images[0], 1000) : fallback);
                       return (
                         <img
                           loading="lazy"

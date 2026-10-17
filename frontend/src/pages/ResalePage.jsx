@@ -392,6 +392,10 @@ export default function ResalePage() {
                         <img
                           src={isDrive ? driveImageUrl(img, 600) : img}
                           alt={p.title}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = "/images/luxe/luxury_villa.webp";
+                          }}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (
@@ -526,6 +530,10 @@ export default function ResalePage() {
                           loading="lazy"
                           src={isDrive ? driveImageUrl(img, 600) : img}
                           alt={`${p.title} - ${p.bedrooms ? p.bedrooms + " BHK " : ""}${p.propertyType || "Resale Property"} in ${p.locality || p.location || "Kolkata"}`}
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = "/images/luxe/luxury_villa.webp";
+                          }}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       ) : (

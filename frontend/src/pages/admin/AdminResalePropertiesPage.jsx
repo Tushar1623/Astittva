@@ -283,7 +283,8 @@ export default function AdminResalePropertiesPage() {
                             alt=""
                             className="w-12 h-12 object-cover rounded border border-copper/20"
                             onError={(e) => {
-                              e.currentTarget.style.display = "none";
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = "/images/luxe/luxury_villa.webp";
                             }}
                           />
                         ) : (

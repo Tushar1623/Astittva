@@ -93,25 +93,32 @@ export function driveImageUrl(url, width = 1000) {
   const id = getGoogleDriveFileId(url);
   if (!id) return "";
 
-  // Direct high-resolution Google Drive thumbnail URL
-  return `https://drive.google.com/thumbnail?id=${id}&sz=w${width || 1000}`;
+  // Proxy through high-speed backend image cache to bypass Google Drive CORS/rate-limits and 302 login redirects
+  return `${API}/images/thumbnail?id=${encodeURIComponent(id)}&w=${width || 1000}`;
 }
 
 export function fileUrl(path, width = 1000) {
-  if (!path) return "";
+  if (!path || typeof path !== "string") return "";
 
-  const driveId = getGoogleDriveFileId(path);
+  const clean = path.trim();
+  const driveId = getGoogleDriveFileId(clean);
   if (driveId) {
-    return `https://drive.google.com/thumbnail?id=${driveId}&sz=w${width || 1000}`;
+    return `${API}/images/thumbnail?id=${encodeURIComponent(driveId)}&w=${width || 1000}`;
   }
 
-  // Do NOT request legacy Astittva storage paths anymore.
-  if (!path.startsWith("http")) {
-    return "";
+  // If already an absolute http/https URL, preserve it
+  if (clean.startsWith("http://") || clean.startsWith("https://")) {
+    return clean;
   }
 
-  // Keep normal external http images only if required.
-  return path;
+  // If local static asset from public/ (e.g. /images/...)
+  if (clean.startsWith("/images/") || clean.startsWith("/static/") || clean.startsWith("/favicon")) {
+    return clean;
+  }
+
+  // Legacy internal storage paths (e.g. "astitva-realestate/properties/...")
+  const sanitizedPath = clean.replace(/^\/+/, "");
+  return `${API}/files/${sanitizedPath}`;
 }
 
 export default api;

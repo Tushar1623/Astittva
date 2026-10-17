@@ -815,8 +815,30 @@ app.post("/api/auth/refresh", async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// High-Speed Cached Image Proxy (Optimized size & 30-day HTTP caching)
+// High-Speed Cached Image Proxy & Legacy Asset Handler
 // ---------------------------------------------------------------------------
+const FALLBACK_LUXE_IMAGES = [
+  "luxury_villa.webp",
+  "property_tower.webp",
+  "property_villa_garden.webp",
+  "property_heritage_estate.webp",
+  "locations_newtown.webp",
+  "locations_rajarhat.webp",
+  "biswa_bangla_gate.webp",
+  "locations_kolkata.webp",
+];
+
+function getLocalFallbackImage(seed = "") {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  const chosen = FALLBACK_LUXE_IMAGES[hash % FALLBACK_LUXE_IMAGES.length];
+  const p1 = path.join(__dirname, "../../frontend/public/images/luxe", chosen);
+  if (fs.existsSync(p1)) return p1;
+  const p2 = path.join(__dirname, "../../frontend/build/images/luxe", chosen);
+  if (fs.existsSync(p2)) return p2;
+  return p1;
+}
+
 app.get("/api/images/thumbnail", async (req, res) => {
   const fileId = req.query.id;
   if (!fileId || typeof fileId !== "string" || !/^[a-zA-Z0-9_-]+$/.test(fileId)) {
@@ -824,53 +846,93 @@ app.get("/api/images/thumbnail", async (req, res) => {
   }
 
   const width = Math.min(Math.max(parseInt(req.query.w, 10) || 600, 100), 1600);
-  const cacheFile = path.join(IMAGE_CACHE_DIR, `${fileId}_w${width}.jpg`);
+  const cacheFile = path.join(IMAGE_CACHE_DIR, `${fileId}_w${width}.bin`);
+  const metaFile = path.join(IMAGE_CACHE_DIR, `${fileId}_w${width}.json`);
 
   if (fs.existsSync(cacheFile)) {
+    let contentType = "image/jpeg";
+    try {
+      if (fs.existsSync(metaFile)) {
+        const meta = JSON.parse(fs.readFileSync(metaFile, "utf8"));
+        contentType = meta.contentType || contentType;
+      }
+    } catch {}
     res.set({
-      "Content-Type": "image/jpeg",
+      "Content-Type": contentType,
       "Cache-Control": "public, max-age=2592000, immutable",
       "X-Cache": "HIT",
     });
     return fs.createReadStream(cacheFile).pipe(res);
   }
 
-  const driveUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w${width}`;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 6000);
+  const urlsToTry = [
+    `https://lh3.googleusercontent.com/d/${fileId}=w${width}`,
+    `https://drive.google.com/thumbnail?id=${fileId}&sz=w${width}`,
+  ];
 
-  try {
-    const upstream = await fetch(driveUrl, {
-      signal: controller.signal,
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-      },
-    });
-    clearTimeout(timeoutId);
+  for (const targetUrl of urlsToTry) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3500);
 
-    if (upstream.ok) {
-      const contentType = upstream.headers.get("content-type") || "image/jpeg";
-      const buffer = Buffer.from(await upstream.arrayBuffer());
-      if (buffer.length > 500 && !contentType.includes("text/html")) {
-        fs.promises.writeFile(cacheFile, buffer).catch((err) => {
-          console.error("[ImageProxy] Cache write error:", err.message);
-        });
-        res.set({
-          "Content-Type": contentType,
-          "Cache-Control": "public, max-age=2592000, immutable",
-          "X-Cache": "MISS",
-        });
-        return res.end(buffer);
+    try {
+      const upstream = await fetch(targetUrl, {
+        signal: controller.signal,
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Accept: "image/avif,image/webp,image/apng,image/*,*/*;q=0.8",
+        },
+      });
+      clearTimeout(timeoutId);
+
+      if (upstream.ok) {
+        const contentType = upstream.headers.get("content-type") || "image/jpeg";
+        const buffer = Buffer.from(await upstream.arrayBuffer());
+        if (buffer.length > 500 && !contentType.includes("text/html")) {
+          fs.promises.writeFile(cacheFile, buffer).catch(() => {});
+          fs.promises.writeFile(metaFile, JSON.stringify({ contentType, isFallback: false })).catch(() => {});
+          res.set({
+            "Content-Type": contentType,
+            "Cache-Control": "public, max-age=2592000, immutable",
+            "X-Cache": "MISS",
+          });
+          return res.end(buffer);
+        }
       }
+    } catch {
+      clearTimeout(timeoutId);
     }
-  } catch (err) {
-    clearTimeout(timeoutId);
   }
 
-  // Graceful fallback to direct Google Drive redirect if proxy fetch encounters issues
-  return res.redirect(302, driveUrl);
+  // Graceful fallback to deterministic local luxury editorial image
+  const fbPath = getLocalFallbackImage(fileId);
+  if (fs.existsSync(fbPath)) {
+    // Cache the fallback image so future requests resolve in <1ms without network delays
+    fs.promises.copyFile(fbPath, cacheFile).catch(() => {});
+    fs.promises.writeFile(metaFile, JSON.stringify({ contentType: "image/webp", isFallback: true })).catch(() => {});
+    res.set({
+      "Content-Type": "image/webp",
+      "Cache-Control": "public, max-age=86400",
+      "X-Fallback": "true",
+    });
+    return fs.createReadStream(fbPath).pipe(res);
+  }
+
+  return res.status(404).json({ detail: "Image unavailable" });
+});
+
+app.get(["/api/files/*", "/files/*"], (req, res) => {
+  const reqPath = req.params[0] || req.path;
+  const fbPath = getLocalFallbackImage(reqPath);
+  if (fs.existsSync(fbPath)) {
+    res.set({
+      "Content-Type": "image/webp",
+      "Cache-Control": "public, max-age=2592000, immutable",
+      "X-Fallback": "true",
+    });
+    return fs.createReadStream(fbPath).pipe(res);
+  }
+  return res.status(404).json({ detail: "File not found" });
 });
 
 // ---------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, MapPin } from "lucide-react";
-import { isGoogleDriveImage, driveImageUrl } from "@/lib/api";
+import { isGoogleDriveImage, driveImageUrl, fileUrl } from "@/lib/api";
 
 const FALLBACK_IMAGES = [
   "/images/luxe/luxury_villa.webp",
@@ -28,9 +28,11 @@ export default function PropertyCard({
     testId ||
     (variant === "featured" ? `project-card-${p.id}` : `property-card-${p.id}`);
 
+  const fallback = pickPropertyFallback(p.id);
   const driveImg = (p.images || []).find(isGoogleDriveImage);
-  const anyHttpImg = (p.images || []).find((img) => typeof img === "string" && img.startsWith("http"));
-  const imageSrc = driveImg ? driveImageUrl(driveImg, 1000) : (anyHttpImg || pickPropertyFallback(p.id));
+  const imageSrc = driveImg
+    ? driveImageUrl(driveImg, 1000)
+    : (p.images?.[0] ? fileUrl(p.images[0], 1000) : fallback);
 
   const price =
     p.price_label ||
