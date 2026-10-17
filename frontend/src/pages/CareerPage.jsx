@@ -201,30 +201,31 @@ export default function CareerPage() {
             and private client advisory firm. Our formal career application portal is launching shortly.
           </motion.p>
 
-          {/* Direct CTA scroll */}
+          {/* Direct CTA buttons */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-wrap items-center justify-center gap-4"
           >
-            <a
-              href="#apply-early"
+            <Link
+              to="/careers/jobs"
               className="inline-flex items-center justify-center gap-2 h-[46px] px-7 font-sans text-[12.5px] font-semibold tracking-[0.1em] uppercase text-white rounded-[6px] transition-all duration-200 hover:-translate-y-px"
               style={{
                 background: "linear-gradient(135deg, #B77B3E 0%, #D2A15D 100%)",
                 boxShadow: "0 8px 24px rgba(185, 125, 62, 0.25)",
               }}
             >
-              <span>Submit Early Application</span>
+              <Briefcase className="w-4 h-4" />
+              <span>Explore Active Vacancies</span>
               <ArrowRight className="w-3.5 h-3.5" />
-            </a>
-            <Link
-              to="/about"
+            </Link>
+            <a
+              href="#apply-early"
               className="inline-flex items-center justify-center gap-2 h-[46px] px-6 font-sans text-[12.5px] font-medium tracking-[0.1em] uppercase text-[#E8DCD5] hover:text-white rounded-[6px] border border-white/20 hover:border-white/40 transition-colors"
             >
-              About Astittva
-            </Link>
+              General Application
+            </a>
           </motion.div>
         </div>
       </section>
@@ -342,6 +343,17 @@ export default function CareerPage() {
                 </span>
               </div>
             ))}
+          </div>
+
+          <div className="mt-8 text-center">
+            <Link
+              to="/careers/jobs"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-[6px] bg-[#B87333] hover:bg-[#A06028] text-white text-[12px] font-semibold tracking-[0.14em] uppercase transition-colors shadow-sm"
+            >
+              <Briefcase className="w-4 h-4" />
+              <span>Browse Active Vacancies &amp; Apply Online</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </section>

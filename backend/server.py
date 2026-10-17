@@ -14,6 +14,7 @@ import bcrypt
 import jwt
 import re
 import requests
+import random
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional, Annotated
 from bson import ObjectId
@@ -329,6 +330,80 @@ class CareerApplicationIn(BaseModel):
     resume: Optional[dict] = None
 
 
+class JobOpeningIn(BaseModel):
+    title: str
+    slug: Optional[str] = ""
+    department: Optional[str] = "Sales & Advisory"
+    location: Optional[str] = "New Town, Kolkata"
+    employmentType: Optional[str] = "Full-time"
+    workplaceType: Optional[str] = "On-site"
+    experienceLevel: Optional[str] = "Mid-Senior Level"
+    experienceMinYears: Optional[int] = 0
+    experienceMaxYears: Optional[int] = 0
+    salaryRange: Optional[dict] = {
+        "min": 0,
+        "max": 0,
+        "currency": "INR",
+        "period": "yearly",
+        "isDisclosed": False,
+    }
+    description: Optional[str] = ""
+    responsibilities: Optional[list] = []
+    requirements: Optional[list] = []
+    benefits: Optional[list] = []
+    tags: Optional[list] = []
+    status: Optional[str] = "draft"
+    isFeatured: Optional[bool] = False
+    expiresAt: Optional[str] = None
+
+
+class JobOpeningUpdate(BaseModel):
+    title: Optional[str] = None
+    slug: Optional[str] = None
+    department: Optional[str] = None
+    location: Optional[str] = None
+    employmentType: Optional[str] = None
+    workplaceType: Optional[str] = None
+    experienceLevel: Optional[str] = None
+    experienceMinYears: Optional[int] = None
+    experienceMaxYears: Optional[int] = None
+    salaryRange: Optional[dict] = None
+    description: Optional[str] = None
+    responsibilities: Optional[list] = None
+    requirements: Optional[list] = None
+    benefits: Optional[list] = None
+    tags: Optional[list] = None
+    status: Optional[str] = None
+    isFeatured: Optional[bool] = None
+    expiresAt: Optional[str] = None
+
+
+class JobApplicationIn(BaseModel):
+    name: str
+    email: str
+    phone: str
+    linkedin: Optional[str] = ""
+    portfolioUrl: Optional[str] = ""
+    coverNote: Optional[str] = ""
+    experienceYears: Optional[float] = 0.0
+    currentCompany: Optional[str] = ""
+    currentCtc: Optional[str] = ""
+    expectedCtc: Optional[str] = ""
+    noticePeriodDays: Optional[int] = 0
+    resumeUrl: Optional[str] = ""
+    resume: Optional[dict] = None
+    source: Optional[str] = "job-board"
+
+
+class JobApplicationStatusUpdate(BaseModel):
+    status: str
+    reason: Optional[str] = ""
+
+
+class JobApplicationNoteIn(BaseModel):
+    note: str
+
+
 class BlogIn(BaseModel):
     title: str
     slug: Optional[str] = ""  # auto-generated from title if empty
@@ -370,6 +445,7 @@ STATIC_SITEMAP_URLS = [
     ("/about", "monthly", "0.7"),
     ("/contact", "monthly", "0.7"),
     ("/career", "monthly", "0.6"),
+    ("/careers/jobs", "daily", "0.85"),
     ("/calculators/home-loan-emi", "weekly", "0.8"),
     ("/calculators/property-affordability", "weekly", "0.8"),
     ("/calculators/property-roi", "weekly", "0.8"),
@@ -446,6 +522,24 @@ async def sitemap_xml():
                 f"  <url><loc>{SITE_URL}/blogs/{slug}</loc>"
                 f"<lastmod>{lastmod}</lastmod><changefreq>weekly</changefreq>"
                 f"<priority>0.8</priority></url>"
+            )
+
+        # Dynamic published job openings (/careers/jobs/<slug>)
+        job_cursor = db.job_openings.find(
+            {"status": "published"},
+            {"slug": 1, "updatedAt": 1, "postedAt": 1, "createdAt": 1},
+        )
+        async for j in job_cursor:
+            slug = j.get("slug")
+            if not slug:
+                continue
+            lastmod = (j.get("updatedAt") or j.get("postedAt") or j.get("createdAt") or today)
+            if isinstance(lastmod, str) and "T" in lastmod:
+                lastmod = lastmod.split("T", 1)[0]
+            parts.append(
+                f"  <url><loc>{SITE_URL}/careers/jobs/{slug}</loc>"
+                f"<lastmod>{lastmod}</lastmod><changefreq>daily</changefreq>"
+                f"<priority>0.85</priority></url>"
             )
     except Exception as e:
         logging.getLogger("astitva.sitemap").exception("sitemap generation failed: %s", e)
@@ -1668,6 +1762,733 @@ async def delete_career_application(app_id: str, _user: dict = Depends(require_a
     return {"ok": True, "message": "Career application deleted"}
 
 
+# ---------------------- Recruitment & Job Openings Management ----------------------
+def slugify_job_title(text: str) -> str:
+    if not text:
+        return "opening"
+    s = text.lower().strip()
+    s = re.sub(r"[^\w\s-]", "", s)
+    s = re.sub(r"[\s_-]+", "-", s)
+    s = re.sub(r"^-+|-+$", "", s)
+    return s[:120] or "opening"
+
+
+def generate_job_app_ref_number() -> str:
+    year = datetime.now(timezone.utc).year
+    chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+    rand = "".join(random.choices(chars, k=5))
+    return f"AST-{year}-{rand}"
+
+
+def serialize_job_opening(doc: dict, is_admin: bool = False) -> dict:
+    if not doc:
+        return {}
+    res = {
+        "id": str(doc.get("_id", "")),
+        "title": doc.get("title", ""),
+        "slug": doc.get("slug", ""),
+        "department": doc.get("department", "Sales & Advisory"),
+        "location": doc.get("location", "New Town, Kolkata"),
+        "employmentType": doc.get("employmentType", "Full-time"),
+        "workplaceType": doc.get("workplaceType", "On-site"),
+        "experienceLevel": doc.get("experienceLevel", "Mid-Senior Level"),
+        "experienceMinYears": doc.get("experienceMinYears", 0),
+        "experienceMaxYears": doc.get("experienceMaxYears", 0),
+        "salaryRange": doc.get("salaryRange", {
+            "min": 0,
+            "max": 0,
+            "currency": "INR",
+            "period": "yearly",
+            "isDisclosed": False,
+        }),
+        "description": doc.get("description", ""),
+        "responsibilities": doc.get("responsibilities", []),
+        "requirements": doc.get("requirements", []),
+        "benefits": doc.get("benefits", []),
+        "tags": doc.get("tags", []),
+        "status": doc.get("status", "draft"),
+        "isFeatured": bool(doc.get("isFeatured", False)),
+        "applicationsCount": doc.get("applicationsCount", 0),
+        "viewsCount": doc.get("viewsCount", 0),
+        "postedAt": doc.get("postedAt"),
+        "expiresAt": doc.get("expiresAt"),
+        "createdAt": doc.get("createdAt", ""),
+        "updatedAt": doc.get("updatedAt", ""),
+    }
+    if is_admin:
+        res["createdBy"] = doc.get("createdBy", "admin")
+        res["updatedBy"] = doc.get("updatedBy", "admin")
+    return res
+
+
+def serialize_job_application(doc: dict) -> dict:
+    if not doc:
+        return {}
+    app_id = str(doc.get("_id", ""))
+    return {
+        "id": app_id,
+        "referenceNumber": doc.get("referenceNumber", ""),
+        "jobId": str(doc.get("jobId", "")),
+        "jobTitle": doc.get("jobTitle", ""),
+        "jobSlug": doc.get("jobSlug", ""),
+        "name": doc.get("name", ""),
+        "email": doc.get("email", ""),
+        "phone": doc.get("phone", ""),
+        "linkedin": doc.get("linkedin", ""),
+        "portfolioUrl": doc.get("portfolioUrl", ""),
+        "coverNote": doc.get("coverNote", ""),
+        "experienceYears": doc.get("experienceYears", 0),
+        "currentCompany": doc.get("currentCompany", ""),
+        "currentCtc": doc.get("currentCtc", ""),
+        "expectedCtc": doc.get("expectedCtc", ""),
+        "noticePeriodDays": doc.get("noticePeriodDays", 0),
+        "resumeFilename": doc.get("resumeFilename", ""),
+        "resumeContentType": doc.get("resumeContentType", "application/pdf"),
+        "resumeSize": doc.get("resumeSize", 0),
+        "resumeUrl": doc.get("resumeUrl") or (f"/api/admin/recruitment/applications/{app_id}/resume" if doc.get("resumeFileId") else ""),
+        "hasResume": bool(doc.get("resumeFileId")),
+        "status": doc.get("status", "New"),
+        "statusHistory": doc.get("statusHistory", []),
+        "notes": doc.get("notes", []),
+        "source": doc.get("source", "job-board"),
+        "createdAt": doc.get("createdAt", ""),
+        "updatedAt": doc.get("updatedAt", ""),
+    }
+
+
+# Public Job Openings Endpoints
+@api_router.get("/jobs")
+async def list_public_jobs(
+    department: Optional[str] = None,
+    employmentType: Optional[str] = None,
+    workplaceType: Optional[str] = None,
+    location: Optional[str] = None,
+    search: Optional[str] = None,
+    limit: int = 50,
+    skip: int = 0,
+):
+    query = {"status": "published"}
+    if department and department != "All":
+        query["department"] = {"$regex": f"^{re.escape(department.strip())}$", "$options": "i"}
+    if employmentType and employmentType != "All":
+        query["employmentType"] = {"$regex": f"^{re.escape(employmentType.strip())}$", "$options": "i"}
+    if workplaceType and workplaceType != "All":
+        query["workplaceType"] = {"$regex": f"^{re.escape(workplaceType.strip())}$", "$options": "i"}
+    if location and location != "All":
+        query["location"] = {"$regex": re.escape(location.strip()), "$options": "i"}
+    if search and search.strip():
+        s = search.strip()
+        query["$or"] = [
+            {"title": {"$regex": s, "$options": "i"}},
+            {"department": {"$regex": s, "$options": "i"}},
+            {"location": {"$regex": s, "$options": "i"}},
+            {"tags": {"$in": [re.compile(s, re.IGNORECASE)]}},
+            {"description": {"$regex": s, "$options": "i"}},
+        ]
+
+    page_size = min(max(limit, 1), 100)
+    skip_num = max(skip, 0)
+
+    total = await db.job_openings.count_documents(query)
+    cursor = db.job_openings.find(query).sort([("isFeatured", -1), ("postedAt", -1), ("createdAt", -1)]).skip(skip_num).limit(page_size)
+    docs = await cursor.to_list(page_size)
+
+    # Dynamic filter lists
+    all_published = await db.job_openings.find({"status": "published"}, {"department": 1, "location": 1, "employmentType": 1, "workplaceType": 1}).to_list(500)
+    departments = sorted(list({j.get("department") for j in all_published if j.get("department")}))
+    locations = sorted(list({j.get("location") for j in all_published if j.get("location")}))
+    employment_types = sorted(list({j.get("employmentType") for j in all_published if j.get("employmentType")}))
+
+    return {
+        "jobs": [serialize_job_opening(d, False) for d in docs],
+        "total": total,
+        "departments": departments,
+        "locations": locations,
+        "employmentTypes": employment_types,
+    }
+
+
+@api_router.get("/jobs/{slug}")
+async def get_public_job(slug: str):
+    clean_slug = slug.strip().lower()
+    doc = await db.job_openings.find_one({"slug": clean_slug, "status": "published"})
+    if not doc:
+        try:
+            doc = await db.job_openings.find_one({"_id": ObjectId(slug), "status": "published"})
+        except Exception:
+            pass
+
+    if not doc:
+        raise HTTPException(status_code=404, detail="Job opening not found or no longer active")
+
+    # Increment viewsCount non-blocking
+    try:
+        await db.job_openings.update_one({"_id": doc["_id"]}, {"$inc": {"viewsCount": 1}})
+    except Exception:
+        pass
+
+    return serialize_job_opening(doc, False)
+
+
+@api_router.post("/jobs/{job_id}/apply", status_code=201)
+async def apply_to_job(job_id: str, payload: JobApplicationIn, request: Request):
+    job_doc = None
+    try:
+        job_doc = await db.job_openings.find_one({"_id": ObjectId(job_id), "status": "published"})
+    except Exception:
+        pass
+    if not job_doc:
+        job_doc = await db.job_openings.find_one({"slug": job_id.strip().lower(), "status": "published"})
+
+    if not job_doc:
+        raise HTTPException(status_code=404, detail="Job opening not found or is no longer accepting applications")
+
+    name = payload.name.strip()
+    email = payload.email.strip().lower()
+    phone = payload.phone.strip()
+
+    if not name:
+        raise HTTPException(status_code=400, detail="Full name is required.")
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="A valid email address is required.")
+    if not phone:
+        raise HTTPException(status_code=400, detail="Phone number is required.")
+
+    # Duplicate check in last 24h
+    twenty_four_hours_ago = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    existing = await db.job_applications.find_one({
+        "jobId": job_doc["_id"],
+        "email": email,
+        "createdAt": {"$gte": twenty_four_hours_ago},
+    })
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail=f"You have already applied for this position within the last 24 hours. Your application reference is {existing.get('referenceNumber')}."
+        )
+
+    # Process resume upload
+    resume_file_id = None
+    resume_filename = ""
+    resume_content_type = "application/pdf"
+    resume_size = 0
+
+    if payload.resume and isinstance(payload.resume, dict) and payload.resume.get("base64"):
+        raw_b64 = str(payload.resume.get("base64", ""))
+        filename = str(payload.resume.get("filename", "resume.pdf"))
+        content_type = str(payload.resume.get("contentType", "application/pdf"))
+
+        raw_ext = filename.split(".")[-1].lower() if "." in filename else ""
+        if raw_ext not in ["pdf", "doc", "docx"]:
+            raise HTTPException(status_code=400, detail="Only PDF, DOC, and DOCX files are accepted for resumes.")
+
+        clean_b64 = raw_b64.split(",", 1)[1].strip() if "," in raw_b64 else raw_b64.strip()
+        try:
+            file_bytes = base64.b64decode(clean_b64)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Malformed base64 resume file data.")
+
+        if not file_bytes or len(file_bytes) == 0:
+            raise HTTPException(status_code=400, detail="Uploaded resume file is empty or invalid.")
+        if len(file_bytes) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="Resume file must be less than 10MB.")
+
+        safe_filename = re.sub(r"[/\\?%*:|\"<>]", "_", filename)
+        safe_filename = re.sub(r"[^a-zA-Z0-9._-]", "_", safe_filename)
+
+        fs = AsyncIOMotorGridFSBucket(db, bucket_name="career_resumes")
+        grid_in = fs.open_upload_stream(
+            safe_filename,
+            metadata={"uploadedAt": now_utc_iso(), "contentType": content_type}
+        )
+        await grid_in.write(file_bytes)
+        await grid_in.close()
+
+        resume_file_id = str(grid_in._id)
+        resume_filename = safe_filename
+        resume_content_type = content_type
+        resume_size = len(file_bytes)
+    elif not payload.resumeUrl and not payload.linkedin:
+        raise HTTPException(status_code=400, detail="Please upload your resume file (PDF, DOC, or DOCX) to apply.")
+
+    inserted_oid = ObjectId()
+    ref_number = generate_job_app_ref_number()
+    resume_url = f"/api/admin/recruitment/applications/{str(inserted_oid)}/resume" if resume_file_id else (payload.resumeUrl or payload.linkedin or "")
+
+    now_iso = now_utc_iso()
+    application_doc = {
+        "_id": inserted_oid,
+        "referenceNumber": ref_number,
+        "jobId": job_doc["_id"],
+        "jobTitle": job_doc.get("title", ""),
+        "jobSlug": job_doc.get("slug", ""),
+        "name": name,
+        "email": email,
+        "phone": phone,
+        "linkedin": (payload.linkedin or "").strip(),
+        "portfolioUrl": (payload.portfolioUrl or "").strip(),
+        "coverNote": (payload.coverNote or "").strip(),
+        "experienceYears": payload.experienceYears or 0.0,
+        "currentCompany": (payload.currentCompany or "").strip(),
+        "currentCtc": (payload.currentCtc or "").strip(),
+        "expectedCtc": (payload.expectedCtc or "").strip(),
+        "noticePeriodDays": payload.noticePeriodDays or 0,
+        "resumeFileId": resume_file_id,
+        "resumeFilename": resume_filename,
+        "resumeContentType": resume_content_type,
+        "resumeSize": resume_size,
+        "resumeUrl": resume_url,
+        "status": "New",
+        "statusHistory": [
+            {
+                "fromStatus": None,
+                "toStatus": "New",
+                "changedBy": "candidate",
+                "changedAt": now_iso,
+                "reason": "Application submitted via online portal",
+            }
+        ],
+        "notes": [],
+        "source": payload.source or "job-board",
+        "ipAddress": request.client.host if request.client else "",
+        "createdAt": now_iso,
+        "updatedAt": now_iso,
+    }
+
+    await db.job_applications.insert_one(application_doc)
+    await db.job_openings.update_one({"_id": job_doc["_id"]}, {"$inc": {"applicationsCount": 1}})
+
+    return {
+        "ok": True,
+        "message": "Application submitted successfully",
+        "referenceNumber": ref_number,
+        "applicationId": str(inserted_oid),
+        "jobTitle": job_doc.get("title", ""),
+    }
+
+
+# Admin Recruitment Endpoints
+@api_router.get("/admin/recruitment/dashboard")
+async def recruitment_dashboard(_user: dict = Depends(require_staff)):
+    total_jobs = await db.job_openings.count_documents({})
+    published_jobs = await db.job_openings.count_documents({"status": "published"})
+    draft_jobs = await db.job_openings.count_documents({"status": "draft"})
+    closed_jobs = await db.job_openings.count_documents({"status": "closed"})
+
+    total_apps = await db.job_applications.count_documents({})
+    new_apps = await db.job_applications.count_documents({"status": {"$regex": "^new$", "$options": "i"}})
+    under_review_apps = await db.job_applications.count_documents({"status": {"$regex": "^under review$", "$options": "i"}})
+    shortlisted_apps = await db.job_applications.count_documents({"status": {"$regex": "^shortlisted$", "$options": "i"}})
+    interview_apps = await db.job_applications.count_documents({"status": {"$regex": "^interview scheduled$", "$options": "i"}})
+    selected_apps = await db.job_applications.count_documents({"status": {"$regex": "^selected$", "$options": "i"}})
+    rejected_apps = await db.job_applications.count_documents({"status": {"$regex": "^rejected$", "$options": "i"}})
+    withdrawn_apps = await db.job_applications.count_documents({"status": {"$regex": "^withdrawn$", "$options": "i"}})
+
+    recent_apps_cursor = db.job_applications.find({}).sort("createdAt", -1).limit(8)
+    recent_apps = await recent_apps_cursor.to_list(8)
+
+    recent_jobs_cursor = db.job_openings.find({}).sort("createdAt", -1).limit(5)
+    recent_jobs = await recent_jobs_cursor.to_list(5)
+
+    return {
+        "summary": {
+            "totalJobs": total_jobs,
+            "publishedJobs": published_jobs,
+            "draftJobs": draft_jobs,
+            "closedJobs": closed_jobs,
+            "totalApplications": total_apps,
+        },
+        "byStatus": {
+            "new": new_apps,
+            "underReview": under_review_apps,
+            "shortlisted": shortlisted_apps,
+            "interviewScheduled": interview_apps,
+            "selected": selected_apps,
+            "rejected": rejected_apps,
+            "withdrawn": withdrawn_apps,
+        },
+        "recentApplications": [serialize_job_application(a) for a in recent_apps],
+        "recentJobs": [serialize_job_opening(j, True) for j in recent_jobs],
+    }
+
+
+@api_router.get("/admin/recruitment/jobs")
+async def list_admin_jobs(
+    status: Optional[str] = None,
+    department: Optional[str] = None,
+    search: Optional[str] = None,
+    _user: dict = Depends(require_staff),
+):
+    query = {}
+    if status and status != "All":
+        query["status"] = status.lower()
+    if department and department != "All":
+        query["department"] = {"$regex": f"^{re.escape(department.strip())}$", "$options": "i"}
+    if search and search.strip():
+        s = search.strip()
+        query["$or"] = [
+            {"title": {"$regex": s, "$options": "i"}},
+            {"department": {"$regex": s, "$options": "i"}},
+            {"location": {"$regex": s, "$options": "i"}},
+            {"tags": {"$in": [re.compile(s, re.IGNORECASE)]}},
+        ]
+
+    docs = await db.job_openings.find(query).sort("createdAt", -1).to_list(500)
+    return [serialize_job_opening(d, True) for d in docs]
+
+
+@api_router.post("/admin/recruitment/jobs", status_code=201)
+async def create_admin_job(payload: JobOpeningIn, _user: dict = Depends(require_staff)):
+    title = payload.title.strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="Job title is required.")
+
+    base_slug = (payload.slug or slugify_job_title(title)).lower().strip()
+    if not base_slug:
+        base_slug = "opening"
+    final_slug = base_slug
+    counter = 1
+    while await db.job_openings.find_one({"slug": final_slug}):
+        counter += 1
+        final_slug = f"{base_slug}-{counter}"
+
+    status = (payload.status or "draft").lower()
+    is_published = status == "published"
+    now_iso = now_utc_iso()
+
+    doc = {
+        "_id": ObjectId(),
+        "title": title,
+        "slug": final_slug,
+        "department": (payload.department or "Sales & Advisory").strip(),
+        "location": (payload.location or "New Town, Kolkata").strip(),
+        "employmentType": payload.employmentType or "Full-time",
+        "workplaceType": payload.workplaceType or "On-site",
+        "experienceLevel": payload.experienceLevel or "Mid-Senior Level",
+        "experienceMinYears": payload.experienceMinYears or 0,
+        "experienceMaxYears": payload.experienceMaxYears or 0,
+        "salaryRange": payload.salaryRange or {
+            "min": 0,
+            "max": 0,
+            "currency": "INR",
+            "period": "yearly",
+            "isDisclosed": False,
+        },
+        "description": payload.description or "",
+        "responsibilities": payload.responsibilities or [],
+        "requirements": payload.requirements or [],
+        "benefits": payload.benefits or [],
+        "tags": payload.tags or [],
+        "status": status,
+        "isFeatured": bool(payload.isFeatured),
+        "applicationsCount": 0,
+        "viewsCount": 0,
+        "postedAt": now_iso if is_published else None,
+        "expiresAt": payload.expiresAt,
+        "createdBy": _user.get("email", "admin"),
+        "updatedBy": _user.get("email", "admin"),
+        "createdAt": now_iso,
+        "updatedAt": now_iso,
+    }
+
+    await db.job_openings.insert_one(doc)
+    return serialize_job_opening(doc, True)
+
+
+@api_router.get("/admin/recruitment/jobs/{job_id}")
+async def get_admin_job(job_id: str, _user: dict = Depends(require_staff)):
+    doc = None
+    try:
+        doc = await db.job_openings.find_one({"_id": ObjectId(job_id)})
+    except Exception:
+        pass
+    if not doc:
+        doc = await db.job_openings.find_one({"slug": job_id.lower().strip()})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Job opening not found")
+
+    return serialize_job_opening(doc, True)
+
+
+@api_router.patch("/admin/recruitment/jobs/{job_id}")
+async def update_admin_job(job_id: str, payload: JobOpeningUpdate, _user: dict = Depends(require_staff)):
+    try:
+        oid = ObjectId(job_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid job opening ID")
+
+    existing = await db.job_openings.find_one({"_id": oid})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Job opening not found")
+
+    updates = {"updatedAt": now_utc_iso(), "updatedBy": _user.get("email", "admin")}
+
+    if payload.title is not None:
+        updates["title"] = payload.title.strip()
+    if payload.slug is not None and payload.slug.strip():
+        clean_slug = payload.slug.lower().strip()
+        slug_clash = await db.job_openings.find_one({"slug": clean_slug, "_id": {"$ne": oid}})
+        if not slug_clash:
+            updates["slug"] = clean_slug
+    if payload.department is not None:
+        updates["department"] = payload.department.strip()
+    if payload.location is not None:
+        updates["location"] = payload.location.strip()
+    if payload.employmentType is not None:
+        updates["employmentType"] = payload.employmentType
+    if payload.workplaceType is not None:
+        updates["workplaceType"] = payload.workplaceType
+    if payload.experienceLevel is not None:
+        updates["experienceLevel"] = payload.experienceLevel
+    if payload.experienceMinYears is not None:
+        updates["experienceMinYears"] = payload.experienceMinYears
+    if payload.experienceMaxYears is not None:
+        updates["experienceMaxYears"] = payload.experienceMaxYears
+    if payload.salaryRange is not None:
+        updates["salaryRange"] = payload.salaryRange
+    if payload.description is not None:
+        updates["description"] = payload.description
+    if payload.responsibilities is not None:
+        updates["responsibilities"] = payload.responsibilities
+    if payload.requirements is not None:
+        updates["requirements"] = payload.requirements
+    if payload.benefits is not None:
+        updates["benefits"] = payload.benefits
+    if payload.tags is not None:
+        updates["tags"] = payload.tags
+    if payload.status is not None:
+        new_status = payload.status.lower()
+        updates["status"] = new_status
+        if new_status == "published" and not existing.get("postedAt"):
+            updates["postedAt"] = now_utc_iso()
+    if payload.isFeatured is not None:
+        updates["isFeatured"] = bool(payload.isFeatured)
+    if payload.expiresAt is not None:
+        updates["expiresAt"] = payload.expiresAt
+
+    await db.job_openings.update_one({"_id": oid}, {"$set": updates})
+    updated = await db.job_openings.find_one({"_id": oid})
+    return serialize_job_opening(updated, True)
+
+
+@api_router.delete("/admin/recruitment/jobs/{job_id}")
+async def delete_admin_job(job_id: str, _user: dict = Depends(require_admin)):
+    try:
+        oid = ObjectId(job_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid job opening ID")
+
+    job = await db.job_openings.find_one({"_id": oid})
+    if not job:
+        raise HTTPException(status_code=404, detail="Job opening not found")
+
+    app_count = await db.job_applications.count_documents({"jobId": oid})
+    if app_count > 0:
+        await db.job_openings.update_one(
+            {"_id": oid},
+            {"$set": {"status": "archived", "updatedAt": now_utc_iso(), "updatedBy": _user.get("email", "admin")}}
+        )
+        return {
+            "ok": True,
+            "archived": True,
+            "message": f"Job has {app_count} applications on file. Status has been changed to 'archived' to preserve candidate records.",
+        }
+
+    await db.job_openings.delete_one({"_id": oid})
+    return {"ok": True, "message": "Job opening deleted successfully"}
+
+
+@api_router.get("/admin/recruitment/applications")
+async def list_admin_applications(
+    jobId: Optional[str] = None,
+    status: Optional[str] = None,
+    search: Optional[str] = None,
+    page: int = 1,
+    limit: int = 50,
+    _user: dict = Depends(require_staff),
+):
+    query = {}
+    if jobId and jobId != "All":
+        try:
+            query["jobId"] = ObjectId(jobId)
+        except Exception:
+            query["jobSlug"] = jobId
+    if status and status != "All":
+        query["status"] = {"$regex": f"^{re.escape(status.strip())}$", "$options": "i"}
+    if search and search.strip():
+        s = search.strip()
+        query["$or"] = [
+            {"name": {"$regex": s, "$options": "i"}},
+            {"email": {"$regex": s, "$options": "i"}},
+            {"phone": {"$regex": s, "$options": "i"}},
+            {"referenceNumber": {"$regex": s, "$options": "i"}},
+            {"currentCompany": {"$regex": s, "$options": "i"}},
+            {"jobTitle": {"$regex": s, "$options": "i"}},
+        ]
+
+    page_size = min(max(limit, 1), 100)
+    page_num = max(page, 1)
+    skip_num = (page_num - 1) * page_size
+
+    total = await db.job_applications.count_documents(query)
+    cursor = db.job_applications.find(query).sort("createdAt", -1).skip(skip_num).limit(page_size)
+    docs = await cursor.to_list(page_size)
+
+    return {
+        "applications": [serialize_job_application(d) for d in docs],
+        "total": total,
+        "page": page_num,
+        "totalPages": (total + page_size - 1) // page_size if total > 0 else 1,
+    }
+
+
+@api_router.get("/admin/recruitment/applications/{app_id}")
+async def get_admin_application(app_id: str, _user: dict = Depends(require_staff)):
+    doc = None
+    try:
+        doc = await db.job_applications.find_one({"_id": ObjectId(app_id)})
+    except Exception:
+        pass
+    if not doc:
+        doc = await db.job_applications.find_one({"referenceNumber": app_id.strip()})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Job application not found")
+
+    return serialize_job_application(doc)
+
+
+@api_router.patch("/admin/recruitment/applications/{app_id}/status")
+async def update_application_status(
+    app_id: str,
+    payload: JobApplicationStatusUpdate,
+    _user: dict = Depends(require_staff),
+):
+    try:
+        oid = ObjectId(app_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid job application ID")
+
+    app_doc = await db.job_applications.find_one({"_id": oid})
+    if not app_doc:
+        raise HTTPException(status_code=404, detail="Job application not found")
+
+    valid_statuses = [
+        "New",
+        "Under Review",
+        "Shortlisted",
+        "Interview Scheduled",
+        "Selected",
+        "Rejected",
+        "Withdrawn",
+    ]
+    status_lower = payload.status.lower()
+    matched = next((s for s in valid_statuses if s.lower() == status_lower), None)
+    if not matched:
+        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}")
+
+    now_iso = now_utc_iso()
+    history_entry = {
+        "fromStatus": app_doc.get("status"),
+        "toStatus": matched,
+        "changedBy": _user.get("email", "Recruiter"),
+        "changedAt": now_iso,
+        "reason": (payload.reason or "").strip() or f"Status updated to {matched}",
+    }
+
+    await db.job_applications.update_one(
+        {"_id": oid},
+        {
+            "$set": {"status": matched, "updatedAt": now_iso},
+            "$push": {"statusHistory": history_entry},
+        }
+    )
+
+    return {
+        "ok": True,
+        "status": matched,
+        "message": f"Candidate status updated to {matched}",
+    }
+
+
+@api_router.post("/admin/recruitment/applications/{app_id}/notes")
+async def add_application_note(
+    app_id: str,
+    payload: JobApplicationNoteIn,
+    _user: dict = Depends(require_staff),
+):
+    try:
+        oid = ObjectId(app_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid job application ID")
+
+    app_doc = await db.job_applications.find_one({"_id": oid})
+    if not app_doc:
+        raise HTTPException(status_code=404, detail="Job application not found")
+
+    note_text = payload.note.strip()
+    if not note_text:
+        raise HTTPException(status_code=400, detail="Note content cannot be empty.")
+
+    now_iso = now_utc_iso()
+    note_item = {
+        "id": str(ObjectId()),
+        "note": note_text,
+        "author": _user.get("name") or _user.get("email") or "Recruiter",
+        "createdAt": now_iso,
+    }
+
+    await db.job_applications.update_one(
+        {"_id": oid},
+        {
+            "$push": {"notes": note_item},
+            "$set": {"updatedAt": now_iso},
+        }
+    )
+
+    updated = await db.job_applications.find_one({"_id": oid})
+    return {"ok": True, "notes": updated.get("notes", [])}
+
+
+@api_router.get("/admin/recruitment/applications/{app_id}/resume")
+async def stream_application_resume(app_id: str, _user: dict = Depends(require_staff)):
+    try:
+        oid = ObjectId(app_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid application ID")
+
+    app_doc = await db.job_applications.find_one({"_id": oid})
+    if not app_doc:
+        raise HTTPException(status_code=404, detail="Job application not found")
+
+    file_id = app_doc.get("resumeFileId")
+    if not file_id:
+        resume_url = app_doc.get("resumeUrl", "")
+        if resume_url and resume_url.startswith("http"):
+            from fastapi.responses import RedirectResponse
+            return RedirectResponse(url=resume_url)
+        raise HTTPException(status_code=404, detail="No resume file stored for this candidate")
+
+    fs = AsyncIOMotorGridFSBucket(db, bucket_name="career_resumes")
+    try:
+        grid_out = await fs.open_download_stream(ObjectId(file_id))
+    except Exception:
+        raise HTTPException(status_code=404, detail="Resume file not found in storage")
+
+    content = await grid_out.read()
+    content_type = getattr(grid_out, "content_type", None) or (grid_out.metadata.get("contentType") if grid_out.metadata else None) or "application/pdf"
+    filename = app_doc.get("resumeFilename") or grid_out.filename or "candidate-resume.pdf"
+    encoded_filename = urllib.parse.quote(filename)
+
+    return Response(
+        content=content,
+        media_type=content_type,
+        headers={
+            "Content-Disposition": f'inline; filename="{encoded_filename}"',
+            "Content-Length": str(len(content)),
+        }
+    )
+
+
 # ---------------------- Blogs ----------------------
 def slugify(text: str) -> str:
     """URL-safe slug: lowercase, non-alphanumerics → hyphens, trimmed."""
@@ -1886,6 +2707,11 @@ async def stats(_user: dict = Depends(require_staff)):
     career_interview = await db.career_applications.count_documents({"status": {"$regex": "^interview$", "$options": "i"}})
     career_selected = await db.career_applications.count_documents({"status": {"$regex": "^selected$", "$options": "i"}})
 
+    recruitment_total_jobs = await db.job_openings.count_documents({})
+    recruitment_published_jobs = await db.job_openings.count_documents({"status": "published"})
+    recruitment_total_apps = await db.job_applications.count_documents({})
+    recruitment_new_apps = await db.job_applications.count_documents({"status": {"$regex": "^new$", "$options": "i"}})
+
     return {
         "properties_total": await db.properties.count_documents({}),
         "properties_published": await db.properties.count_documents({"status": "published"}),
@@ -1903,6 +2729,12 @@ async def stats(_user: dict = Depends(require_staff)):
             "shortlisted": career_shortlisted,
             "interview": career_interview,
             "selected": career_selected,
+        },
+        "recruitment": {
+            "total_jobs": recruitment_total_jobs,
+            "published_jobs": recruitment_published_jobs,
+            "total_applications": recruitment_total_apps,
+            "new_applications": recruitment_new_apps,
         },
         "leads_total": prop_total,
         "leads_new": prop_new,
@@ -2072,9 +2904,20 @@ async def on_startup():
         await db.resale_leads.create_index("email")
         await db.resale_leads.create_index([("status", 1), ("createdAt", -1)])
         await db.resale_leads.create_index("createdAt")
+        # Dedicated Recruitment System indexes (job_openings & job_applications)
+        await db.job_openings.create_index("slug", unique=True)
+        await db.job_openings.create_index([("status", 1), ("postedAt", -1), ("createdAt", -1)])
+        await db.job_openings.create_index("department")
+        await db.job_openings.create_index("location")
+        await db.job_applications.create_index("referenceNumber", unique=True)
+        await db.job_applications.create_index([("jobId", 1), ("createdAt", -1)])
+        await db.job_applications.create_index("email")
+        await db.job_applications.create_index("phone")
+        await db.job_applications.create_index([("status", 1), ("createdAt", -1)])
+        await db.job_applications.create_index("createdAt")
         await seed_admin()
         init_storage()
-        logger.info("Astitva backend started with resale indexes")
+        logger.info("Astitva backend started with recruitment & resale indexes")
     except Exception as e:  # noqa: BLE001
         logger.error(f"Startup error: {e}")
 

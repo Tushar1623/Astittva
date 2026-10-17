@@ -192,6 +192,19 @@ const STATIC_PAGES = [
       },
     ],
   },
+  {
+    path: "/careers/jobs",
+    rawTitle: "Job Openings & Vacancies in Kolkata",
+    description: "Explore published career opportunities at Astittva Marketing. Join Kolkata's premier luxury real estate advisory team in New Town and Salt Lake.",
+    h1: "Career Opportunities & Job Vacancies at Astittva",
+    lead: "Browse active job openings across Private Client Advisory, Digital Growth, and Strategic Investments in Kolkata.",
+    sections: [
+      {
+        h2: "Explore Active Vacancies",
+        content: "View full role profiles, candidate requirements, compensation packages, and apply online with your resume.",
+      },
+    ],
+  },
 ];
 
 const CALCULATOR_PAGES = [

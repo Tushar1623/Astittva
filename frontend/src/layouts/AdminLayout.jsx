@@ -62,6 +62,14 @@ export default function AdminLayout() {
         { to: "/admin/leads/careers", label: "Career Applications", icon: Briefcase },
       ],
     },
+    {
+      title: "RECRUITMENT",
+      items: [
+        { to: "/admin/recruitment", label: "Overview", icon: LayoutDashboard, end: true },
+        { to: "/admin/recruitment/jobs", label: "Job Openings", icon: Briefcase },
+        { to: "/admin/recruitment/applications", label: "Candidate Pipeline", icon: Users },
+      ],
+    },
     ...(user?.role === "admin"
       ? [
           {

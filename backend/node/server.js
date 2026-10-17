@@ -388,6 +388,121 @@ function serializeResaleLead(doc) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Recruitment / Job Openings Serializers & Helpers
+// ---------------------------------------------------------------------------
+function slugifyJobTitle(text) {
+  return (text || "")
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w-]+/g, "")
+    .replace(/--+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
+}
+
+function generateJobAppRefNumber() {
+  const year = new Date().getFullYear();
+  const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  let rand = "";
+  for (let i = 0; i < 5; i++) {
+    rand += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `AST-${year}-${rand}`;
+}
+
+function serializeJobOpening(doc, isAdmin = false) {
+  if (!doc) return null;
+  const res = {
+    id: String(doc._id),
+    title: doc.title || "",
+    slug: doc.slug || "",
+    department: doc.department || "Sales & Advisory",
+    location: doc.location || "New Town, Kolkata",
+    employmentType: doc.employmentType || "Full-time",
+    workplaceType: doc.workplaceType || "On-site",
+    experienceLevel: doc.experienceLevel || "Mid-Senior Level",
+    experienceMinYears: typeof doc.experienceMinYears === "number" ? doc.experienceMinYears : 0,
+    experienceMaxYears: typeof doc.experienceMaxYears === "number" ? doc.experienceMaxYears : 0,
+    salaryRange: doc.salaryRange || {
+      min: 0,
+      max: 0,
+      currency: "INR",
+      period: "yearly",
+      isDisclosed: false,
+    },
+    description: doc.description || "",
+    responsibilities: Array.isArray(doc.responsibilities)
+      ? doc.responsibilities
+      : typeof doc.responsibilities === "string"
+      ? doc.responsibilities.split("\n").map((s) => s.trim()).filter(Boolean)
+      : [],
+    requirements: Array.isArray(doc.requirements)
+      ? doc.requirements
+      : typeof doc.requirements === "string"
+      ? doc.requirements.split("\n").map((s) => s.trim()).filter(Boolean)
+      : [],
+    benefits: Array.isArray(doc.benefits)
+      ? doc.benefits
+      : typeof doc.benefits === "string"
+      ? doc.benefits.split("\n").map((s) => s.trim()).filter(Boolean)
+      : [],
+    tags: Array.isArray(doc.tags)
+      ? doc.tags
+      : typeof doc.tags === "string"
+      ? doc.tags.split(",").map((s) => s.trim()).filter(Boolean)
+      : [],
+    status: doc.status || "draft",
+    isFeatured: Boolean(doc.isFeatured),
+    applicationsCount: doc.applicationsCount || 0,
+    viewsCount: doc.viewsCount || 0,
+    postedAt: doc.postedAt || null,
+    expiresAt: doc.expiresAt || null,
+    createdAt: doc.createdAt || "",
+    updatedAt: doc.updatedAt || "",
+  };
+  if (isAdmin) {
+    res.createdBy = doc.createdBy || "admin";
+    res.updatedBy = doc.updatedBy || "admin";
+  }
+  return res;
+}
+
+function serializeJobApplication(doc) {
+  if (!doc) return null;
+  return {
+    id: String(doc._id),
+    referenceNumber: doc.referenceNumber || "",
+    jobId: String(doc.jobId || ""),
+    jobTitle: doc.jobTitle || "",
+    jobSlug: doc.jobSlug || "",
+    name: doc.name || "",
+    email: doc.email || "",
+    phone: doc.phone || "",
+    linkedin: doc.linkedin || "",
+    portfolioUrl: doc.portfolioUrl || "",
+    coverNote: doc.coverNote || "",
+    experienceYears: typeof doc.experienceYears === "number" ? doc.experienceYears : parseFloat(doc.experienceYears) || 0,
+    currentCompany: doc.currentCompany || "",
+    currentCtc: doc.currentCtc || "",
+    expectedCtc: doc.expectedCtc || "",
+    noticePeriodDays: typeof doc.noticePeriodDays === "number" ? doc.noticePeriodDays : parseInt(doc.noticePeriodDays, 10) || 0,
+    resumeFilename: doc.resumeFilename || "",
+    resumeContentType: doc.resumeContentType || "application/pdf",
+    resumeSize: doc.resumeSize || 0,
+    resumeUrl: doc.resumeUrl || (doc.resumeFileId ? `/api/admin/recruitment/applications/${doc._id}/resume` : ""),
+    hasResume: Boolean(doc.resumeFileId),
+    status: doc.status || "New",
+    statusHistory: Array.isArray(doc.statusHistory) ? doc.statusHistory : [],
+    notes: Array.isArray(doc.notes) ? doc.notes : [],
+    source: doc.source || "job-portal",
+    createdAt: doc.createdAt || "",
+    updatedAt: doc.updatedAt || "",
+  };
+}
+
 function slugify(text) {
   if (!text) return "blog";
   const s = text
@@ -428,6 +543,7 @@ const STATIC_SITEMAP_ENTRIES = [
   { path: "/about", changefreq: "monthly", priority: "0.7" },
   { path: "/contact", changefreq: "monthly", priority: "0.7" },
   { path: "/career", changefreq: "monthly", priority: "0.6" },
+  { path: "/careers/jobs", changefreq: "daily", priority: "0.85" },
   // 12 Calculators
   { path: "/calculators/home-loan-emi", changefreq: "weekly", priority: "0.8" },
   { path: "/calculators/property-affordability", changefreq: "weekly", priority: "0.8" },
@@ -532,6 +648,30 @@ async function generateSitemapXml() {
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>`);
+      }
+
+      // 4. Published Job Openings
+      const jobs = await db
+        .collection("job_openings")
+        .find({ status: "published" }, { projection: { slug: 1, updatedAt: 1, postedAt: 1, createdAt: 1 } })
+        .toArray();
+
+      for (const j of jobs) {
+        if (!j.slug) continue;
+        let lastmod = j.updatedAt || j.postedAt || j.createdAt || today;
+        if (typeof lastmod === "string" && lastmod.includes("T")) {
+          lastmod = lastmod.split("T")[0];
+        } else if (lastmod instanceof Date) {
+          lastmod = lastmod.toISOString().split("T")[0];
+        } else {
+          lastmod = today;
+        }
+        urls.push(`  <url>
+    <loc>${SITE_DOMAIN}/careers/jobs/${encodeURIComponent(j.slug)}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
   </url>`);
       }
     } catch (err) {
@@ -1107,6 +1247,233 @@ app.get("/api/blogs/:slug", async (req, res) => {
   } catch (err) {
     console.error("Get blog error:", err);
     return res.status(500).json({ detail: "Failed to fetch blog" });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// PUBLIC JOB OPENINGS & APPLICATIONS
+// ---------------------------------------------------------------------------
+app.get("/api/jobs", async (req, res) => {
+  try {
+    const db = getDb();
+    const { department, employmentType, workplaceType, location, search, limit, skip } = req.query;
+
+    const query = { status: "published" };
+
+    if (department && department !== "All") {
+      query.department = { $regex: new RegExp(`^${department.trim()}$`, "i") };
+    }
+    if (employmentType && employmentType !== "All") {
+      query.employmentType = { $regex: new RegExp(`^${employmentType.trim()}$`, "i") };
+    }
+    if (workplaceType && workplaceType !== "All") {
+      query.workplaceType = { $regex: new RegExp(`^${workplaceType.trim()}$`, "i") };
+    }
+    if (location && location !== "All") {
+      query.location = { $regex: new RegExp(location.trim(), "i") };
+    }
+    if (search && search.trim()) {
+      const s = search.trim();
+      query.$or = [
+        { title: { $regex: s, $options: "i" } },
+        { department: { $regex: s, $options: "i" } },
+        { location: { $regex: s, $options: "i" } },
+        { tags: { $in: [new RegExp(s, "i")] } },
+        { description: { $regex: s, $options: "i" } },
+      ];
+    }
+
+    const pageSize = Math.min(parseInt(limit, 10) || 50, 100);
+    const skipNum = Math.max(parseInt(skip, 10) || 0, 0);
+
+    const [total, docs, allPublished] = await Promise.all([
+      db.collection("job_openings").countDocuments(query),
+      db.collection("job_openings")
+        .find(query)
+        .sort({ isFeatured: -1, postedAt: -1, createdAt: -1 })
+        .skip(skipNum)
+        .limit(pageSize)
+        .toArray(),
+      db.collection("job_openings").find({ status: "published" }).project({ department: 1, location: 1, employmentType: 1, workplaceType: 1 }).toArray(),
+    ]);
+
+    // Extract dynamic filter lists for convenience
+    const departments = Array.from(new Set(allPublished.map((j) => j.department).filter(Boolean))).sort();
+    const locations = Array.from(new Set(allPublished.map((j) => j.location).filter(Boolean))).sort();
+    const employmentTypes = Array.from(new Set(allPublished.map((j) => j.employmentType).filter(Boolean))).sort();
+
+    return res.json({
+      jobs: docs.map((d) => serializeJobOpening(d, false)),
+      total,
+      departments,
+      locations,
+      employmentTypes,
+    });
+  } catch (err) {
+    console.error("Fetch public jobs error:", err);
+    return res.status(500).json({ detail: "Failed to fetch job openings" });
+  }
+});
+
+app.get("/api/jobs/:slug", async (req, res) => {
+  try {
+    const db = getDb();
+    const { slug } = req.params;
+
+    let query = { slug: slug.trim().toLowerCase(), status: "published" };
+    let doc = await db.collection("job_openings").findOne(query);
+
+    if (!doc && ObjectId.isValid(slug)) {
+      doc = await db.collection("job_openings").findOne({ _id: new ObjectId(slug), status: "published" });
+    }
+
+    if (!doc) {
+      return res.status(404).json({ detail: "Job opening not found or no longer active" });
+    }
+
+    // Atomically increment views count (non-blocking)
+    db.collection("job_openings").updateOne({ _id: doc._id }, { $inc: { viewsCount: 1 } }).catch(() => {});
+
+    return res.json(serializeJobOpening(doc, false));
+  } catch (err) {
+    console.error("Fetch single job error:", err);
+    return res.status(500).json({ detail: "Failed to fetch job opening details" });
+  }
+});
+
+app.post("/api/jobs/:id/apply", async (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    const body = req.body || {};
+
+    // Validate target job exists & is published
+    let jobDoc = null;
+    if (ObjectId.isValid(id)) {
+      jobDoc = await db.collection("job_openings").findOne({ _id: new ObjectId(id), status: "published" });
+    }
+    if (!jobDoc) {
+      jobDoc = await db.collection("job_openings").findOne({ slug: id.trim().toLowerCase(), status: "published" });
+    }
+
+    if (!jobDoc) {
+      return res.status(404).json({ detail: "Job opening not found or is no longer accepting applications" });
+    }
+
+    // Required fields validation
+    const name = (body.name || "").trim();
+    const email = (body.email || "").toLowerCase().trim();
+    const phone = (body.phone || "").trim();
+
+    if (!name) return res.status(400).json({ detail: "Full name is required." });
+    if (!email || !email.includes("@")) return res.status(400).json({ detail: "A valid email address is required." });
+    if (!phone) return res.status(400).json({ detail: "Phone number is required." });
+
+    // Duplicate Prevention: Check if applicant already applied for this opening in last 24h
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const existing = await db.collection("job_applications").findOne({
+      jobId: jobDoc._id,
+      email: email,
+      createdAt: { $gte: twentyFourHoursAgo },
+    });
+
+    if (existing) {
+      return res.status(409).json({
+        detail: `You have already applied for this position within the last 24 hours. Your application reference is ${existing.referenceNumber}.`,
+        referenceNumber: existing.referenceNumber,
+      });
+    }
+
+    // Process resume upload to GridFS career_resumes bucket
+    let resumeFileId = null;
+    let resumeFilename = "";
+    let resumeContentType = "application/pdf";
+    let resumeSize = 0;
+
+    if (body.resume && body.resume.base64) {
+      const { filename, contentType, base64 } = body.resume;
+      const rawExt = (filename || "resume.pdf").split(".").pop().toLowerCase();
+      const allowedExts = ["pdf", "doc", "docx"];
+      if (!allowedExts.includes(rawExt)) {
+        return res.status(400).json({ detail: "Only PDF, DOC, and DOCX files are accepted for resumes." });
+      }
+
+      const cleanBase64 = base64.includes(",") ? base64.split(",")[1].trim() : base64.trim();
+      const buffer = Buffer.from(cleanBase64, "base64");
+      if (!buffer || buffer.length === 0) {
+        return res.status(400).json({ detail: "Uploaded resume file is empty or invalid." });
+      }
+      if (buffer.length > 10 * 1024 * 1024) {
+        return res.status(400).json({ detail: "Resume file must be less than 10MB." });
+      }
+
+      const stored = await storeResumeInGridFS(db, filename, contentType, buffer);
+      resumeFileId = stored.fileId;
+      resumeFilename = stored.filename;
+      resumeContentType = contentType || "application/pdf";
+      resumeSize = buffer.length;
+    } else if (!body.resumeUrl && !body.linkedin) {
+      return res.status(400).json({ detail: "Please upload your resume file (PDF, DOC, or DOCX) to apply." });
+    }
+
+    const insertedId = new ObjectId();
+    const referenceNumber = generateJobAppRefNumber();
+    const resumeUrl = resumeFileId ? `/api/admin/recruitment/applications/${insertedId}/resume` : (body.resumeUrl || body.linkedin || "");
+
+    const applicationDoc = {
+      _id: insertedId,
+      referenceNumber,
+      jobId: jobDoc._id,
+      jobTitle: jobDoc.title,
+      jobSlug: jobDoc.slug,
+      name,
+      email,
+      phone,
+      linkedin: (body.linkedin || "").trim(),
+      portfolioUrl: (body.portfolioUrl || "").trim(),
+      coverNote: (body.coverNote || body.message || "").trim(),
+      experienceYears: typeof body.experienceYears === "number" ? body.experienceYears : parseFloat(body.experienceYears) || 0,
+      currentCompany: (body.currentCompany || "").trim(),
+      currentCtc: (body.currentCtc || "").trim(),
+      expectedCtc: (body.expectedCtc || "").trim(),
+      noticePeriodDays: typeof body.noticePeriodDays === "number" ? body.noticePeriodDays : parseInt(body.noticePeriodDays, 10) || 0,
+      resumeFileId,
+      resumeFilename,
+      resumeContentType,
+      resumeSize,
+      resumeUrl,
+      status: "New",
+      statusHistory: [
+        {
+          fromStatus: null,
+          toStatus: "New",
+          changedBy: "candidate",
+          changedAt: nowUtcIso(),
+          reason: "Application submitted via online portal",
+        },
+      ],
+      notes: [],
+      source: body.source || "job-board",
+      ipAddress: req.ip || req.headers["x-forwarded-for"] || "",
+      createdAt: nowUtcIso(),
+      updatedAt: nowUtcIso(),
+    };
+
+    await db.collection("job_applications").insertOne(applicationDoc);
+
+    // Atomically increment applicationsCount on job opening
+    await db.collection("job_openings").updateOne({ _id: jobDoc._id }, { $inc: { applicationsCount: 1 } });
+
+    return res.status(201).json({
+      ok: true,
+      message: "Application submitted successfully",
+      referenceNumber,
+      applicationId: String(insertedId),
+      jobTitle: jobDoc.title,
+    });
+  } catch (err) {
+    console.error("Job application submission error:", err);
+    return res.status(500).json({ detail: "Failed to submit job application. Please try again." });
   }
 });
 
@@ -2379,6 +2746,491 @@ app.delete("/api/admin/leads/career/:id", requireAdmin, async (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
+// ADMIN RECRUITMENT & HIRING MANAGEMENT CONSOLE
+// ---------------------------------------------------------------------------
+app.get("/api/admin/recruitment/dashboard", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const [
+      totalJobs,
+      publishedJobs,
+      draftJobs,
+      closedJobs,
+      totalApps,
+      newApps,
+      underReviewApps,
+      shortlistedApps,
+      interviewApps,
+      selectedApps,
+      rejectedApps,
+      withdrawnApps,
+      recentApps,
+      recentJobs,
+    ] = await Promise.all([
+      db.collection("job_openings").countDocuments({}),
+      db.collection("job_openings").countDocuments({ status: "published" }),
+      db.collection("job_openings").countDocuments({ status: "draft" }),
+      db.collection("job_openings").countDocuments({ status: "closed" }),
+      db.collection("job_applications").countDocuments({}),
+      db.collection("job_applications").countDocuments({ status: { $regex: /^new$/i } }),
+      db.collection("job_applications").countDocuments({ status: { $regex: /^under review$/i } }),
+      db.collection("job_applications").countDocuments({ status: { $regex: /^shortlisted$/i } }),
+      db.collection("job_applications").countDocuments({ status: { $regex: /^interview scheduled$/i } }),
+      db.collection("job_applications").countDocuments({ status: { $regex: /^selected$/i } }),
+      db.collection("job_applications").countDocuments({ status: { $regex: /^rejected$/i } }),
+      db.collection("job_applications").countDocuments({ status: { $regex: /^withdrawn$/i } }),
+      db.collection("job_applications").find({}).sort({ createdAt: -1 }).limit(8).toArray(),
+      db.collection("job_openings").find({}).sort({ createdAt: -1 }).limit(5).toArray(),
+    ]);
+
+    return res.json({
+      summary: {
+        totalJobs,
+        publishedJobs,
+        draftJobs,
+        closedJobs,
+        totalApplications: totalApps,
+      },
+      byStatus: {
+        new: newApps,
+        underReview: underReviewApps,
+        shortlisted: shortlistedApps,
+        interviewScheduled: interviewApps,
+        selected: selectedApps,
+        rejected: rejectedApps,
+        withdrawn: withdrawnApps,
+      },
+      recentApplications: recentApps.map(serializeJobApplication),
+      recentJobs: recentJobs.map((j) => serializeJobOpening(j, true)),
+    });
+  } catch (err) {
+    console.error("Recruitment dashboard error:", err);
+    return res.status(500).json({ detail: "Failed to load recruitment dashboard data" });
+  }
+});
+
+app.get("/api/admin/recruitment/jobs", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const { status, department, search } = req.query;
+    const query = {};
+
+    if (status && status !== "All") {
+      query.status = status.toLowerCase();
+    }
+    if (department && department !== "All") {
+      query.department = { $regex: new RegExp(`^${department.trim()}$`, "i") };
+    }
+    if (search && search.trim()) {
+      const s = search.trim();
+      query.$or = [
+        { title: { $regex: s, $options: "i" } },
+        { department: { $regex: s, $options: "i" } },
+        { location: { $regex: s, $options: "i" } },
+        { tags: { $in: [new RegExp(s, "i")] } },
+      ];
+    }
+
+    const docs = await db.collection("job_openings").find(query).sort({ createdAt: -1 }).toArray();
+    return res.json(docs.map((d) => serializeJobOpening(d, true)));
+  } catch (err) {
+    console.error("Admin list jobs error:", err);
+    return res.status(500).json({ detail: "Failed to fetch job openings" });
+  }
+});
+
+app.post("/api/admin/recruitment/jobs", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const body = req.body || {};
+
+    const title = (body.title || "").trim();
+    if (!title) return res.status(400).json({ detail: "Job title is required." });
+
+    let baseSlug = (body.slug || slugifyJobTitle(title)).toLowerCase().trim();
+    if (!baseSlug) baseSlug = "opening";
+    let finalSlug = baseSlug;
+    let counter = 1;
+    while (await db.collection("job_openings").findOne({ slug: finalSlug })) {
+      counter += 1;
+      finalSlug = `${baseSlug}-${counter}`;
+    }
+
+    const insertedId = new ObjectId();
+    const status = (body.status || "draft").toLowerCase();
+    const isPublished = status === "published";
+
+    const doc = {
+      _id: insertedId,
+      title,
+      slug: finalSlug,
+      department: (body.department || "Sales & Advisory").trim(),
+      location: (body.location || "New Town, Kolkata").trim(),
+      employmentType: body.employmentType || "Full-time",
+      workplaceType: body.workplaceType || "On-site",
+      experienceLevel: body.experienceLevel || "Mid-Senior Level",
+      experienceMinYears: typeof body.experienceMinYears === "number" ? body.experienceMinYears : parseInt(body.experienceMinYears, 10) || 0,
+      experienceMaxYears: typeof body.experienceMaxYears === "number" ? body.experienceMaxYears : parseInt(body.experienceMaxYears, 10) || 0,
+      salaryRange: body.salaryRange || {
+        min: 0,
+        max: 0,
+        currency: "INR",
+        period: "yearly",
+        isDisclosed: false,
+      },
+      description: body.description || "",
+      responsibilities: Array.isArray(body.responsibilities)
+        ? body.responsibilities
+        : (body.responsibilities || "").split("\n").map((s) => s.trim()).filter(Boolean),
+      requirements: Array.isArray(body.requirements)
+        ? body.requirements
+        : (body.requirements || "").split("\n").map((s) => s.trim()).filter(Boolean),
+      benefits: Array.isArray(body.benefits)
+        ? body.benefits
+        : (body.benefits || "").split("\n").map((s) => s.trim()).filter(Boolean),
+      tags: Array.isArray(body.tags)
+        ? body.tags
+        : (body.tags || "").split(",").map((s) => s.trim()).filter(Boolean),
+      status,
+      isFeatured: Boolean(body.isFeatured),
+      applicationsCount: 0,
+      viewsCount: 0,
+      postedAt: isPublished ? (body.postedAt || nowUtcIso()) : null,
+      expiresAt: body.expiresAt || null,
+      createdBy: req.user?.email || "admin",
+      updatedBy: req.user?.email || "admin",
+      createdAt: nowUtcIso(),
+      updatedAt: nowUtcIso(),
+    };
+
+    await db.collection("job_openings").insertOne(doc);
+    return res.status(201).json(serializeJobOpening(doc, true));
+  } catch (err) {
+    console.error("Create job opening error:", err);
+    return res.status(500).json({ detail: "Failed to create job opening" });
+  }
+});
+
+app.get("/api/admin/recruitment/jobs/:id", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    let doc = null;
+    if (ObjectId.isValid(id)) {
+      doc = await db.collection("job_openings").findOne({ _id: new ObjectId(id) });
+    }
+    if (!doc) {
+      doc = await db.collection("job_openings").findOne({ slug: id.toLowerCase().trim() });
+    }
+    if (!doc) return res.status(404).json({ detail: "Job opening not found" });
+
+    return res.json(serializeJobOpening(doc, true));
+  } catch (err) {
+    console.error("Get admin job error:", err);
+    return res.status(400).json({ detail: "Invalid job opening ID" });
+  }
+});
+
+app.patch("/api/admin/recruitment/jobs/:id", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) return res.status(400).json({ detail: "Invalid job opening ID" });
+
+    const existing = await db.collection("job_openings").findOne({ _id: new ObjectId(id) });
+    if (!existing) return res.status(404).json({ detail: "Job opening not found" });
+
+    const body = req.body || {};
+    const updates = { updatedAt: nowUtcIso(), updatedBy: req.user?.email || "admin" };
+
+    if (body.title !== undefined) updates.title = body.title.trim();
+    if (body.slug !== undefined && body.slug.trim()) {
+      const cleanSlug = body.slug.toLowerCase().trim();
+      const slugClash = await db.collection("job_openings").findOne({ slug: cleanSlug, _id: { $ne: existing._id } });
+      if (!slugClash) updates.slug = cleanSlug;
+    }
+    if (body.department !== undefined) updates.department = body.department.trim();
+    if (body.location !== undefined) updates.location = body.location.trim();
+    if (body.employmentType !== undefined) updates.employmentType = body.employmentType;
+    if (body.workplaceType !== undefined) updates.workplaceType = body.workplaceType;
+    if (body.experienceLevel !== undefined) updates.experienceLevel = body.experienceLevel;
+    if (body.experienceMinYears !== undefined) updates.experienceMinYears = parseInt(body.experienceMinYears, 10) || 0;
+    if (body.experienceMaxYears !== undefined) updates.experienceMaxYears = parseInt(body.experienceMaxYears, 10) || 0;
+    if (body.salaryRange !== undefined) updates.salaryRange = body.salaryRange;
+    if (body.description !== undefined) updates.description = body.description;
+    if (body.responsibilities !== undefined) {
+      updates.responsibilities = Array.isArray(body.responsibilities)
+        ? body.responsibilities
+        : body.responsibilities.split("\n").map((s) => s.trim()).filter(Boolean);
+    }
+    if (body.requirements !== undefined) {
+      updates.requirements = Array.isArray(body.requirements)
+        ? body.requirements
+        : body.requirements.split("\n").map((s) => s.trim()).filter(Boolean);
+    }
+    if (body.benefits !== undefined) {
+      updates.benefits = Array.isArray(body.benefits)
+        ? body.benefits
+        : body.benefits.split("\n").map((s) => s.trim()).filter(Boolean);
+    }
+    if (body.tags !== undefined) {
+      updates.tags = Array.isArray(body.tags)
+        ? body.tags
+        : body.tags.split(",").map((s) => s.trim()).filter(Boolean);
+    }
+    if (body.status !== undefined) {
+      updates.status = body.status.toLowerCase();
+      if (updates.status === "published" && !existing.postedAt) {
+        updates.postedAt = nowUtcIso();
+      }
+    }
+    if (body.isFeatured !== undefined) updates.isFeatured = Boolean(body.isFeatured);
+    if (body.expiresAt !== undefined) updates.expiresAt = body.expiresAt;
+
+    await db.collection("job_openings").updateOne({ _id: existing._id }, { $set: updates });
+    const updated = await db.collection("job_openings").findOne({ _id: existing._id });
+
+    return res.json(serializeJobOpening(updated, true));
+  } catch (err) {
+    console.error("Update job error:", err);
+    return res.status(500).json({ detail: "Failed to update job opening" });
+  }
+});
+
+app.delete("/api/admin/recruitment/jobs/:id", requireAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) return res.status(400).json({ detail: "Invalid job opening ID" });
+
+    const job = await db.collection("job_openings").findOne({ _id: new ObjectId(id) });
+    if (!job) return res.status(404).json({ detail: "Job opening not found" });
+
+    const appCount = await db.collection("job_applications").countDocuments({ jobId: job._id });
+    if (appCount > 0) {
+      await db.collection("job_openings").updateOne(
+        { _id: job._id },
+        { $set: { status: "archived", updatedAt: nowUtcIso(), updatedBy: req.user?.email || "admin" } }
+      );
+      return res.json({
+        ok: true,
+        archived: true,
+        message: `Job has ${appCount} applications on file. Status has been changed to 'archived' to preserve candidate records.`,
+      });
+    }
+
+    await db.collection("job_openings").deleteOne({ _id: job._id });
+    return res.json({ ok: true, message: "Job opening deleted successfully" });
+  } catch (err) {
+    console.error("Delete job error:", err);
+    return res.status(500).json({ detail: "Failed to delete job opening" });
+  }
+});
+
+app.get("/api/admin/recruitment/applications", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const { jobId, status, search, page, limit } = req.query;
+
+    const query = {};
+    if (jobId && jobId !== "All") {
+      if (ObjectId.isValid(jobId)) {
+        query.jobId = new ObjectId(jobId);
+      } else {
+        query.jobSlug = jobId;
+      }
+    }
+    if (status && status !== "All") {
+      query.status = { $regex: new RegExp(`^${status.trim()}$`, "i") };
+    }
+    if (search && search.trim()) {
+      const s = search.trim();
+      query.$or = [
+        { name: { $regex: s, $options: "i" } },
+        { email: { $regex: s, $options: "i" } },
+        { phone: { $regex: s, $options: "i" } },
+        { referenceNumber: { $regex: s, $options: "i" } },
+        { currentCompany: { $regex: s, $options: "i" } },
+        { jobTitle: { $regex: s, $options: "i" } },
+      ];
+    }
+
+    const pageSize = Math.min(parseInt(limit, 10) || 50, 100);
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const skipNum = (pageNum - 1) * pageSize;
+
+    const [total, docs] = await Promise.all([
+      db.collection("job_applications").countDocuments(query),
+      db.collection("job_applications")
+        .find(query)
+        .sort({ createdAt: -1 })
+        .skip(skipNum)
+        .limit(pageSize)
+        .toArray(),
+    ]);
+
+    return res.json({
+      applications: docs.map(serializeJobApplication),
+      total,
+      page: pageNum,
+      totalPages: Math.ceil(total / pageSize) || 1,
+    });
+  } catch (err) {
+    console.error("List applications error:", err);
+    return res.status(500).json({ detail: "Failed to fetch job applications" });
+  }
+});
+
+app.get("/api/admin/recruitment/applications/:id", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    let doc = null;
+    if (ObjectId.isValid(id)) {
+      doc = await db.collection("job_applications").findOne({ _id: new ObjectId(id) });
+    }
+    if (!doc) {
+      doc = await db.collection("job_applications").findOne({ referenceNumber: id.trim() });
+    }
+    if (!doc) return res.status(404).json({ detail: "Job application not found" });
+
+    return res.json(serializeJobApplication(doc));
+  } catch (err) {
+    console.error("Get application detail error:", err);
+    return res.status(400).json({ detail: "Invalid job application ID" });
+  }
+});
+
+app.patch("/api/admin/recruitment/applications/:id/status", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) return res.status(400).json({ detail: "Invalid job application ID" });
+
+    const appDoc = await db.collection("job_applications").findOne({ _id: new ObjectId(id) });
+    if (!appDoc) return res.status(404).json({ detail: "Job application not found" });
+
+    const { status, reason } = req.body || {};
+    const validStatuses = [
+      "New",
+      "Under Review",
+      "Shortlisted",
+      "Interview Scheduled",
+      "Selected",
+      "Rejected",
+      "Withdrawn",
+    ];
+
+    if (!status || !validStatuses.map((s) => s.toLowerCase()).includes(status.toLowerCase())) {
+      return res.status(400).json({ detail: `Invalid status. Must be one of: ${validStatuses.join(", ")}` });
+    }
+
+    const matchedStatus = validStatuses.find((s) => s.toLowerCase() === status.toLowerCase()) || status;
+
+    const historyEntry = {
+      fromStatus: appDoc.status,
+      toStatus: matchedStatus,
+      changedBy: req.user?.email || "Recruiter",
+      changedAt: nowUtcIso(),
+      reason: (reason || "").trim() || `Status updated to ${matchedStatus}`,
+    };
+
+    await db.collection("job_applications").updateOne(
+      { _id: appDoc._id },
+      {
+        $set: { status: matchedStatus, updatedAt: nowUtcIso() },
+        $push: { statusHistory: historyEntry },
+      }
+    );
+
+    return res.json({
+      ok: true,
+      status: matchedStatus,
+      message: `Candidate status updated to ${matchedStatus}`,
+    });
+  } catch (err) {
+    console.error("Update application status error:", err);
+    return res.status(500).json({ detail: "Failed to update application status" });
+  }
+});
+
+app.post("/api/admin/recruitment/applications/:id/notes", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) return res.status(400).json({ detail: "Invalid job application ID" });
+
+    const appDoc = await db.collection("job_applications").findOne({ _id: new ObjectId(id) });
+    if (!appDoc) return res.status(404).json({ detail: "Job application not found" });
+
+    const noteText = (req.body?.note || "").trim();
+    if (!noteText) return res.status(400).json({ detail: "Note content cannot be empty." });
+
+    const noteItem = {
+      id: new ObjectId().toString(),
+      note: noteText,
+      author: req.user?.name || req.user?.email || "Recruiter",
+      createdAt: nowUtcIso(),
+    };
+
+    await db.collection("job_applications").updateOne(
+      { _id: appDoc._id },
+      {
+        $push: { notes: noteItem },
+        $set: { updatedAt: nowUtcIso() },
+      }
+    );
+
+    const updated = await db.collection("job_applications").findOne({ _id: appDoc._id });
+    return res.json({ ok: true, notes: updated.notes || [] });
+  } catch (err) {
+    console.error("Add application note error:", err);
+    return res.status(500).json({ detail: "Failed to add note to application" });
+  }
+});
+
+app.get("/api/admin/recruitment/applications/:id/resume", requireStaff, async (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) return res.status(400).json({ detail: "Invalid application ID" });
+
+    const appDoc = await db.collection("job_applications").findOne({ _id: new ObjectId(id) });
+    if (!appDoc) return res.status(404).json({ detail: "Job application not found" });
+
+    if (!appDoc.resumeFileId) {
+      if (appDoc.resumeUrl && appDoc.resumeUrl.startsWith("http")) {
+        return res.redirect(appDoc.resumeUrl);
+      }
+      return res.status(404).json({ detail: "No resume file stored for this candidate." });
+    }
+
+    const bucket = new GridFSBucket(db, { bucketName: "career_resumes" });
+    const downloadStream = bucket.openDownloadStream(new ObjectId(appDoc.resumeFileId));
+
+    const filename = appDoc.resumeFilename || "candidate_resume.pdf";
+    const contentType = appDoc.resumeContentType || "application/pdf";
+
+    res.set({
+      "Content-Type": contentType,
+      "Content-Disposition": `inline; filename="${encodeURIComponent(filename)}"`,
+    });
+
+    downloadStream.on("error", (err) => {
+      console.error("Resume GridFS stream error:", err);
+      if (!res.headersSent) {
+        res.status(404).json({ detail: "Resume file not found in storage" });
+      }
+    });
+
+    downloadStream.pipe(res);
+  } catch (err) {
+    console.error("Download application resume error:", err);
+    return res.status(500).json({ detail: "Failed to stream resume file" });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Backward-Compatible Generic Admin Leads Endpoints
 // ---------------------------------------------------------------------------
 app.get("/api/admin/leads", requireStaff, async (req, res) => {
@@ -2464,6 +3316,10 @@ app.get("/api/admin/stats", requireStaff, async (req, res) => {
       resalePublished,
       resaleLeadsTotal,
       resaleLeadsNew,
+      recruitmentTotalJobs,
+      recruitmentPublishedJobs,
+      recruitmentTotalApps,
+      recruitmentNewApps,
     ] = await Promise.all([
       db.collection("properties").countDocuments({}),
       db.collection("properties").countDocuments({ status: "published" }),
@@ -2486,6 +3342,11 @@ app.get("/api/admin/stats", requireStaff, async (req, res) => {
       db.collection("resale_properties").countDocuments({ status: { $regex: /^published$/i } }),
       db.collection("resale_leads").countDocuments({}),
       db.collection("resale_leads").countDocuments({ status: { $regex: /^new$/i } }),
+      // Recruitment System stats
+      db.collection("job_openings").countDocuments({}),
+      db.collection("job_openings").countDocuments({ status: "published" }),
+      db.collection("job_applications").countDocuments({}),
+      db.collection("job_applications").countDocuments({ status: { $regex: /^new$/i } }),
     ]);
 
     return res.json({
@@ -2511,6 +3372,12 @@ app.get("/api/admin/stats", requireStaff, async (req, res) => {
         published: resalePublished,
         leads_total: resaleLeadsTotal,
         leads_new: resaleLeadsNew,
+      },
+      recruitment: {
+        total_jobs: recruitmentTotalJobs,
+        published_jobs: recruitmentPublishedJobs,
+        total_applications: recruitmentTotalApps,
+        new_applications: recruitmentNewApps,
       },
       leads_total: propTotal,
       leads_new: propNew,
@@ -2721,7 +3588,7 @@ if (activeBuildPath) {
   app.use(express.static(activeBuildPath, { redirect: false, index: false }));
 
   // Route allowlist for legitimate application routes
-  const VALID_APP_ROUTE_REGEX = /^\/(properties|resale|blogs|news|market-intelligence|calculators|about|contact|career|admin)($|\/.*)/i;
+  const VALID_APP_ROUTE_REGEX = /^\/(properties|resale|blogs|news|market-intelligence|calculators|about|contact|careers?|admin)($|\/.*)/i;
 
   // SPA Route Handler: return index.html (200 OK) for valid routes, or 404 for unknown routes
   app.get("*", (req, res, next) => {
@@ -2806,8 +3673,19 @@ async function ensureDatabaseIndexes() {
       db.collection("resale_leads").createIndex({ email: 1 }),
       db.collection("resale_leads").createIndex({ status: 1, createdAt: -1 }),
       db.collection("resale_leads").createIndex({ createdAt: -1 }),
+      // Recruitment System Indexes (job_openings & job_applications)
+      db.collection("job_openings").createIndex({ slug: 1 }, { unique: true }),
+      db.collection("job_openings").createIndex({ status: 1, postedAt: -1, createdAt: -1 }),
+      db.collection("job_openings").createIndex({ department: 1 }),
+      db.collection("job_openings").createIndex({ location: 1 }),
+      db.collection("job_applications").createIndex({ referenceNumber: 1 }, { unique: true }),
+      db.collection("job_applications").createIndex({ jobId: 1, createdAt: -1 }),
+      db.collection("job_applications").createIndex({ email: 1 }),
+      db.collection("job_applications").createIndex({ phone: 1 }),
+      db.collection("job_applications").createIndex({ status: 1, createdAt: -1 }),
+      db.collection("job_applications").createIndex({ createdAt: -1 }),
     ]);
-    console.log("[MongoDB] Database compound indexes verified & active (including resale_properties & resale_leads)");
+    console.log("[MongoDB] Database compound indexes verified & active (including job_openings & job_applications)");
 
     // Safe preservation: initialize property_leads from existing leads if property_leads is empty
     const propCount = await db.collection("property_leads").countDocuments();

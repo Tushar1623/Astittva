@@ -21,6 +21,7 @@ const STATIC_URLS = [
   { path: "/about", changefreq: "monthly", priority: "0.7" },
   { path: "/contact", changefreq: "monthly", priority: "0.7" },
   { path: "/career", changefreq: "monthly", priority: "0.6" },
+  { path: "/careers/jobs", changefreq: "daily", priority: "0.85" },
   // Calculators
   { path: "/calculators/home-loan-emi", changefreq: "weekly", priority: "0.8" },
   { path: "/calculators/property-affordability", changefreq: "weekly", priority: "0.8" },

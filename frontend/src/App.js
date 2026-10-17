@@ -22,6 +22,10 @@ const BlogDetailPage = lazy(() => import("@/pages/BlogDetailPage"));
 const ResalePage = lazy(() => import("@/pages/ResalePage"));
 const ResaleDetailPage = lazy(() => import("@/pages/ResaleDetailPage"));
 const CareerPage = lazy(() => import("@/pages/CareerPage"));
+const JobsListPage = lazy(() => import("@/pages/careers/JobsListPage"));
+const JobDetailPage = lazy(() => import("@/pages/careers/JobDetailPage"));
+const JobApplyPage = lazy(() => import("@/pages/careers/JobApplyPage"));
+const ApplicationSuccessPage = lazy(() => import("@/pages/careers/ApplicationSuccessPage"));
 const CalculatorsLandingPage = lazy(() => import("@/pages/calculators/CalculatorsLandingPage"));
 const CalculatorDetailPage = lazy(() => import("@/pages/calculators/CalculatorDetailPage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
@@ -40,6 +44,10 @@ const AdminCareerApplicationsPage = lazy(() => import("@/pages/admin/AdminCareer
 const AdminUsersPage = lazy(() => import("@/pages/admin/AdminUsersPage"));
 const AdminBlogsPage = lazy(() => import("@/pages/admin/AdminBlogsPage"));
 const AdminBlogFormPage = lazy(() => import("@/pages/admin/AdminBlogFormPage"));
+const AdminRecruitmentDashboardPage = lazy(() => import("@/pages/admin/AdminRecruitmentDashboardPage"));
+const AdminRecruitmentJobsPage = lazy(() => import("@/pages/admin/AdminRecruitmentJobsPage"));
+const AdminRecruitmentJobFormPage = lazy(() => import("@/pages/admin/AdminRecruitmentJobFormPage"));
+const AdminRecruitmentApplicationsPage = lazy(() => import("@/pages/admin/AdminRecruitmentApplicationsPage"));
 
 function RouteFallback() {
   return (
@@ -79,6 +87,10 @@ function App() {
                     <Route path="/calculators" element={<CalculatorsLandingPage />} />
                     <Route path="/calculators/:slug" element={<CalculatorDetailPage />} />
                     <Route path="/career" element={<CareerPage />} />
+                    <Route path="/careers/jobs" element={<JobsListPage />} />
+                    <Route path="/careers/jobs/:slug" element={<JobDetailPage />} />
+                    <Route path="/careers/jobs/:slug/apply" element={<JobApplyPage />} />
+                    <Route path="/careers/application-success" element={<ApplicationSuccessPage />} />
                     <Route path="/about" element={<AboutPage />} />
                     <Route path="/contact" element={<ContactPage />} />
                     <Route path="*" element={<NotFoundPage />} />
@@ -110,6 +122,11 @@ function App() {
                     <Route path="blogs" element={<AdminBlogsPage />} />
                     <Route path="blogs/new" element={<AdminBlogFormPage />} />
                     <Route path="blogs/:id/edit" element={<AdminBlogFormPage />} />
+                    <Route path="recruitment" element={<AdminRecruitmentDashboardPage />} />
+                    <Route path="recruitment/jobs" element={<AdminRecruitmentJobsPage />} />
+                    <Route path="recruitment/jobs/new" element={<AdminRecruitmentJobFormPage />} />
+                    <Route path="recruitment/jobs/:id/edit" element={<AdminRecruitmentJobFormPage />} />
+                    <Route path="recruitment/applications" element={<AdminRecruitmentApplicationsPage />} />
                     <Route
                       path="users"
                       element={
