@@ -2708,21 +2708,25 @@ async def get_image_thumbnail(id: str = Query(...), w: int = Query(600)):
 
     if cache_file.exists():
         media_type = "image/jpeg"
+        is_fallback = False
         try:
             if meta_file.exists():
                 meta = json.loads(meta_file.read_text(encoding="utf-8"))
                 media_type = meta.get("contentType", media_type)
+                is_fallback = bool(meta.get("isFallback"))
         except Exception:
             pass
-        return FileResponse(
-            str(cache_file),
-            media_type=media_type,
-            headers={"Cache-Control": "public, max-age=2592000, immutable", "X-Cache": "HIT"},
-        )
+        if not is_fallback:
+            return FileResponse(
+                str(cache_file),
+                media_type=media_type,
+                headers={"Cache-Control": "public, max-age=2592000, immutable", "X-Cache": "HIT"},
+            )
 
     urls_to_try = [
         f"https://lh3.googleusercontent.com/d/{id}=w{width}",
         f"https://drive.google.com/thumbnail?id={id}&sz=w{width}",
+        f"https://drive.usercontent.google.com/download?id={id}&export=view",
     ]
 
     headers = {
@@ -2732,7 +2736,7 @@ async def get_image_thumbnail(id: str = Query(...), w: int = Query(600)):
 
     for target_url in urls_to_try:
         try:
-            resp = requests.get(target_url, headers=headers, timeout=3.5, allow_redirects=True)
+            resp = requests.get(target_url, headers=headers, timeout=4.0, allow_redirects=True)
             if resp.status_code == 200:
                 ct = resp.headers.get("Content-Type", "image/jpeg")
                 if len(resp.content) > 500 and "text/html" not in ct:
@@ -2749,21 +2753,85 @@ async def get_image_thumbnail(id: str = Query(...), w: int = Query(600)):
         except Exception:
             continue
 
-    # Graceful fallback to deterministic local luxury image
+    # Graceful fallback without polluting cache
     fb_path = get_server_fallback_image(id)
     if fb_path.exists():
-        try:
-            cache_file.write_bytes(fb_path.read_bytes())
-            meta_file.write_text(json.dumps({"contentType": "image/webp", "isFallback": True}), encoding="utf-8")
-        except Exception:
-            pass
         return FileResponse(
             str(fb_path),
             media_type="image/webp",
-            headers={"Cache-Control": "public, max-age=86400", "X-Fallback": "true"},
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate", "X-Fallback": "true", "X-Drive-Status": "restricted"},
         )
 
     return Response(status_code=404)
+
+
+@api_router.get("/images/validate")
+async def validate_image(id: str = Query(...)):
+    if not id or not re.match(r"^[a-zA-Z0-9_-]+$", id):
+        return {"valid": False, "reason": "invalid_id"}
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "image/*,*/*;q=0.8",
+    }
+    try:
+        resp = requests.get(f"https://lh3.googleusercontent.com/d/{id}=w200", headers=headers, timeout=4.0, allow_redirects=False)
+        ct = resp.headers.get("Content-Type", "")
+        if resp.status_code == 200 and ct.startswith("image/"):
+            return {"valid": True}
+        if resp.status_code in (301, 302, 401, 403) or "text/html" in ct:
+            return {
+                "valid": False,
+                "reason": "restricted",
+                "message": "Google Drive link requires sign-in. Set General access to 'Anyone with the link' -> Viewer in Google Drive.",
+            }
+        if resp.status_code == 404:
+            return {"valid": False, "reason": "not_found", "message": "Google Drive file not found."}
+        return {"valid": False, "reason": "unavailable"}
+    except Exception:
+        return {"valid": False, "reason": "timeout", "message": "Could not reach Google Drive."}
+
+
+@api_router.post("/upload")
+async def direct_upload(request: Request, user: dict = Depends(get_current_user)):
+    try:
+        body = await request.json()
+        base64_data = body.get("base64", "")
+        filename = body.get("filename", "image.webp")
+        content_type = body.get("contentType", "image/webp")
+        if not base64_data:
+            raise HTTPException(status_code=400, detail="No image file provided.")
+
+        clean_base64 = base64_data.split(",")[1].strip() if "," in base64_data else base64_data.strip()
+        data = base64.b64decode(clean_base64)
+        if len(data) > 15 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="Image must be under 15MB.")
+
+        ext = filename.split(".")[-1].lower() if "." in filename else "webp"
+        if ext not in ("jpg", "jpeg", "png", "webp", "gif", "avif"):
+            ext = "webp"
+
+        import uuid
+        unique_name = f"upload_{int(time.time() * 1000)}_{uuid.uuid4().hex[:7]}.{ext}"
+
+        upload_dir = ROOT_DIR.parent / "frontend" / "public" / "uploads"
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        (upload_dir / unique_name).write_bytes(data)
+
+        build_upload_dir = ROOT_DIR.parent / "frontend" / "build" / "uploads"
+        if build_upload_dir.exists():
+            (build_upload_dir / unique_name).write_bytes(data)
+
+        return {
+            "url": f"/uploads/{unique_name}",
+            "filename": unique_name,
+            "size": len(data),
+            "contentType": content_type,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 
 @api_router.get("/files/{path:path}")

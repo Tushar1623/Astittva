@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
-import { ArrowLeft, X, Eye } from "lucide-react";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, getGoogleDriveFileId } from "@/lib/api";
+import { ArrowLeft, X, Eye, Upload, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { sanitizeBlogHtml } from "@/lib/sanitize";
 
@@ -39,6 +39,76 @@ export default function AdminBlogFormPage() {
   const [driveImageUrlInput, setDriveImageUrlInput] = useState("");
   const [preview, setPreview] = useState(false);
   const [slugTouched, setSlugTouched] = useState(false);
+  const fileInputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [driveValidation, setDriveValidation] = useState({ status: "idle", message: "" });
+
+  const checkDriveAccess = async (rawUrl) => {
+    if (!rawUrl || !isGoogleDriveImage(rawUrl)) {
+      setDriveValidation({ status: "idle", message: "" });
+      return;
+    }
+    const fileId = getGoogleDriveFileId(rawUrl);
+    if (!fileId) return;
+
+    setDriveValidation({ status: "checking", message: "Checking Google Drive link permissions..." });
+    try {
+      const { data } = await api.get(`/images/validate?id=${fileId}`);
+      if (data.valid) {
+        setDriveValidation({ status: "valid", message: "Google Drive photo is public and verified." });
+      } else if (data.reason === "restricted") {
+        setDriveValidation({
+          status: "restricted",
+          message: data.message || "File requires sign-in. Set General access to 'Anyone with the link' -> Viewer in Google Drive.",
+        });
+      } else {
+        setDriveValidation({
+          status: "error",
+          message: data.message || "Unable to load image from Google Drive.",
+        });
+      }
+    } catch {
+      setDriveValidation({ status: "idle", message: "" });
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("Image file must be under 15MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result;
+          const { data } = await api.post("/upload", {
+            filename: file.name,
+            contentType: file.type,
+            base64,
+          });
+          set("featured_image", data.url);
+          setDriveImageUrlInput("");
+          setDriveValidation({ status: "idle", message: "" });
+          toast.success("Photo uploaded successfully!");
+        } catch (err) {
+          toast.error(formatApiErrorDetail(err.response?.data?.detail) || "Upload failed");
+        } finally {
+          setUploading(false);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      toast.error("Could not read image file");
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
     if (isEdit) {
@@ -48,6 +118,9 @@ export default function AdminBlogFormPage() {
           setForm({ ...empty, ...data });
           if (data?.featured_image) {
             setDriveImageUrlInput(data.featured_image);
+            if (isGoogleDriveImage(data.featured_image)) {
+              checkDriveAccess(data.featured_image);
+            }
           }
           setSlugTouched(true); // don't auto-overwrite existing slug
         })
@@ -297,25 +370,52 @@ export default function AdminBlogFormPage() {
             </div>
           </div>
 
-          <div className="border border-copper/15 p-6 bg-charcoal-2/30 space-y-4">
-            <div className="overline">Featured Image</div>
+          <div className="border border-copper/15 p-6 bg-charcoal-2/30 space-y-5">
+            <div className="flex items-center justify-between">
+              <div className="overline">Featured Image</div>
+              {currentImageUrl && (
+                <span className="text-[10px] tracking-wider uppercase text-copper font-medium">
+                  {isGoogleDriveImage(currentImageUrl) ? "Google Drive" : "Uploaded Image"}
+                </span>
+              )}
+            </div>
+
+            {/* Preview Box */}
             {imgSrc ? (
-              <div className="relative">
+              <div className="relative group overflow-hidden border border-copper/20 rounded-[4px] aspect-[16/10] bg-charcoal-3">
                 <img
                   src={imgSrc}
                   alt="Featured"
-                  className="w-full aspect-[16/10] object-cover border border-copper/20 rounded-[4px]"
+                  className="w-full h-full object-cover"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
                     e.currentTarget.src = pickBlogFallback({ slug: form.slug, title: form.title });
                   }}
                 />
+
+                {/* Status Overlay Badge */}
+                {driveValidation.status === "restricted" && (
+                  <div className="absolute inset-x-0 bottom-0 bg-red-950/95 text-red-200 p-2.5 text-xs flex items-center gap-2 border-t border-red-500/30">
+                    <AlertTriangle className="w-4 h-4 shrink-0 text-red-400" />
+                    <span className="text-[11px] leading-tight">
+                      Google Drive file is restricted. Website visitors cannot see it until set to &quot;Anyone with the link&quot;.
+                    </span>
+                  </div>
+                )}
+
+                {driveValidation.status === "valid" && (
+                  <div className="absolute top-2 left-2 bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded text-[10px] flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Verified Public
+                  </div>
+                )}
+
                 {currentImageUrl && (
                   <button
                     type="button"
                     onClick={removeImage}
                     data-testid="remove-featured-image"
-                    className="absolute top-2 right-2 bg-black/60 text-white p-1.5 hover:bg-red-500/80 transition rounded"
+                    className="absolute top-2 right-2 bg-black/75 text-white p-1.5 hover:bg-red-500/80 transition rounded"
                     title="Remove image"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -323,11 +423,48 @@ export default function AdminBlogFormPage() {
                 )}
               </div>
             ) : (
-              <div className="border border-dashed border-copper/25 p-6 text-center text-ivory/50 text-xs tracking-[0.25em] uppercase">
-                No image
+              <div className="border border-dashed border-copper/25 p-8 text-center text-ivory/50 text-xs tracking-[0.25em] uppercase">
+                No Featured Image
               </div>
             )}
 
+            {/* Direct Upload Option */}
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/avif,image/gif"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="btn-outline w-full flex items-center justify-center gap-2 py-2.5 text-xs hover:border-copper"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Uploading photo...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 text-copper" /> Upload Photo from Device
+                  </>
+                )}
+              </button>
+              <p className="text-[10px] text-ivory/50 mt-1.5 text-center font-light">
+                JPG, PNG, WebP up to 15MB. Stored directly on site without Google Drive permissions.
+              </p>
+            </div>
+
+            <div className="relative flex py-1 items-center">
+              <div className="flex-grow border-t border-copper/15"></div>
+              <span className="flex-shrink mx-3 text-[10px] uppercase tracking-widest text-ivory/40">or link from Drive</span>
+              <div className="flex-grow border-t border-copper/15"></div>
+            </div>
+
+            {/* Google Drive Link Input */}
             <div>
               <label className="input-label">Google Drive Image Link</label>
               <div className="space-y-2">
@@ -337,32 +474,47 @@ export default function AdminBlogFormPage() {
                   className="input-filled text-xs font-mono"
                   placeholder="https://drive.google.com/file/d/.../view"
                   value={driveImageUrlInput || form.featured_image || ""}
-                  onChange={(e) => handleDriveUrlChange(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      applyDriveImage();
-                    }
+                  onChange={(e) => {
+                    handleDriveUrlChange(e.target.value);
+                    checkDriveAccess(e.target.value);
                   }}
+                  onBlur={(e) => checkDriveAccess(e.target.value)}
                 />
-                {(driveImageUrlInput || form.featured_image) && (
-                  <div className="flex items-center justify-between text-[11px] text-ivory/60 pt-1">
-                    <span className="truncate max-w-[280px] text-copper/80">
-                      Linked: {driveImageUrlInput || form.featured_image}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={removeImage}
-                      className="text-rose-400 hover:text-rose-300 ml-2"
-                    >
-                      Clear
-                    </button>
+
+                {driveValidation.status === "checking" && (
+                  <div className="flex items-center gap-2 text-[11px] text-copper/80 pt-1">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span>Checking link permissions...</span>
+                  </div>
+                )}
+
+                {driveValidation.status === "valid" && (
+                  <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 pt-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Google Drive link is public & verified!</span>
+                  </div>
+                )}
+
+                {driveValidation.status === "restricted" && (
+                  <div className="p-3 bg-red-950/40 border border-red-500/40 rounded space-y-1.5 text-red-200 text-xs mt-2">
+                    <div className="font-semibold flex items-center gap-1.5 text-red-400">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      Google Drive Permission Notice
+                    </div>
+                    <p className="text-[11px] text-red-200/90 leading-relaxed font-light">
+                      This file is set to <strong>Restricted</strong> (or requires sign-in). To allow visitors to see it:
+                    </p>
+                    <ol className="list-decimal list-inside text-[11px] text-red-200/80 space-y-0.5 pl-1 font-light">
+                      <li>Open file in Google Drive</li>
+                      <li>Click <strong>Share</strong> (top-right)</li>
+                      <li>Under General access, change to <strong>Anyone with the link → Viewer</strong></li>
+                    </ol>
+                    <p className="text-[11px] text-copper pt-1">
+                      Or click &quot;Upload Photo from Device&quot; above to bypass Drive permissions.
+                    </p>
                   </div>
                 )}
               </div>
-              <p className="text-[10px] text-ivory/50 mt-2 font-light">
-                Before adding the image, open Google Drive → Share → General access → Anyone with the link → Viewer.
-              </p>
             </div>
           </div>
 

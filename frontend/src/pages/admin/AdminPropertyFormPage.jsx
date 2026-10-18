@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, fileUrl } from "@/lib/api";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, X, Upload, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 const emptyProperty = {
@@ -36,6 +36,52 @@ export default function AdminPropertyFormPage() {
   const [saving, setSaving] = useState(false);
   const [amenityInput, setAmenityInput] = useState("");
   const [driveInputUrl, setDriveInputUrl] = useState("");
+  const fileInputRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handlePropertyFileUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    setUploading(true);
+    let uploadedUrls = [];
+    try {
+      for (const file of files) {
+        if (file.size > 15 * 1024 * 1024) {
+          toast.error(`File ${file.name} exceeds 15MB limit`);
+          continue;
+        }
+
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        const { data } = await api.post("/upload", {
+          filename: file.name,
+          contentType: file.type,
+          base64,
+        });
+
+        if (data?.url) uploadedUrls.push(data.url);
+      }
+
+      if (uploadedUrls.length > 0) {
+        setForm((f) => ({
+          ...f,
+          images: [...(f.images || []), ...uploadedUrls],
+        }));
+        toast.success(`Uploaded ${uploadedUrls.length} photo(s) successfully!`);
+      }
+    } catch (err) {
+      toast.error(formatApiErrorDetail(err.response?.data?.detail) || "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   useEffect(() => {
     if (isEdit) {
@@ -290,6 +336,17 @@ export default function AdminPropertyFormPage() {
                               e.currentTarget.src = "/images/luxe/luxury_villa.webp";
                             }}
                           />
+                          <div className="absolute top-1 left-1">
+                            <span className={`text-[8px] tracking-wider uppercase px-1.5 py-0.5 rounded ${
+                              path.startsWith("/uploads/")
+                                ? "bg-emerald-950/80 text-emerald-300 border border-emerald-500/40"
+                                : isGoogleDriveImage(path)
+                                ? "bg-black/75 text-copper border border-copper/30"
+                                : "bg-black/75 text-ivory/70 border border-white/20"
+                            }`}>
+                              {path.startsWith("/uploads/") ? "Uploaded" : isGoogleDriveImage(path) ? "Drive" : "Asset"}
+                            </span>
+                          </div>
                           <button
                             type="button"
                             onClick={() => removeImage(path)}
@@ -309,11 +366,48 @@ export default function AdminPropertyFormPage() {
                     ))}
                   </div>
                   {driveImages.length === 0 && (
-                    <p className="text-xs text-ivory/40 mb-6 italic">No Google Drive images added yet.</p>
+                    <p className="text-xs text-ivory/40 mb-6 italic">No property images added yet.</p>
                   )}
                 </>
               );
             })()}
+
+            {/* Direct Upload Button */}
+            <div className="mb-5">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/png,image/jpeg,image/webp,image/avif"
+                onChange={handlePropertyFileUpload}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="btn-outline w-full flex items-center justify-center gap-2 py-3 text-xs hover:border-copper"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Uploading photos...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 text-copper" /> + Upload Photos from Device (Select Multiple)
+                  </>
+                )}
+              </button>
+              <p className="text-[10px] text-ivory/50 mt-1.5 text-center font-light">
+                JPG, PNG, WebP up to 15MB each. Uploaded images store directly on Astittva server.
+              </p>
+            </div>
+
+            <div className="relative flex py-1 items-center mb-5">
+              <div className="flex-grow border-t border-copper/15"></div>
+              <span className="flex-shrink mx-3 text-[10px] uppercase tracking-widest text-ivory/40">or link from Google Drive</span>
+              <div className="flex-grow border-t border-copper/15"></div>
+            </div>
 
             {/* Google Drive Image Link Input */}
             <div>
@@ -339,11 +433,11 @@ export default function AdminPropertyFormPage() {
                   data-testid="add-drive-image-button"
                   className="btn-outline shrink-0 inline-flex items-center justify-center gap-2"
                 >
-                  + Add Drive Image
+                  + Add Drive Link
                 </button>
               </div>
               <p className="text-[11px] text-ivory/50 mt-2 font-light">
-                Paste any Google Drive link (e.g. view, sharing, or /file/d/ link). Links are automatically saved when submitting.
+                Paste any Google Drive link. Ensure the file sharing is set to &quot;Anyone with the link&quot; in Google Drive.
               </p>
             </div>
           </section>
