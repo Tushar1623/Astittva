@@ -17,6 +17,7 @@ import {
   BadgePercent,
 } from "lucide-react";
 import Seo from "@/components/Seo";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
@@ -214,7 +215,9 @@ export default function AdminLayout() {
 
       <main className="flex-1 min-w-0 overflow-y-auto">
         <div className="p-4 sm:p-6 lg:p-12 max-w-7xl mx-auto w-full">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </main>
     </div>

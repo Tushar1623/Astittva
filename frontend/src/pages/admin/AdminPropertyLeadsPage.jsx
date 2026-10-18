@@ -31,8 +31,11 @@ export default function AdminPropertyLeadsPage() {
   const load = () => {
     setLoading(true);
     api.get("/admin/leads/property")
-      .then(({ data }) => setLeads(data))
-      .catch((e) => toast.error(formatApiErrorDetail(e.response?.data?.detail) || "Failed to load property leads"))
+      .then(({ data }) => setLeads(Array.isArray(data) ? data : []))
+      .catch((e) => {
+        setLeads([]);
+        toast.error(formatApiErrorDetail(e.response?.data?.detail) || "Failed to load property leads");
+      })
       .finally(() => setLoading(false));
   };
 
@@ -102,7 +105,7 @@ export default function AdminPropertyLeadsPage() {
   };
 
   // Filter & Search
-  const filteredLeads = leads.filter((l) => {
+  const filteredLeads = (Array.isArray(leads) ? leads : []).filter((l) => {
     const matchesStatus =
       statusFilter === "ALL" ||
       (l.status && l.status.toLowerCase() === statusFilter.toLowerCase());

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import api, { formatApiErrorDetail } from "@/lib/api";
+import api, { formatApiErrorDetail, getGoogleDriveFileId, driveProxyUrl } from "@/lib/api";
 import { Plus, Pencil, Trash2, Eye, EyeOff, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
@@ -102,6 +102,12 @@ export default function AdminBlogsPage() {
                         alt={b.title}
                         className="w-14 h-14 object-cover border border-copper/20 rounded-[4px] shrink-0 bg-charcoal-2"
                         onError={(e) => {
+                          const currentSrc = e.currentTarget.src || "";
+                          const driveId = getGoogleDriveFileId(b?.featured_image);
+                          if (driveId && !currentSrc.includes("/images/thumbnail")) {
+                            e.currentTarget.src = driveProxyUrl(driveId, 200);
+                            return;
+                          }
                           e.currentTarget.onerror = null;
                           e.currentTarget.src = pickBlogFallback(b);
                         }}

@@ -14,8 +14,11 @@ export default function AdminUsersPage() {
   const load = () => {
     setLoading(true);
     api.get("/users")
-      .then(({ data }) => setUsers(data))
-      .catch((e) => toast.error(formatApiErrorDetail(e.response?.data?.detail)))
+      .then(({ data }) => setUsers(Array.isArray(data) ? data : []))
+      .catch((e) => {
+        setUsers([]);
+        toast.error(formatApiErrorDetail(e.response?.data?.detail));
+      })
       .finally(() => setLoading(false));
   };
   useEffect(() => { load(); }, []);

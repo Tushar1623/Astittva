@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowUpRight, Calendar, BookOpen } from "lucide-react";
-import api, { isGoogleDriveImage, driveImageUrl } from "@/lib/api";
+import api, { isGoogleDriveImage, driveImageUrl, driveProxyUrl, getGoogleDriveFileId } from "@/lib/api";
 import Seo from "@/components/Seo";
 import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 
@@ -43,6 +43,12 @@ function BlogCard({ blog, idx }) {
             src={img}
             alt={blog.title}
             onError={(e) => {
+              const currentSrc = e.currentTarget.src || "";
+              const driveId = getGoogleDriveFileId(blog?.featured_image);
+              if (driveId && !currentSrc.includes("/images/thumbnail")) {
+                e.currentTarget.src = driveProxyUrl(driveId, 900);
+                return;
+              }
               e.currentTarget.onerror = null;
               e.currentTarget.src = pickBlogFallback(blog);
             }}

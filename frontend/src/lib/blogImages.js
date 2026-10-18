@@ -88,9 +88,11 @@ export function resolveBlogImage(blog, width = 1000) {
       return driveImageUrl(clean, width);
     }
     if (
-      clean.startsWith("http://") ||
-      clean.startsWith("https://") ||
-      clean.startsWith("/")
+      (clean.startsWith("http://") ||
+        clean.startsWith("https://") ||
+        clean.startsWith("/")) &&
+      !clean.includes("drive.google.com") &&
+      !clean.includes("docs.google.com")
     ) {
       return clean;
     }

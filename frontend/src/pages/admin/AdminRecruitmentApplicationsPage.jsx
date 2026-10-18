@@ -96,10 +96,15 @@ export default function AdminRecruitmentApplicationsPage() {
           limit: 100,
         },
       });
-      setApplications(res.data.applications || []);
-      setTotal(res.data.total || 0);
+      const list = Array.isArray(res?.data?.applications)
+        ? res.data.applications
+        : (Array.isArray(res?.data) ? res.data : []);
+      setApplications(list);
+      setTotal(typeof res?.data?.total === "number" ? res.data.total : list.length);
     } catch (err) {
       console.error("Failed to fetch applications:", err);
+      setApplications([]);
+      setTotal(0);
       setError(formatApiErrorDetail(err.response?.data?.detail));
     } finally {
       setLoading(false);

@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, ShieldCheck, Sparkles, Building2, Compass, ChevronRight, MapPin, Globe2, Award, TrendingUp, BadgeCheck, Handshake, Briefcase, MessageCircle, Check, ChevronDown, Loader2 } from "lucide-react";
-import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, fileUrl } from "@/lib/api";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, driveDirectFallbackUrl, fileUrl } from "@/lib/api";
 import { pickPropertyFallback } from "@/components/PropertyCard";
 import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY } from "@/lib/site";
@@ -360,15 +360,21 @@ export default function HomePage() {
                       {(() => {
                         const fallback = pickPropertyFallback(p.id);
                         const driveImg = (p.images || []).find(isGoogleDriveImage);
+                        const anyHttpImg = (p.images || []).find((img) => typeof img === "string" && (img.startsWith("http") || img.startsWith("/uploads/")) && !img.includes("astitva-realestate"));
                         const imgSrc = driveImg
                           ? driveImageUrl(driveImg, 1000)
-                          : (p.images?.[0] ? fileUrl(p.images[0], 1000) : fallback);
+                          : (anyHttpImg ? fileUrl(anyHttpImg, 1000) : (p.images?.[0] ? fileUrl(p.images[0], 1000) : fallback) || fallback);
                         return (
                           <img
                             loading="lazy"
                             src={imgSrc}
                             alt={p.project_name}
                             onError={(e) => {
+                              const currentSrc = e.currentTarget.src || "";
+                              if (driveImg && currentSrc.includes("drive.google.com/thumbnail")) {
+                                e.currentTarget.src = driveDirectFallbackUrl(driveImg, 1000);
+                                return;
+                              }
                               e.currentTarget.onerror = null;
                               e.currentTarget.src = fallback;
                             }}

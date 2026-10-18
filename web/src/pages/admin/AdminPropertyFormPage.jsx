@@ -1,7 +1,7 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import api, { fileUrl, formatApiErrorDetail } from "@/lib/api";
-import { ArrowLeft, Upload, X, Loader2 } from "lucide-react";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, driveDirectFallbackUrl, fileUrl } from "@/lib/api";
+import { ArrowLeft, X } from "lucide-react";
 import { toast } from "sonner";
 
 const emptyProperty = {
@@ -32,44 +32,74 @@ export default function AdminPropertyFormPage() {
   const isEdit = Boolean(id);
   const [form, setForm] = useState(emptyProperty);
   const [loading, setLoading] = useState(isEdit);
+  const [loadError, setLoadError] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [amenityInput, setAmenityInput] = useState("");
-  const fileInputRef = useRef(null);
+  const [driveInputUrl, setDriveInputUrl] = useState("");
 
   useEffect(() => {
     if (isEdit) {
+      setLoading(true);
+      setLoadError(null);
+      // Try admin endpoint first; fall back to public property endpoint if needed
       api.get(`/admin/properties/${id}`)
-        .then(({ data }) => setForm({ ...data, starting_price: data.starting_price ?? "" }))
-        .catch(() => toast.error("Failed to load property"))
+        .catch(() => api.get(`/properties/${id}`))
+        .then(({ data }) => {
+          if (data && typeof data === "object") {
+            setForm({
+              ...emptyProperty,
+              ...data,
+              starting_price: data.starting_price ?? "",
+              images: Array.isArray(data.images) ? data.images : [],
+              amenities: Array.isArray(data.amenities) ? data.amenities : [],
+            });
+          } else {
+            throw new Error("Invalid data format received");
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load property:", err);
+          setLoadError("Failed to load property details. Please try again.");
+          toast.error("Failed to load property");
+        })
         .finally(() => setLoading(false));
     }
   }, [id, isEdit]);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-  const onFiles = async (e) => {
-    const files = Array.from(e.target.files || []);
-    if (!files.length) return;
-    setUploading(true);
-    const newPaths = [];
-    for (const file of files) {
-      const fd = new FormData();
-      fd.append("file", file);
-      try {
-        const { data } = await api.post("/admin/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
-        newPaths.push(data.path);
-      } catch (err) {
-        toast.error(`Upload failed for ${file.name}: ${formatApiErrorDetail(err.response?.data?.detail)}`);
-      }
-    }
-    setForm((f) => ({ ...f, images: [...(f.images || []), ...newPaths] }));
-    setUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  const removeImage = (path) => {
+    setForm((f) => ({ ...f, images: (f.images || []).filter((p) => p !== path) }));
   };
 
-  const removeImage = (path) => {
-    setForm((f) => ({ ...f, images: f.images.filter((p) => p !== path) }));
+  const addDriveImage = () => {
+    const raw = driveInputUrl.trim();
+    if (!raw) {
+      toast.error("Paste a Google Drive image link");
+      return;
+    }
+    // Support multiple URLs pasted at once (comma, semicolon, or newline separated)
+    const candidates = raw.split(/[\n,;]+/).map((s) => s.trim().replace(/^[<"']+|[>"']+$/g, "")).filter(Boolean);
+    const newUrls = [];
+    for (const u of candidates) {
+      if (isGoogleDriveImage(u) || u.startsWith("http")) {
+        newUrls.push(u);
+      } else {
+        toast.error(`Invalid link: ${u.slice(0, 45)}`);
+      }
+    }
+    if (newUrls.length > 0) {
+      setForm((f) => {
+        const existing = f.images || [];
+        const combined = [...existing];
+        newUrls.forEach((url) => {
+          if (!combined.includes(url)) combined.push(url);
+        });
+        return { ...f, images: combined };
+      });
+      setDriveInputUrl("");
+      toast.success(`${newUrls.length} image link(s) added`);
+    }
   };
 
   const addAmenity = () => {
@@ -83,8 +113,22 @@ export default function AdminPropertyFormPage() {
   const submit = async (e) => {
     e.preventDefault();
     setSaving(true);
+
+    // Auto-include any link currently in the input field even if "+ Add Drive Image" wasn't clicked
+    let finalImages = Array.isArray(form.images) ? [...form.images] : [];
+    const pending = driveInputUrl.trim();
+    if (pending) {
+      const candidates = pending.split(/[\n,;]+/).map((s) => s.trim().replace(/^[<"']+|[>"']+$/g, "")).filter(Boolean);
+      candidates.forEach((u) => {
+        if (!finalImages.includes(u) && (isGoogleDriveImage(u) || u.startsWith("http"))) {
+          finalImages.push(u);
+        }
+      });
+    }
+
     const payload = {
       ...form,
+      images: finalImages,
       starting_price: form.starting_price === "" ? null : Number(form.starting_price),
     };
     try {
@@ -103,7 +147,29 @@ export default function AdminPropertyFormPage() {
     }
   };
 
-  if (loading) return <div className="text-ivory/50 text-center py-16 tracking-[0.3em] uppercase text-xs">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="py-24 flex flex-col items-center justify-center space-y-4">
+        <div className="w-8 h-8 border-2 border-copper/30 border-t-copper rounded-full animate-spin" />
+        <div className="text-copper text-xs tracking-[0.3em] uppercase">Loading Property Details...</div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="py-24 text-center space-y-4">
+        <p className="text-rose-400 text-sm">{loadError}</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="btn-outline text-xs tracking-[0.2em] uppercase px-4 py-2"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div data-testid="admin-property-form">
@@ -194,30 +260,99 @@ export default function AdminPropertyFormPage() {
           </div>
         </section>
 
-        {/* Images */}
-        <section className="border border-copper/15 p-8">
-          <h3 className="overline mb-6">Images</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
-            {form.images.map((path) => (
-              <div key={path} className="relative aspect-[4/3] group border border-copper/20">
-                <img loading="lazy" src={fileUrl(path)} alt="" className="w-full h-full object-cover" />
+          {/* Images */}
+          <section className="border border-copper/15 p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="overline">Images</h3>
+              {Array.isArray(form.images) && form.images.length > 0 && (
+                <span className="text-copper text-xs tracking-wider">
+                  {form.images.length} Image{form.images.length !== 1 ? "s" : ""} Attached
+                </span>
+              )}
+            </div>
+            {(() => {
+              const driveImages = (form.images || []).filter(
+                (img) => typeof img === "string" && img.trim().length > 0 && !img.startsWith("astitva-realestate")
+              );
+              return (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+                    {driveImages.map((path) => (
+                      <div key={path} className="relative group border border-copper/20 bg-charcoal/30 flex flex-col overflow-hidden">
+                        <div className="aspect-[4/3] w-full overflow-hidden relative">
+                          <img
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                            src={isGoogleDriveImage(path) ? driveImageUrl(path, 400) : fileUrl(path, 400)}
+                            alt=""
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const currentSrc = e.currentTarget.src || "";
+                              if (isGoogleDriveImage(path) && currentSrc.includes("drive.google.com/thumbnail")) {
+                                e.currentTarget.src = driveDirectFallbackUrl(path, 400);
+                                return;
+                              }
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = "/images/luxe/luxury_villa.webp";
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(path)}
+                            data-testid="remove-image"
+                            className="absolute top-1 right-1 w-7 h-7 bg-charcoal/90 border border-copper/40 flex items-center justify-center text-copper hover:bg-copper hover:text-charcoal transition"
+                            title="Remove image"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="p-2 bg-charcoal-2/80 border-t border-copper/10">
+                          <span className="text-[10px] text-ivory/60 truncate block font-mono" title={path}>
+                            {path}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {driveImages.length === 0 && (
+                    <p className="text-xs text-ivory/40 mb-6 italic">No Google Drive images added yet.</p>
+                  )}
+                </>
+              );
+            })()}
+
+            {/* Google Drive Image Link Input */}
+            <div>
+              <label className="input-label">Google Drive Image Link</label>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="text"
+                  data-testid="form-drive-image-url"
+                  className="input-filled flex-1 font-mono text-xs"
+                  placeholder="https://drive.google.com/file/d/.../view (paste single or multiple links)"
+                  value={driveInputUrl}
+                  onChange={(e) => setDriveInputUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addDriveImage();
+                    }
+                  }}
+                />
                 <button
                   type="button"
-                  onClick={() => removeImage(path)}
-                  data-testid={`remove-image`}
-                  className="absolute top-1 right-1 w-7 h-7 bg-charcoal/90 border border-copper/40 flex items-center justify-center text-copper hover:bg-copper hover:text-charcoal"
+                  onClick={addDriveImage}
+                  data-testid="add-drive-image-button"
+                  className="btn-outline shrink-0 inline-flex items-center justify-center gap-2"
                 >
-                  <X className="w-4 h-4" />
+                  + Add Drive Image
                 </button>
               </div>
-            ))}
-          </div>
-          <label className="btn-outline inline-flex cursor-pointer">
-            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-            {uploading ? "Uploading..." : "Upload Images"}
-            <input ref={fileInputRef} type="file" data-testid="form-image-upload" accept="image/*" multiple className="hidden" onChange={onFiles} />
-          </label>
-        </section>
+              <p className="text-[11px] text-ivory/50 mt-2 font-light">
+                Paste any Google Drive link (e.g. view, sharing, or /file/d/ link). Links are automatically saved when submitting.
+              </p>
+            </div>
+          </section>
 
         {/* Details */}
         <section className="border border-copper/15 p-8">

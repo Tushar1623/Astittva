@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, MapPin, Filter, X, SlidersHorizontal } from "lucide-react";
-import api, { isGoogleDriveImage, driveImageUrl, driveImageFallback } from "@/lib/api";
+import api, { isGoogleDriveImage, driveImageUrl, driveDirectFallbackUrl, fileUrl } from "@/lib/api";
 import Seo from "@/components/Seo";
 import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 
@@ -329,9 +329,12 @@ export default function PropertiesPage() {
                 <Link to={`/properties/${p.id}`}>
                   <div className="aspect-[4/3] overflow-hidden relative">
                     {(() => {
+                      const fallback = pickFallback(p.id);
                       const driveImg = (p.images || []).find(isGoogleDriveImage);
-                      const anyHttpImg = (p.images || []).find((img) => typeof img === "string" && img.startsWith("http"));
-                      const imgSrc = driveImg ? driveImageUrl(driveImg, 1000) : (anyHttpImg || pickFallback(p.id));
+                      const anyHttpImg = (p.images || []).find((img) => typeof img === "string" && (img.startsWith("http") || img.startsWith("/uploads/")) && !img.includes("astitva-realestate"));
+                      const imgSrc = driveImg
+                        ? driveImageUrl(driveImg, 1000)
+                        : (anyHttpImg ? fileUrl(anyHttpImg, 1000) : (p.images?.[0] ? fileUrl(p.images[0], 1000) : fallback) || fallback);
                       return (
                         <img
                           loading="lazy"
@@ -340,8 +343,8 @@ export default function PropertiesPage() {
                           className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
                           onError={(e) => {
                             const currentSrc = e.currentTarget.src || "";
-                            if (driveImg && currentSrc.includes("googleusercontent.com")) {
-                              e.currentTarget.src = driveImageFallback(driveImg, 1000);
+                            if (driveImg && currentSrc.includes("drive.google.com/thumbnail")) {
+                              e.currentTarget.src = driveDirectFallbackUrl(driveImg, 1000);
                               return;
                             }
                             e.currentTarget.onerror = null;

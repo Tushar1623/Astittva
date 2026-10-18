@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight, MapPin } from "lucide-react";
-import { isGoogleDriveImage, driveImageUrl, driveImageFallback } from "@/lib/api";
+import { isGoogleDriveImage, driveImageUrl, driveDirectFallbackUrl, fileUrl } from "@/lib/api";
 
 const FALLBACK_IMAGES = [
   "/images/luxe/luxury_villa.webp",
@@ -28,9 +28,12 @@ export default function PropertyCard({
     testId ||
     (variant === "featured" ? `project-card-${p.id}` : `property-card-${p.id}`);
 
+  const fallback = pickPropertyFallback(p.id);
   const driveImg = (p.images || []).find(isGoogleDriveImage);
-  const anyHttpImg = (p.images || []).find((img) => typeof img === "string" && img.startsWith("http"));
-  const imageSrc = driveImg ? driveImageUrl(driveImg, 1000) : (anyHttpImg || pickPropertyFallback(p.id));
+  const anyHttpImg = (p.images || []).find((img) => typeof img === "string" && (img.startsWith("http") || img.startsWith("/uploads/")) && !img.includes("astitva-realestate"));
+  const imageSrc = driveImg
+    ? driveImageUrl(driveImg, 1000)
+    : (anyHttpImg ? fileUrl(anyHttpImg, 1000) : (p.images?.[0] ? fileUrl(p.images[0], 1000) : fallback) || fallback);
 
   const price =
     p.price_label ||
@@ -48,12 +51,13 @@ export default function PropertyCard({
       <Link to={`/properties/${p.id}`} className="block relative aspect-[4/3] overflow-hidden bg-[#FAF8F5]">
         <img
           loading="lazy"
+          referrerPolicy="no-referrer"
           src={imageSrc}
           alt={`${p.project_name} - ${p.bedrooms || p.property_type || "Luxury Property"} in ${p.location ? `${p.location}, ${p.city}` : p.city || "Kolkata"}`}
           onError={(e) => {
             const currentSrc = e.currentTarget.src || "";
-            if (driveImg && currentSrc.includes("googleusercontent.com")) {
-              e.currentTarget.src = driveImageFallback(driveImg, 1000);
+            if (driveImg && currentSrc.includes("drive.google.com/thumbnail")) {
+              e.currentTarget.src = driveDirectFallbackUrl(driveImg, 1000);
               return;
             }
             e.currentTarget.onerror = null;

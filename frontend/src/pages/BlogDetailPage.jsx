@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Calendar, ArrowLeft, ArrowUpRight } from "lucide-react";
-import api, { isGoogleDriveImage, driveImageUrl } from "@/lib/api";
+import api, { isGoogleDriveImage, driveImageUrl, driveProxyUrl, getGoogleDriveFileId } from "@/lib/api";
 import Seo from "@/components/Seo";
 import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import { sanitizeBlogHtml } from "@/lib/sanitize";
+import { resolveBlogImage, pickBlogFallback } from "@/lib/blogImages";
 
 function formatDate(iso) {
   if (!iso) return "";
@@ -19,8 +20,6 @@ function formatDate(iso) {
     return iso;
   }
 }
-
-import { resolveBlogImage, pickBlogFallback } from "@/lib/blogImages";
 
 export default function BlogDetailPage() {
   const { slug } = useParams();
@@ -197,6 +196,12 @@ export default function BlogDetailPage() {
                 src={img}
                 alt={blog.title}
                 onError={(e) => {
+                  const currentSrc = e.currentTarget.src || "";
+                  const driveId = getGoogleDriveFileId(blog?.featured_image);
+                  if (driveId && !currentSrc.includes("/images/thumbnail")) {
+                    e.currentTarget.src = driveProxyUrl(driveId, 1200);
+                    return;
+                  }
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = pickBlogFallback(blog);
                 }}

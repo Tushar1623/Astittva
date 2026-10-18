@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MapPin, Building2, Calendar, BadgeCheck, Home, ArrowLeft, Phone, MessageCircle } from "lucide-react";
-import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, fileUrl } from "@/lib/api";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, driveDirectFallbackUrl, fileUrl } from "@/lib/api";
 import { pickPropertyFallback } from "@/components/PropertyCard";
 import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY } from "@/lib/site";
@@ -18,7 +18,10 @@ function PropertySeo({ property, id }) {
     `Explore ${property.project_name}${property.location ? ` in ${property.location}` : ""}, Kolkata by ${property.builder || "Astittva Marketing"}. ${priceTxt ? `Starting ${priceTxt}. ` : ""}Verified details, floor plans, and site visits.`;
 
   const primaryFallback = pickPropertyFallback(property.id || id);
-  const firstResolved = (property.images || []).map((img) => (typeof img === "string" ? fileUrl(img, 1200) : "")).find(Boolean);
+  const driveImg = (property.images || []).find(isGoogleDriveImage);
+  const firstResolved = driveImg
+    ? driveImageUrl(driveImg, 1200)
+    : (property.images || []).map((img) => (typeof img === "string" ? fileUrl(img, 1200) : "")).find(Boolean);
   const image = firstResolved || primaryFallback;
 
   const breadcrumbs = [
@@ -152,10 +155,14 @@ export default function PropertyDetailPage() {
 
   const primaryFallback = pickPropertyFallback(property.id || id);
   const rawList = Array.isArray(property.images) ? property.images : [];
+  const driveImg = rawList.find(isGoogleDriveImage);
   const resolvedImages = rawList
     .map((img) => (typeof img === "string" ? fileUrl(img, 1200) : ""))
     .filter(Boolean);
-  const images = resolvedImages.length > 0 ? resolvedImages : [primaryFallback];
+  const finalImages = driveImg
+    ? [driveImageUrl(driveImg, 1200), ...resolvedImages.filter((u) => u !== driveImageUrl(driveImg, 1200))]
+    : resolvedImages;
+  const images = finalImages.length > 0 ? finalImages : [primaryFallback];
 
   return (
     <div data-testid="property-detail-page" className="pt-28 pb-24">
@@ -188,10 +195,16 @@ export default function PropertyDetailPage() {
             {images.length > 0 && images[activeImg] ? (
               <img
                 loading="lazy"
+                referrerPolicy="no-referrer"
                 src={images[activeImg]}
                 alt={`${property.project_name} - ${property.bedrooms || property.property_type || "Luxury apartment"} in ${property.location || property.city || "Kolkata"}`}
                 className="w-full h-full object-cover"
                 onError={(e) => {
+                  const currentSrc = e.currentTarget.src || "";
+                  if (driveImg && currentSrc.includes("drive.google.com/thumbnail")) {
+                    e.currentTarget.src = driveDirectFallbackUrl(driveImg, 1200);
+                    return;
+                  }
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = primaryFallback;
                 }}
@@ -213,10 +226,16 @@ export default function PropertyDetailPage() {
                 >
                   <img
                     loading="lazy"
+                    referrerPolicy="no-referrer"
                     src={img}
                     alt={`${property.project_name} gallery preview ${i + 1}`}
                     className="absolute inset-0 w-full h-full object-cover"
                     onError={(e) => {
+                      const currentSrc = e.currentTarget.src || "";
+                      if (driveImg && currentSrc.includes("drive.google.com/thumbnail")) {
+                        e.currentTarget.src = driveDirectFallbackUrl(driveImg, 400);
+                        return;
+                      }
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = primaryFallback;
                     }}

@@ -30,8 +30,11 @@ export default function AdminCareerApplicationsPage() {
   const load = () => {
     setLoading(true);
     api.get("/admin/leads/career")
-      .then(({ data }) => setApplications(data))
-      .catch((e) => toast.error(formatApiErrorDetail(e.response?.data?.detail) || "Failed to load career applications"))
+      .then(({ data }) => setApplications(Array.isArray(data) ? data : []))
+      .catch((e) => {
+        setApplications([]);
+        toast.error(formatApiErrorDetail(e.response?.data?.detail) || "Failed to load career applications");
+      })
       .finally(() => setLoading(false));
   };
 
@@ -121,7 +124,7 @@ export default function AdminCareerApplicationsPage() {
   };
 
   // Filter & Search
-  const filteredApps = applications.filter((a) => {
+  const filteredApps = (Array.isArray(applications) ? applications : []).filter((a) => {
     const matchesStatus =
       statusFilter === "ALL" ||
       (a.status && a.status.toLowerCase() === statusFilter.toLowerCase());

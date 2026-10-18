@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, fileUrl } from "@/lib/api";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, driveDirectFallbackUrl, fileUrl } from "@/lib/api";
 import { pickPropertyFallback } from "@/components/PropertyCard";
 import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
@@ -14,8 +14,11 @@ export default function AdminPropertiesPage() {
   const load = () => {
     setLoading(true);
     api.get("/admin/properties")
-      .then(({ data }) => setProperties(data))
-      .catch((e) => toast.error(formatApiErrorDetail(e.response?.data?.detail)))
+      .then(({ data }) => setProperties(Array.isArray(data) ? data : []))
+      .catch((e) => {
+        setProperties([]);
+        toast.error(formatApiErrorDetail(e.response?.data?.detail));
+      })
       .finally(() => setLoading(false));
   };
 
@@ -80,14 +83,21 @@ export default function AdminPropertiesPage() {
                       {(() => {
                         const fallback = pickPropertyFallback(p.id);
                         const driveImg = (p.images || []).find(isGoogleDriveImage);
-                        const imgSrc = driveImg ? driveImageUrl(driveImg, 150) : (p.images?.[0] ? fileUrl(p.images[0], 150) : fallback);
+                        const anyHttpImg = (p.images || []).find((img) => typeof img === "string" && (img.startsWith("http") || img.startsWith("/uploads/")) && !img.includes("astitva-realestate"));
+                        const imgSrc = driveImg ? driveImageUrl(driveImg, 150) : (anyHttpImg ? fileUrl(anyHttpImg, 150) : (p.images?.[0] ? fileUrl(p.images[0], 150) : fallback) || fallback);
                         return (
                           <img
                             loading="lazy"
+                            referrerPolicy="no-referrer"
                             src={imgSrc}
                             alt=""
                             className="w-12 h-12 object-cover border border-copper/20 rounded-[4px] shrink-0 bg-charcoal-2"
                             onError={(e) => {
+                              const currentSrc = e.currentTarget.src || "";
+                              if (driveImg && currentSrc.includes("drive.google.com/thumbnail")) {
+                                e.currentTarget.src = driveDirectFallbackUrl(driveImg, 150);
+                                return;
+                              }
                               e.currentTarget.onerror = null;
                               e.currentTarget.src = fallback;
                             }}

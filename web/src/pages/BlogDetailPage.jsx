@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Calendar, ArrowLeft, ArrowUpRight } from "lucide-react";
-import api, { isGoogleDriveImage, driveImageUrl, driveImageFallback } from "@/lib/api";
+import api, { isGoogleDriveImage, driveImageUrl, driveProxyUrl, getGoogleDriveFileId } from "@/lib/api";
 import Seo from "@/components/Seo";
 import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import { sanitizeBlogHtml } from "@/lib/sanitize";
+import { resolveBlogImage, pickBlogFallback } from "@/lib/blogImages";
 
 function formatDate(iso) {
   if (!iso) return "";
@@ -18,13 +19,6 @@ function formatDate(iso) {
   } catch {
     return iso;
   }
-}
-
-function blogImage(src) {
-  if (!src) return "";
-  if (isGoogleDriveImage(src)) return driveImageUrl(src, 1200);
-  if (src.startsWith("http")) return src;
-  return "";
 }
 
 export default function BlogDetailPage() {
@@ -75,8 +69,19 @@ export default function BlogDetailPage() {
     );
   }
 
-  const img = blogImage(blog.featured_image);
-  const seoTitle = blog.seo_title || blog.title;
+  const img = resolveBlogImage(blog, 1200);
+  const matchedArea = ["New Town", "Rajarhat", "Salt Lake", "EM Bypass", "Kolkata"].find((a) =>
+    `${blog.title} ${blog.short_description || ""}`.toLowerCase().includes(a.toLowerCase())
+  ) || "Kolkata";
+
+  let rawTitle = (blog.seo_title || blog.title || "Real Estate Journal").trim();
+  rawTitle = rawTitle.replace(/\s*\|\s*Astittva.*$/i, "").trim();
+
+  const hasAreaMention = new RegExp(`\\bin\\s+(${matchedArea}|Kolkata)\\b`, "i").test(rawTitle);
+  const formattedBlogTitle = hasAreaMention
+    ? `${rawTitle} | Astittva Marketing`
+    : `${rawTitle} in ${matchedArea} | Astittva Marketing`;
+
   const seoDesc =
     blog.seo_description ||
     blog.short_description ||
@@ -111,7 +116,7 @@ export default function BlogDetailPage() {
   return (
     <div data-testid="blog-detail-page" className="relative text-ivory">
       <Seo
-        title={`${seoTitle} | Astittva Marketing`}
+        title={formattedBlogTitle}
         description={seoDesc}
         path={`/blogs/${blog.slug}`}
         image={img || undefined}
@@ -192,11 +197,13 @@ export default function BlogDetailPage() {
                 alt={blog.title}
                 onError={(e) => {
                   const currentSrc = e.currentTarget.src || "";
-                  if (isGoogleDriveImage(blog.featured_image) && currentSrc.includes("googleusercontent.com")) {
-                    e.currentTarget.src = driveImageFallback(blog.featured_image, 1200);
+                  const driveId = getGoogleDriveFileId(blog?.featured_image);
+                  if (driveId && !currentSrc.includes("/images/thumbnail")) {
+                    e.currentTarget.src = driveProxyUrl(driveId, 1200);
                     return;
                   }
-                  e.currentTarget.style.display = "none";
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = pickBlogFallback(blog);
                 }}
                 className="w-full h-full object-cover"
               />

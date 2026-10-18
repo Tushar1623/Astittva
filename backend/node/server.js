@@ -248,6 +248,21 @@ function effectivePrice(doc) {
 }
 
 function serializeProperty(doc) {
+  const rawImgs = Array.isArray(doc.images) ? doc.images : [];
+  const valid = [];
+  const legacy = [];
+  for (const img of rawImgs) {
+    if (typeof img === "string" && img.trim()) {
+      const clean = img.trim();
+      if (clean.includes("drive.google.com") || clean.includes("googleusercontent.com") || clean.startsWith("http://") || clean.startsWith("https://") || clean.startsWith("/uploads/")) {
+        valid.push(clean);
+      } else if (!clean.startsWith("astitva-realestate")) {
+        legacy.push(clean);
+      }
+    }
+  }
+  const orderedImages = [...valid, ...legacy];
+
   return {
     id: String(doc._id),
     project_name: doc.project_name || "",
@@ -259,7 +274,8 @@ function serializeProperty(doc) {
     property_type: doc.property_type || "",
     property_category: doc.property_category || "",
     description: doc.description || "",
-    images: Array.isArray(doc.images) ? doc.images : [],
+    featured_image: doc.featured_image || (valid[0] || ""),
+    images: orderedImages,
     rera_number: doc.rera_number || "",
     possession_date: doc.possession_date || "",
     availability: doc.availability || "",
@@ -853,7 +869,7 @@ function getLocalFallbackImage(seed = "") {
 
 app.get("/api/images/thumbnail", async (req, res) => {
   const fileId = req.query.id;
-  if (!fileId || typeof fileId !== "string" || !/^[a-zA-Z0-9_-]+$/.test(fileId)) {
+  if (!fileId || typeof fileId !== "string" || !/^[a-zA-Z0-9_-]{20,60}$/.test(fileId)) {
     return res.status(400).json({ detail: "Invalid image ID" });
   }
 
@@ -863,28 +879,41 @@ app.get("/api/images/thumbnail", async (req, res) => {
 
   if (fs.existsSync(cacheFile)) {
     let contentType = "image/jpeg";
+    let isFallback = false;
     try {
       if (fs.existsSync(metaFile)) {
         const meta = JSON.parse(fs.readFileSync(metaFile, "utf8"));
         contentType = meta.contentType || contentType;
+        isFallback = Boolean(meta.isFallback);
       }
     } catch {}
-    res.set({
-      "Content-Type": contentType,
-      "Cache-Control": "public, max-age=2592000, immutable",
-      "X-Cache": "HIT",
-    });
-    return fs.createReadStream(cacheFile).pipe(res);
+
+    // Only serve from disk cache if it is a genuine successful image fetch, NOT a poisoned fallback
+    if (!isFallback) {
+      res.set({
+        "Content-Type": contentType,
+        "Cache-Control": "public, max-age=2592000, immutable",
+        "X-Cache": "HIT",
+      });
+      return fs.createReadStream(cacheFile).pipe(res);
+    } else {
+      // Clean up poisoned fallback cache entry so upstream can be re-attempted
+      try {
+        fs.unlinkSync(cacheFile);
+        if (fs.existsSync(metaFile)) fs.unlinkSync(metaFile);
+      } catch {}
+    }
   }
 
   const urlsToTry = [
     `https://lh3.googleusercontent.com/d/${fileId}=w${width}`,
     `https://drive.google.com/thumbnail?id=${fileId}&sz=w${width}`,
+    `https://drive.google.com/uc?id=${fileId}&export=view`,
   ];
 
   for (const targetUrl of urlsToTry) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
     try {
       const upstream = await fetch(targetUrl, {
@@ -919,12 +948,10 @@ app.get("/api/images/thumbnail", async (req, res) => {
   // Graceful fallback to deterministic local luxury editorial image
   const fbPath = getLocalFallbackImage(fileId);
   if (fs.existsSync(fbPath)) {
-    // Cache the fallback image so future requests resolve in <1ms without network delays
-    fs.promises.copyFile(fbPath, cacheFile).catch(() => {});
-    fs.promises.writeFile(metaFile, JSON.stringify({ contentType: "image/webp", isFallback: true })).catch(() => {});
+    // Serve fallback on-the-fly with short cache so future requests re-attempt Google Drive
     res.set({
       "Content-Type": "image/webp",
-      "Cache-Control": "public, max-age=86400",
+      "Cache-Control": "public, max-age=60",
       "X-Fallback": "true",
     });
     return fs.createReadStream(fbPath).pipe(res);

@@ -1,9 +1,25 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, getGoogleDriveFileId } from "@/lib/api";
-import { ArrowLeft, X, Eye, Upload, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
+import api, {
+  formatApiErrorDetail,
+  isGoogleDriveImage,
+  driveImageUrl,
+  driveProxyUrl,
+  getGoogleDriveFileId,
+} from "@/lib/api";
+import {
+  ArrowLeft,
+  X,
+  Eye,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  ExternalLink,
+  RefreshCw,
+} from "lucide-react";
 import { toast } from "sonner";
 import { sanitizeBlogHtml } from "@/lib/sanitize";
+import { resolveBlogImage, pickBlogFallback } from "@/lib/blogImages";
 
 const empty = {
   title: "",
@@ -27,8 +43,6 @@ function slugify(s) {
     .slice(0, 120);
 }
 
-import { resolveBlogImage, pickBlogFallback } from "@/lib/blogImages";
-
 export default function AdminBlogFormPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -39,76 +53,9 @@ export default function AdminBlogFormPage() {
   const [driveImageUrlInput, setDriveImageUrlInput] = useState("");
   const [preview, setPreview] = useState(false);
   const [slugTouched, setSlugTouched] = useState(false);
-  const fileInputRef = useRef(null);
-  const [uploading, setUploading] = useState(false);
-  const [driveValidation, setDriveValidation] = useState({ status: "idle", message: "" });
-
-  const checkDriveAccess = async (rawUrl) => {
-    if (!rawUrl || !isGoogleDriveImage(rawUrl)) {
-      setDriveValidation({ status: "idle", message: "" });
-      return;
-    }
-    const fileId = getGoogleDriveFileId(rawUrl);
-    if (!fileId) return;
-
-    setDriveValidation({ status: "checking", message: "Checking Google Drive link permissions..." });
-    try {
-      const { data } = await api.get(`/images/validate?id=${fileId}`);
-      if (data.valid) {
-        setDriveValidation({ status: "valid", message: "Google Drive photo is public and verified." });
-      } else if (data.reason === "restricted") {
-        setDriveValidation({
-          status: "restricted",
-          message: data.message || "File requires sign-in. Set General access to 'Anyone with the link' -> Viewer in Google Drive.",
-        });
-      } else {
-        setDriveValidation({
-          status: "error",
-          message: data.message || "Unable to load image from Google Drive.",
-        });
-      }
-    } catch {
-      setDriveValidation({ status: "idle", message: "" });
-    }
-  };
-
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 15 * 1024 * 1024) {
-      toast.error("Image file must be under 15MB");
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const base64 = reader.result;
-          const { data } = await api.post("/upload", {
-            filename: file.name,
-            contentType: file.type,
-            base64,
-          });
-          set("featured_image", data.url);
-          setDriveImageUrlInput("");
-          setDriveValidation({ status: "idle", message: "" });
-          toast.success("Photo uploaded successfully!");
-        } catch (err) {
-          toast.error(formatApiErrorDetail(err.response?.data?.detail) || "Upload failed");
-        } finally {
-          setUploading(false);
-          if (fileInputRef.current) fileInputRef.current.value = "";
-        }
-      };
-      reader.readAsDataURL(file);
-    } catch {
-      toast.error("Could not read image file");
-      setUploading(false);
-    }
-  };
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [imageRetryCount, setImageRetryCount] = useState(0);
 
   useEffect(() => {
     if (isEdit) {
@@ -118,9 +65,6 @@ export default function AdminBlogFormPage() {
           setForm({ ...empty, ...data });
           if (data?.featured_image) {
             setDriveImageUrlInput(data.featured_image);
-            if (isGoogleDriveImage(data.featured_image)) {
-              checkDriveAccess(data.featured_image);
-            }
           }
           setSlugTouched(true); // don't auto-overwrite existing slug
         })
@@ -138,23 +82,48 @@ export default function AdminBlogFormPage() {
 
   const handleDriveUrlChange = (val) => {
     setDriveImageUrlInput(val);
-    set("featured_image", val.trim());
+    const trimmed = val.trim();
+    const detectedId = getGoogleDriveFileId(trimmed);
+    if (detectedId) {
+      set("featured_image", trimmed);
+      setImageError(false);
+      setImageLoading(true);
+      setImageRetryCount(0);
+    } else if (!trimmed) {
+      set("featured_image", "");
+      setImageError(false);
+      setImageLoading(false);
+      setImageRetryCount(0);
+    }
   };
 
   const applyDriveImage = () => {
     const url = (driveImageUrlInput || form.featured_image || "").trim();
     if (!url) {
-      toast.error("Paste a Google Drive image link");
+      toast.error("Please paste a Google Drive image link");
+      return;
+    }
+    const detectedId = getGoogleDriveFileId(url);
+    if (!detectedId) {
+      toast.error(
+        "Invalid Google Drive link. Please enter a full link with file ID (e.g. https://drive.google.com/file/d/...)"
+      );
       return;
     }
     set("featured_image", url);
     setDriveImageUrlInput(url);
+    setImageError(false);
+    setImageLoading(true);
+    setImageRetryCount(0);
     toast.success("Google Drive image linked");
   };
 
   const removeImage = () => {
     set("featured_image", "");
     setDriveImageUrlInput("");
+    setImageError(false);
+    setImageLoading(false);
+    setImageRetryCount(0);
   };
 
   const submit = async (e, overrideStatus) => {
@@ -196,8 +165,24 @@ export default function AdminBlogFormPage() {
     );
   }
 
-  const currentImageUrl = form.featured_image || driveImageUrlInput;
-  const imgSrc = resolveBlogImage({ featured_image: currentImageUrl, slug: form.slug, title: form.title }, 800);
+  const currentImageUrl = (driveImageUrlInput || form.featured_image || "").trim();
+  const driveId = getGoogleDriveFileId(currentImageUrl);
+  const isDirectImage =
+    (currentImageUrl.startsWith("http://") ||
+      currentImageUrl.startsWith("https://") ||
+      currentImageUrl.startsWith("/")) &&
+    !currentImageUrl.includes("drive.google.com") &&
+    !currentImageUrl.includes("docs.google.com");
+  const hasIncompleteDriveUrl = currentImageUrl.includes("drive.google.com") && !driveId;
+
+  // Direct Google CDN for instantaneous, high-speed preview with proxy retry fallback
+  const imgSrc = driveId
+    ? imageRetryCount > 0
+      ? driveProxyUrl(driveId, 800)
+      : driveImageUrl(driveId, 800)
+    : isDirectImage
+    ? currentImageUrl
+    : "";
 
   return (
     <div data-testid="admin-blog-form-page">
@@ -370,151 +355,162 @@ export default function AdminBlogFormPage() {
             </div>
           </div>
 
-          <div className="border border-copper/15 p-6 bg-charcoal-2/30 space-y-5">
+          <div className="border border-copper/15 p-6 bg-charcoal-2/30 space-y-4">
             <div className="flex items-center justify-between">
               <div className="overline">Featured Image</div>
-              {currentImageUrl && (
-                <span className="text-[10px] tracking-wider uppercase text-copper font-medium">
-                  {isGoogleDriveImage(currentImageUrl) ? "Google Drive" : "Uploaded Image"}
-                </span>
+              {imgSrc && (
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  data-testid="remove-featured-image"
+                  className="text-[10px] uppercase tracking-wider text-rose-400 hover:text-rose-300 transition"
+                >
+                  Remove
+                </button>
               )}
             </div>
 
-            {/* Preview Box */}
             {imgSrc ? (
-              <div className="relative group overflow-hidden border border-copper/20 rounded-[4px] aspect-[16/10] bg-charcoal-3">
-                <img
-                  src={imgSrc}
-                  alt="Featured"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = pickBlogFallback({ slug: form.slug, title: form.title });
-                  }}
-                />
+              <div className="space-y-2">
+                <div className="relative overflow-hidden rounded-[4px] border border-copper/20 bg-charcoal-2 min-h-[140px]">
+                  {imageLoading && (
+                    <div className="absolute inset-0 bg-charcoal-2/80 backdrop-blur-sm flex flex-col items-center justify-center gap-2 z-10">
+                      <Loader2 className="w-5 h-5 text-copper animate-spin" />
+                      <span className="text-[11px] text-ivory/80 uppercase tracking-widest">
+                        Fetching image…
+                      </span>
+                    </div>
+                  )}
 
-                {/* Status Overlay Badge */}
-                {driveValidation.status === "restricted" && (
-                  <div className="absolute inset-x-0 bottom-0 bg-red-950/95 text-red-200 p-2.5 text-xs flex items-center gap-2 border-t border-red-500/30">
-                    <AlertTriangle className="w-4 h-4 shrink-0 text-red-400" />
-                    <span className="text-[11px] leading-tight">
-                      Google Drive file is restricted. Website visitors cannot see it until set to &quot;Anyone with the link&quot;.
-                    </span>
+                  {!imageError ? (
+                    <div className="relative">
+                      <img
+                        key={`${imgSrc}-${imageRetryCount}`}
+                        src={imgSrc}
+                        alt="Featured"
+                        className="w-full aspect-[16/10] object-cover"
+                        onLoad={() => {
+                          setImageLoading(false);
+                          setImageError(false);
+                        }}
+                        onError={() => {
+                          if (imageRetryCount === 0 && driveId) {
+                            // Automatically fall back to backend proxy cache on first CDN error
+                            setImageRetryCount(1);
+                          } else {
+                            setImageLoading(false);
+                            setImageError(true);
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="absolute top-2 right-2 bg-black/70 hover:bg-red-500 text-white p-1.5 transition rounded z-20"
+                        title="Remove image"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-5 text-center bg-rose-950/20 border border-rose-500/30 rounded flex flex-col items-center justify-center gap-2">
+                      <AlertCircle className="w-6 h-6 text-rose-400" />
+                      <div className="text-xs text-rose-200 font-medium">
+                        Could not load image from Google Drive
+                      </div>
+                      <p className="text-[11px] text-ivory/70 max-w-xs leading-relaxed">
+                        Please check Google Drive sharing: Open Drive &rarr; Share &rarr; General access &rarr; set to <strong>Anyone with the link &rarr; Viewer</strong>.
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <a
+                          href={currentImageUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn-outline text-[11px] py-1 px-3 inline-flex items-center gap-1"
+                        >
+                          Check Permissions <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImageError(false);
+                            setImageLoading(true);
+                            setImageRetryCount((c) => c + 1);
+                          }}
+                          className="btn-primary text-[11px] py-1 px-3 inline-flex items-center gap-1"
+                        >
+                          <RefreshCw className="w-3 h-3" /> Retry
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {!imageLoading && !imageError && driveId && (
+                  <div className="flex items-center gap-1.5 text-emerald-400 text-xs">
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>Live Google Drive preview loaded</span>
                   </div>
-                )}
-
-                {driveValidation.status === "valid" && (
-                  <div className="absolute top-2 left-2 bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded text-[10px] flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" />
-                    Verified Public
-                  </div>
-                )}
-
-                {currentImageUrl && (
-                  <button
-                    type="button"
-                    onClick={removeImage}
-                    data-testid="remove-featured-image"
-                    className="absolute top-2 right-2 bg-black/75 text-white p-1.5 hover:bg-red-500/80 transition rounded"
-                    title="Remove image"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
                 )}
               </div>
             ) : (
-              <div className="border border-dashed border-copper/25 p-8 text-center text-ivory/50 text-xs tracking-[0.25em] uppercase">
-                No Featured Image
+              <div className="border border-dashed border-copper/25 p-6 text-center text-ivory/50 text-xs tracking-[0.25em] uppercase rounded-[4px]">
+                No featured image attached
               </div>
             )}
 
-            {/* Direct Upload Option */}
-            <div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/avif,image/gif"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="btn-outline w-full flex items-center justify-center gap-2 py-2.5 text-xs hover:border-copper"
-              >
-                {uploading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" /> Uploading photo...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4 text-copper" /> Upload Photo from Device
-                  </>
-                )}
-              </button>
-              <p className="text-[10px] text-ivory/50 mt-1.5 text-center font-light">
-                JPG, PNG, WebP up to 15MB. Stored directly on site without Google Drive permissions.
-              </p>
-            </div>
-
-            <div className="relative flex py-1 items-center">
-              <div className="flex-grow border-t border-copper/15"></div>
-              <span className="flex-shrink mx-3 text-[10px] uppercase tracking-widest text-ivory/40">or link from Drive</span>
-              <div className="flex-grow border-t border-copper/15"></div>
-            </div>
-
-            {/* Google Drive Link Input */}
             <div>
               <label className="input-label">Google Drive Image Link</label>
               <div className="space-y-2">
-                <input
-                  type="text"
-                  data-testid="blog-drive-image-input"
-                  className="input-filled text-xs font-mono"
-                  placeholder="https://drive.google.com/file/d/.../view"
-                  value={driveImageUrlInput || form.featured_image || ""}
-                  onChange={(e) => {
-                    handleDriveUrlChange(e.target.value);
-                    checkDriveAccess(e.target.value);
-                  }}
-                  onBlur={(e) => checkDriveAccess(e.target.value)}
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    data-testid="blog-drive-image-input"
+                    className="input-filled text-xs font-mono flex-1"
+                    placeholder="https://drive.google.com/file/d/.../view"
+                    value={driveImageUrlInput || form.featured_image || ""}
+                    onChange={(e) => handleDriveUrlChange(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        applyDriveImage();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={applyDriveImage}
+                    className="btn-outline px-3 py-1.5 text-xs whitespace-nowrap"
+                    title="Apply image link"
+                  >
+                    Preview
+                  </button>
+                </div>
 
-                {driveValidation.status === "checking" && (
-                  <div className="flex items-center gap-2 text-[11px] text-copper/80 pt-1">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    <span>Checking link permissions...</span>
-                  </div>
+                {hasIncompleteDriveUrl && (
+                  <p className="text-[11px] text-amber-400/90">
+                    Incomplete link. Please paste the full Google Drive link (file ID must be 20+ characters).
+                  </p>
                 )}
 
-                {driveValidation.status === "valid" && (
-                  <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 pt-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Google Drive link is public & verified!</span>
-                  </div>
-                )}
-
-                {driveValidation.status === "restricted" && (
-                  <div className="p-3 bg-red-950/40 border border-red-500/40 rounded space-y-1.5 text-red-200 text-xs mt-2">
-                    <div className="font-semibold flex items-center gap-1.5 text-red-400">
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                      Google Drive Permission Notice
-                    </div>
-                    <p className="text-[11px] text-red-200/90 leading-relaxed font-light">
-                      This file is set to <strong>Restricted</strong> (or requires sign-in). To allow visitors to see it:
-                    </p>
-                    <ol className="list-decimal list-inside text-[11px] text-red-200/80 space-y-0.5 pl-1 font-light">
-                      <li>Open file in Google Drive</li>
-                      <li>Click <strong>Share</strong> (top-right)</li>
-                      <li>Under General access, change to <strong>Anyone with the link → Viewer</strong></li>
-                    </ol>
-                    <p className="text-[11px] text-copper pt-1">
-                      Or click &quot;Upload Photo from Device&quot; above to bypass Drive permissions.
-                    </p>
+                {(driveImageUrlInput || form.featured_image) && (
+                  <div className="flex items-center justify-between text-[11px] text-ivory/60 pt-1">
+                    <span className="truncate max-w-[220px] text-copper/80">
+                      Linked: {driveImageUrlInput || form.featured_image}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      className="text-rose-400 hover:text-rose-300 ml-2"
+                    >
+                      Clear
+                    </button>
                   </div>
                 )}
               </div>
+              <p className="text-[10px] text-ivory/50 mt-2 font-light">
+                Before adding the image, open Google Drive &rarr; Share &rarr; General access &rarr; Anyone with the link &rarr; Viewer.
+              </p>
             </div>
           </div>
 

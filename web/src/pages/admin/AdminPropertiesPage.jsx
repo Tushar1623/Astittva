@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import api, { fileUrl, formatApiErrorDetail } from "@/lib/api";
+import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, driveDirectFallbackUrl, fileUrl } from "@/lib/api";
+import { pickPropertyFallback } from "@/components/PropertyCard";
 import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
@@ -13,8 +14,11 @@ export default function AdminPropertiesPage() {
   const load = () => {
     setLoading(true);
     api.get("/admin/properties")
-      .then(({ data }) => setProperties(data))
-      .catch((e) => toast.error(formatApiErrorDetail(e.response?.data?.detail)))
+      .then(({ data }) => setProperties(Array.isArray(data) ? data : []))
+      .catch((e) => {
+        setProperties([]);
+        toast.error(formatApiErrorDetail(e.response?.data?.detail));
+      })
       .finally(() => setLoading(false));
   };
 
@@ -76,13 +80,30 @@ export default function AdminPropertiesPage() {
                 <tr key={p.id} className="border-t border-copper/10 hover:bg-charcoal-2/30">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
-                      {p.images?.[0] ? (
-                        <img loading="lazy" src={fileUrl(p.images[0])} alt="" className="w-12 h-12 object-cover border border-copper/20" />
-                      ) : (
-                        <div className="w-12 h-12 bg-charcoal-2 border border-copper/10 flex items-center justify-center text-copper/40 text-[10px] tracking-widest uppercase">
-                          N/A
-                        </div>
-                      )}
+                      {(() => {
+                        const fallback = pickPropertyFallback(p.id);
+                        const driveImg = (p.images || []).find(isGoogleDriveImage);
+                        const anyHttpImg = (p.images || []).find((img) => typeof img === "string" && (img.startsWith("http") || img.startsWith("/uploads/")) && !img.includes("astitva-realestate"));
+                        const imgSrc = driveImg ? driveImageUrl(driveImg, 150) : (anyHttpImg ? fileUrl(anyHttpImg, 150) : (p.images?.[0] ? fileUrl(p.images[0], 150) : fallback) || fallback);
+                        return (
+                          <img
+                            loading="lazy"
+                            referrerPolicy="no-referrer"
+                            src={imgSrc}
+                            alt=""
+                            className="w-12 h-12 object-cover border border-copper/20 rounded-[4px] shrink-0 bg-charcoal-2"
+                            onError={(e) => {
+                              const currentSrc = e.currentTarget.src || "";
+                              if (driveImg && currentSrc.includes("drive.google.com/thumbnail")) {
+                                e.currentTarget.src = driveDirectFallbackUrl(driveImg, 150);
+                                return;
+                              }
+                              e.currentTarget.onerror = null;
+                              e.currentTarget.src = fallback;
+                            }}
+                          />
+                        );
+                      })()}
                       <div>
                         <div className="text-ivory font-display font-normal">{p.project_name}</div>
                         <div className="text-ivory/50 text-xs">{p.builder || "—"}</div>

@@ -40,9 +40,10 @@ export default function AdminRecruitmentJobsPage() {
           department: deptFilter !== "All" ? deptFilter : undefined,
         },
       });
-      setJobs(res.data || []);
+      setJobs(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Failed to fetch admin jobs:", err);
+      setJobs([]);
       setError(formatApiErrorDetail(err.response?.data?.detail));
     } finally {
       setLoading(false);
