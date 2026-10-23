@@ -16,6 +16,8 @@ import {
   Repeat,
   BadgePercent,
 } from "lucide-react";
+import Seo from "@/components/Seo";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
@@ -61,6 +63,14 @@ export default function AdminLayout() {
         { to: "/admin/leads/careers", label: "Career Applications", icon: Briefcase },
       ],
     },
+    {
+      title: "RECRUITMENT",
+      items: [
+        { to: "/admin/recruitment", label: "Overview", icon: LayoutDashboard, end: true },
+        { to: "/admin/recruitment/jobs", label: "Job Openings", icon: Briefcase },
+        { to: "/admin/recruitment/applications", label: "Candidate Pipeline", icon: Users },
+      ],
+    },
     ...(user?.role === "admin"
       ? [
           {
@@ -73,6 +83,7 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-charcoal">
+      <Seo title="Admin Console | Astittva Marketing" noIndex={true} path={location.pathname} />
       {/* Mobile top bar — visible < lg. Sticky so admin can always reach the menu. */}
       <div className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 h-14 bg-charcoal border-b border-copper/15">
         <div className="flex items-center gap-2 min-w-0">
@@ -204,7 +215,9 @@ export default function AdminLayout() {
 
       <main className="flex-1 min-w-0 overflow-y-auto">
         <div className="p-4 sm:p-6 lg:p-12 max-w-7xl mx-auto w-full">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </main>
     </div>

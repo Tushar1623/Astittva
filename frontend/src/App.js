@@ -127,6 +127,11 @@ function App() {
                     <Route path="recruitment/jobs/new" element={<AdminRecruitmentJobFormPage />} />
                     <Route path="recruitment/jobs/:id/edit" element={<AdminRecruitmentJobFormPage />} />
                     <Route path="recruitment/applications" element={<AdminRecruitmentApplicationsPage />} />
+                    {/* Direct aliases for /admin/jobs */}
+                    <Route path="jobs" element={<AdminRecruitmentJobsPage />} />
+                    <Route path="jobs/new" element={<AdminRecruitmentJobFormPage />} />
+                    <Route path="jobs/:id/edit" element={<AdminRecruitmentJobFormPage />} />
+                    <Route path="jobs/applications" element={<AdminRecruitmentApplicationsPage />} />
                     <Route
                       path="users"
                       element={

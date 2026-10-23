@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
@@ -28,6 +28,29 @@ export default function CareerPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  const [liveJobs, setLiveJobs] = useState([]);
+  const [loadingJobs, setLoadingJobs] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    api
+      .get("/jobs?limit=6")
+      .then((res) => {
+        if (isMounted && res.data && Array.isArray(res.data.jobs)) {
+          setLiveJobs(res.data.jobs);
+        }
+      })
+      .catch(() => {
+        // Soft fallback to empty array
+      })
+      .finally(() => {
+        if (isMounted) setLoadingJobs(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -134,10 +157,9 @@ export default function CareerPage() {
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-[90px] sm:pt-[105px] lg:pt-[115px]">
       <Seo
-        title="Careers | Astittva Marketing"
-        description="Explore career opportunities at Astittva Marketing. Join Kolkata's premier luxury real estate advisory and property marketing consultancy."
+        title="Careers at Astittva Marketing | Real Estate Jobs Kolkata"
+        description="Explore real estate career opportunities with Astittva Marketing in Kolkata. Join our property advisory and consultancy team in New Town and Rajarhat."
         path="/career"
-        keywords="careers Astittva Marketing, real estate jobs Kolkata, luxury property advisor jobs, property consultant careers New Town"
         schema={buildBreadcrumbSchema([{ name: "Home", path: "/" }, { name: "Careers", path: "/career" }])}
       />
 
@@ -202,30 +224,31 @@ export default function CareerPage() {
             and private client advisory firm. Our formal career application portal is launching shortly.
           </motion.p>
 
-          {/* Direct CTA scroll */}
+          {/* Direct CTA buttons */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-wrap items-center justify-center gap-4"
           >
-            <a
-              href="#apply-early"
+            <Link
+              to="/careers/jobs"
               className="inline-flex items-center justify-center gap-2 h-[46px] px-7 font-sans text-[12.5px] font-semibold tracking-[0.1em] uppercase text-white rounded-[6px] transition-all duration-200 hover:-translate-y-px"
               style={{
                 background: "linear-gradient(135deg, #B77B3E 0%, #D2A15D 100%)",
                 boxShadow: "0 8px 24px rgba(185, 125, 62, 0.25)",
               }}
             >
-              <span>Submit Early Application</span>
+              <Briefcase className="w-4 h-4" />
+              <span>Explore Active Vacancies</span>
               <ArrowRight className="w-3.5 h-3.5" />
-            </a>
-            <Link
-              to="/about"
+            </Link>
+            <a
+              href="#apply-early"
               className="inline-flex items-center justify-center gap-2 h-[46px] px-6 font-sans text-[12.5px] font-medium tracking-[0.1em] uppercase text-[#E8DCD5] hover:text-white rounded-[6px] border border-white/20 hover:border-white/40 transition-colors"
             >
-              About Astittva
-            </Link>
+              General Application
+            </a>
           </motion.div>
         </div>
       </section>
@@ -283,66 +306,125 @@ export default function CareerPage() {
         </div>
       </section>
 
-      {/* Upcoming Openings Preview */}
+      {/* Openings Section: Live Published Jobs or Upcoming Roles */}
       <section className="py-12 sm:py-16 bg-[#FAF8F5] border-t border-[#E8DED2]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
             <span className="font-sans text-[11px] font-semibold tracking-[0.28em] uppercase text-[#B87333]">
-              Upcoming Openings
+              {liveJobs.length > 0 ? "Current Opportunities" : "Upcoming Openings"}
             </span>
             <h2 className="font-serif-display text-2xl sm:text-3xl text-[#1C1C1C] mt-1.5">
-              Roles Opening Soon in Kolkata
+              {liveJobs.length > 0 ? "Active Vacancies in Kolkata" : "Roles Opening Soon in Kolkata"}
             </h2>
           </div>
 
-          <div className="space-y-3.5">
-            {[
-              {
-                title: "Senior Luxury Real Estate Consultant",
-                dept: "Private Client Advisory",
-                exp: "3+ Years",
-                loc: "New Town / Rajarhat HQ",
-              },
-              {
-                title: "HNI Relationship Manager",
-                dept: "Client Relationship Management",
-                exp: "2+ Years",
-                loc: "Kolkata",
-              },
-              {
-                title: "Real Estate Content & Brand Strategist",
-                dept: "Marketing & Communications",
-                exp: "2+ Years",
-                loc: "Kolkata (Hybrid)",
-              },
-              {
-                title: "Market Research & Investment Analyst",
-                dept: "Research & Valuation Desk",
-                exp: "1-3 Years",
-                loc: "Kolkata",
-              },
-            ].map((role, idx) => (
-              <div
-                key={idx}
-                className="bg-white p-5 rounded-[6px] border border-[#E8DED2] flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-[#B87333]/40 transition-colors"
-              >
-                <div>
-                  <h3 className="font-serif-display text-lg text-[#1C1C1C]">
-                    {role.title}
-                  </h3>
-                  <div className="flex flex-wrap gap-2 text-[12px] font-sans text-[#5F5F5F] mt-1">
-                    <span>{role.dept}</span>
-                    <span>•</span>
-                    <span>{role.exp}</span>
-                    <span>•</span>
-                    <span>{role.loc}</span>
+          {liveJobs.length > 0 ? (
+            <div className="space-y-4">
+              {liveJobs.map((job) => (
+                <div
+                  key={job.id || job._id}
+                  className="bg-white p-5 sm:p-6 rounded-[6px] border border-[#E8DED2] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-[#B87333]/50 transition-all shadow-[0_2px_12px_rgba(0,0,0,0.02)]"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-semibold tracking-wider uppercase bg-[#EBF7EE] text-[#1E7E34] border border-[#1E7E34]/20">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#1E7E34] animate-pulse" />
+                        Actively Hiring
+                      </span>
+                      {job.department && (
+                        <span className="text-[11px] font-sans text-[#7A6B5B] uppercase tracking-wider">
+                          {job.department}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="font-serif-display text-xl text-[#1C1C1C] truncate">
+                      {job.title}
+                    </h3>
+                    <div className="flex flex-wrap gap-2.5 text-[12.5px] font-sans text-[#5F5F5F] mt-2">
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5 text-[#B87333]" /> {job.location || "Kolkata"}
+                      </span>
+                      <span>•</span>
+                      <span>{job.employmentType || "Full-time"}</span>
+                      <span>•</span>
+                      <span>
+                        {job.experienceLevel || (job.experienceMin ? `${job.experienceMin}+ years` : "Experience not specified")}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0 self-start sm:self-center">
+                    <Link
+                      to={`/careers/jobs/${job.slug}`}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[4px] bg-[#B87333] hover:bg-[#A06028] text-white text-[12px] font-semibold tracking-[0.1em] uppercase transition-colors"
+                    >
+                      <span>Apply Now</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
                   </div>
                 </div>
-                <span className="inline-flex items-center text-[11px] font-semibold tracking-[0.14em] uppercase text-[#B87333] bg-[#FAF8F5] px-3 py-1.5 rounded-[4px] border border-[#E8DED2] self-start sm:self-center">
-                  Opening Soon
-                </span>
-              </div>
-            ))}
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-3.5">
+              {[
+                {
+                  title: "Senior Luxury Real Estate Consultant",
+                  dept: "Private Client Advisory",
+                  exp: "3+ Years",
+                  loc: "New Town / Rajarhat HQ",
+                },
+                {
+                  title: "HNI Relationship Manager",
+                  dept: "Client Relationship Management",
+                  exp: "2+ Years",
+                  loc: "Kolkata",
+                },
+                {
+                  title: "Real Estate Content & Brand Strategist",
+                  dept: "Marketing & Communications",
+                  exp: "2+ Years",
+                  loc: "Kolkata (Hybrid)",
+                },
+                {
+                  title: "Market Research & Investment Analyst",
+                  dept: "Research & Valuation Desk",
+                  exp: "1-3 Years",
+                  loc: "Kolkata",
+                },
+              ].map((role, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white p-5 rounded-[6px] border border-[#E8DED2] flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-[#B87333]/40 transition-colors"
+                >
+                  <div>
+                    <h3 className="font-serif-display text-lg text-[#1C1C1C]">
+                      {role.title}
+                    </h3>
+                    <div className="flex flex-wrap gap-2 text-[12px] font-sans text-[#5F5F5F] mt-1">
+                      <span>{role.dept}</span>
+                      <span>•</span>
+                      <span>{role.exp}</span>
+                      <span>•</span>
+                      <span>{role.loc}</span>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center text-[11px] font-semibold tracking-[0.14em] uppercase text-[#B87333] bg-[#FAF8F5] px-3 py-1.5 rounded-[4px] border border-[#E8DED2] self-start sm:self-center">
+                    Opening Soon
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-8 text-center flex flex-wrap items-center justify-center gap-4">
+            <Link
+              to="/careers/jobs"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-[6px] bg-[#B87333] hover:bg-[#A06028] text-white text-[12px] font-semibold tracking-[0.14em] uppercase transition-colors shadow-sm"
+            >
+              <Briefcase className="w-4 h-4" />
+              <span>Browse All Vacancies Directory</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </section>

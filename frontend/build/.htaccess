@@ -56,9 +56,13 @@ ErrorDocument 404 /404.html
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]
 
+  # Pass through backend API endpoints without SPA or 404 rewrite
+  RewriteCond %{REQUEST_URI} ^/api(/.*)?$
+  RewriteRule ^ - [L]
+
   # Allowlist of legitimate application routes -> route to index.html with 200 OK
   RewriteCond %{REQUEST_URI} ^/$ [OR]
-  RewriteCond %{REQUEST_URI} ^/(properties|resale|blogs|news|market-intelligence|calculators|about|contact|career|admin)(/.*)?$
+  RewriteCond %{REQUEST_URI} ^/(properties|resale|blogs|news|market-intelligence|calculators|about|contact|careers?|admin)(/.*)?$
   RewriteRule ^ index.html [L]
 
   # Any unknown path not in the route allowlist returns real HTTP 404 via 404.html
