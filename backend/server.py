@@ -2979,9 +2979,11 @@ app.add_middleware(GZipMiddleware, minimum_size=500, compresslevel=6)
 # Startup
 # ---------------------------------------------------------------------------
 async def seed_admin():
-    email = os.environ.get("ADMIN_EMAIL", "admin@astitva.com").lower()
+    email = os.environ.get("ADMIN_EMAIL", "admin@astitva.com").lower().strip()
     password = os.environ.get("ADMIN_PASSWORD", "Astitva@2026")
     name = os.environ.get("ADMIN_NAME", "Astitva Admin")
+    # Strictly ensure only the single authorized admin account exists
+    await db.users.delete_many({"email": {"$ne": email}})
     existing = await db.users.find_one({"email": email})
     if existing is None:
         await db.users.insert_one({
@@ -2991,11 +2993,11 @@ async def seed_admin():
             "role": "admin",
             "created_at": now_utc_iso(),
         })
-        logger.info(f"Seeded admin user: {email}")
+        logger.info(f"Seeded sole admin user: {email}")
     else:
         if not verify_password(password, existing["password_hash"]):
             await db.users.update_one({"email": email}, {"$set": {"password_hash": hash_password(password)}})
-            logger.info(f"Updated admin password: {email}")
+            logger.info(f"Updated sole admin password: {email}")
 
 
 @app.on_event("startup")

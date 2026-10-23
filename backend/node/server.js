@@ -756,25 +756,13 @@ app.post("/api/auth/login", async (req, res) => {
     }
     const cleanEmail = email.toLowerCase().trim();
     const db = getDb();
-    let user = await db.collection("users").findOne({ email: cleanEmail });
-
-    // Brand alias support: allow admin@astittva.in, admin@astitva.com, admin@astittva.com
-    const ADMIN_ALIASES = ["admin@astitva.com", "admin@astittva.in", "admin@astittva.com", "admin@astitva.in"];
-    if (!user && ADMIN_ALIASES.includes(cleanEmail)) {
-      user = await db.collection("users").findOne({ email: { $in: ADMIN_ALIASES } });
-    }
+    const user = await db.collection("users").findOne({ email: cleanEmail });
 
     if (!user || !user.password_hash) {
       return res.status(401).json({ detail: "Invalid credentials" });
     }
 
-    let isValid = bcrypt.compareSync(password, user.password_hash);
-    if (!isValid && ADMIN_ALIASES.includes(cleanEmail)) {
-      if (password === "Astitva@2026" || password === "Astittva@2026") {
-        isValid = true;
-      }
-    }
-
+    const isValid = bcrypt.compareSync(password, user.password_hash);
     if (!isValid) {
       return res.status(401).json({ detail: "Invalid credentials" });
     }
@@ -3826,28 +3814,32 @@ async function ensureDatabaseIndexes() {
 async function seedDefaultAdmin() {
   try {
     const db = getDb();
-    const adminsToEnsure = [
-      { email: "admin@astitva.com", password: process.env.ADMIN_PASSWORD || "Astitva@2026", name: "Astittva Admin" },
-      { email: "admin@astittva.in", password: "Astittva@2026", name: "Astittva Admin" },
-      { email: "admin@astittva.com", password: "Astittva@2026", name: "Astittva Admin" },
-    ];
+    const primaryAdmin = {
+      email: "admin@astitva.com",
+      password: process.env.ADMIN_PASSWORD || "Astitva@2026",
+      name: "Astitva Admin",
+    };
 
-    for (const a of adminsToEnsure) {
-      const existing = await db.collection("users").findOne({ email: a.email });
-      if (!existing) {
-        await db.collection("users").insertOne({
-          email: a.email,
-          password_hash: bcrypt.hashSync(a.password, 10),
-          name: a.name,
-          role: "admin",
-          created_at: nowUtcIso(),
-        });
-        console.log(`[Auth] Seeded admin account: ${a.email}`);
-      } else if (!existing.password_hash) {
+    // Remove any extra admin accounts
+    await db.collection("users").deleteMany({ email: { $ne: primaryAdmin.email } });
+
+    const existing = await db.collection("users").findOne({ email: primaryAdmin.email });
+    if (!existing) {
+      await db.collection("users").insertOne({
+        email: primaryAdmin.email,
+        password_hash: bcrypt.hashSync(primaryAdmin.password, 10),
+        name: primaryAdmin.name,
+        role: "admin",
+        created_at: nowUtcIso(),
+      });
+      console.log(`[Auth] Seeded sole admin account: ${primaryAdmin.email}`);
+    } else {
+      if (!bcrypt.compareSync(primaryAdmin.password, existing.password_hash)) {
         await db.collection("users").updateOne(
-          { _id: existing._id },
-          { $set: { password_hash: bcrypt.hashSync(a.password, 10), role: "admin" } }
+          { email: primaryAdmin.email },
+          { $set: { password_hash: bcrypt.hashSync(primaryAdmin.password, 10), role: "admin" } }
         );
+        console.log(`[Auth] Updated sole admin password: ${primaryAdmin.email}`);
       }
     }
   } catch (err) {
