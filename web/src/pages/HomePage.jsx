@@ -371,7 +371,7 @@ export default function HomePage() {
                             alt={p.project_name}
                             onError={(e) => {
                               const currentSrc = e.currentTarget.src || "";
-                              if (driveImg && currentSrc.includes("drive.google.com/thumbnail")) {
+                              if (driveImg && currentSrc.includes("googleusercontent.com")) {
                                 e.currentTarget.src = driveDirectFallbackUrl(driveImg, 1000);
                                 return;
                               }

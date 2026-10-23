@@ -201,7 +201,7 @@ export default function PropertyDetailPage() {
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   const currentSrc = e.currentTarget.src || "";
-                  if (driveImg && currentSrc.includes("drive.google.com/thumbnail")) {
+                  if (driveImg && currentSrc.includes("googleusercontent.com")) {
                     e.currentTarget.src = driveDirectFallbackUrl(driveImg, 1200);
                     return;
                   }
@@ -232,7 +232,7 @@ export default function PropertyDetailPage() {
                     className="absolute inset-0 w-full h-full object-cover"
                     onError={(e) => {
                       const currentSrc = e.currentTarget.src || "";
-                      if (driveImg && currentSrc.includes("drive.google.com/thumbnail")) {
+                      if (driveImg && currentSrc.includes("googleusercontent.com")) {
                         e.currentTarget.src = driveDirectFallbackUrl(driveImg, 400);
                         return;
                       }

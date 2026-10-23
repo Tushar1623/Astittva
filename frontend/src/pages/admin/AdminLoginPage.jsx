@@ -49,7 +49,7 @@ export default function AdminLoginPage() {
               className="input-filled"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@astittva.in or admin@astitva.com"
+              placeholder="admin@astitva.com"
               autoFocus
             />
           </div>
@@ -70,12 +70,12 @@ export default function AdminLoginPage() {
             {loading ? "Signing in..." : "Sign In"}
           </button>
           <div className="pt-2 text-center text-xs text-ivory/50 flex items-center justify-between border-t border-copper/10 mt-4">
-            <span className="font-mono text-[11px] text-ivory/40">admin@astittva.in</span>
+            <span className="font-mono text-[11px] text-ivory/40">admin@astitva.com</span>
             <button
               type="button"
               onClick={() => {
-                setEmail("admin@astittva.in");
-                setPassword("Astittva@2026");
+                setEmail("admin@astitva.com");
+                setPassword("Astitva@2026");
               }}
               className="text-copper hover:text-rose-gold text-xs transition cursor-pointer font-medium"
             >

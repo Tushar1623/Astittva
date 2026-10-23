@@ -288,7 +288,7 @@ export default function AdminPropertyFormPage() {
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               const currentSrc = e.currentTarget.src || "";
-                              if (isGoogleDriveImage(path) && currentSrc.includes("drive.google.com/thumbnail")) {
+                              if (isGoogleDriveImage(path) && currentSrc.includes("googleusercontent.com")) {
                                 e.currentTarget.src = driveDirectFallbackUrl(path, 400);
                                 return;
                               }

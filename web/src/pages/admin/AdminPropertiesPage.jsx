@@ -94,7 +94,7 @@ export default function AdminPropertiesPage() {
                             className="w-12 h-12 object-cover border border-copper/20 rounded-[4px] shrink-0 bg-charcoal-2"
                             onError={(e) => {
                               const currentSrc = e.currentTarget.src || "";
-                              if (driveImg && currentSrc.includes("drive.google.com/thumbnail")) {
+                              if (driveImg && currentSrc.includes("googleusercontent.com")) {
                                 e.currentTarget.src = driveDirectFallbackUrl(driveImg, 150);
                                 return;
                               }

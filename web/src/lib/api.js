@@ -5,17 +5,17 @@ const RAW_BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "";
 function getBaseURL() {
   if (typeof window !== "undefined" && window.location) {
     const host = window.location.hostname;
-    // When served in production on astittva.in or any non-localhost host,
-    // always use relative "/api" to eliminate Mixed Content HTTPS->HTTP localhost failures
-    if (host && host !== "localhost" && host !== "127.0.0.1") {
-      return "/api";
+    // When served in production on astittva.in or any external host,
+    // connect directly to the live Render production backend API
+    if (host.includes("astittva.in") || (host && host !== "localhost" && host !== "127.0.0.1")) {
+      return "https://astittva-backend.onrender.com/api";
     }
   }
   if (RAW_BACKEND_URL && RAW_BACKEND_URL.trim() !== "") {
     const cleanUrl = RAW_BACKEND_URL.trim().replace(/\/+$/, "");
     return cleanUrl.endsWith("/api") ? cleanUrl : `${cleanUrl}/api`;
   }
-  // When served by Express, Hostinger, or local development dev-server proxy, route to /api on the current origin
+  // When served by Express or local development dev-server proxy, route to /api on the current origin
   return "/api";
 }
 
@@ -95,14 +95,15 @@ export function driveImageUrl(url, width = 1000) {
   const id = getGoogleDriveFileId(url);
   if (!id) return "";
 
-  // Direct high-resolution Google Drive thumbnail URL (previous Drive link)
-  return `https://drive.google.com/thumbnail?id=${id}&sz=w${width || 1000}`;
+  // Direct high-resolution Google CDN image URL
+  // lh3.googleusercontent.com avoids 302 redirects, cookie dependencies, and Drive rate limits
+  return `https://lh3.googleusercontent.com/d/${id}=w${width || 1000}`;
 }
 
 export function driveDirectFallbackUrl(url, width = 1000) {
   const id = getGoogleDriveFileId(url);
   if (!id) return "";
-  return `https://lh3.googleusercontent.com/d/${id}=w${width || 1000}`;
+  return `https://drive.google.com/thumbnail?id=${id}&sz=w${width || 1000}`;
 }
 
 export function driveProxyUrl(url, width = 1000) {
