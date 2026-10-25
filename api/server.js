@@ -180,6 +180,9 @@ async function authenticateUser(req, res, next) {
       token = authHeader.substring(7);
     }
   }
+  if (!token && req.query?.token) {
+    token = req.query.token;
+  }
 
   if (!token) {
     return res.status(401).json({ detail: "Not authenticated" });
@@ -2822,9 +2825,16 @@ app.delete("/api/admin/leads/career/:id", requireAdmin, async (req, res) => {
 
     if (appDoc.resumeFileId) {
       try {
-        const bucket = new GridFSBucket(db, { bucketName: "career_resumes" });
-        await bucket.delete(new ObjectId(appDoc.resumeFileId));
-      } catch {}
+        const fileOid = new ObjectId(appDoc.resumeFileId);
+        const otherJob = await db.collection("job_applications").findOne({ resumeFileId: String(appDoc.resumeFileId) });
+        const otherCareer = await db.collection("career_applications").findOne({ _id: { $ne: new ObjectId(req.params.id) }, resumeFileId: appDoc.resumeFileId });
+        if (!otherJob && !otherCareer) {
+          const bucket = new GridFSBucket(db, { bucketName: "career_resumes" });
+          await bucket.delete(fileOid);
+        }
+      } catch (err) {
+        console.warn("Failed to delete resume from GridFS:", err.message);
+      }
     }
 
     await db.collection("career_applications").deleteOne({ _id: new ObjectId(req.params.id) });
@@ -3304,9 +3314,11 @@ app.get("/api/admin/recruitment/applications/:id/resume", requireStaff, async (r
     const filename = appDoc.resumeFilename || "candidate_resume.pdf";
     const contentType = appDoc.resumeContentType || "application/pdf";
 
+    const disposition = req.query?.inline === "1" ? "inline" : "attachment";
+
     res.set({
       "Content-Type": contentType,
-      "Content-Disposition": `inline; filename="${encodeURIComponent(filename)}"`,
+      "Content-Disposition": `${disposition}; filename="${encodeURIComponent(filename)}"`,
     });
 
     downloadStream.on("error", (err) => {
@@ -3320,6 +3332,42 @@ app.get("/api/admin/recruitment/applications/:id/resume", requireStaff, async (r
   } catch (err) {
     console.error("Download application resume error:", err);
     return res.status(500).json({ detail: "Failed to stream resume file" });
+  }
+});
+
+app.delete("/api/admin/recruitment/applications/:id", requireAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) return res.status(400).json({ detail: "Invalid application ID" });
+
+    const appOid = new ObjectId(id);
+    const appDoc = await db.collection("job_applications").findOne({ _id: appOid });
+    if (!appDoc) return res.status(404).json({ detail: "Job application not found" });
+
+    if (appDoc.resumeFileId) {
+      try {
+        const fileOid = new ObjectId(appDoc.resumeFileId);
+        const otherJob = await db.collection("job_applications").findOne({ _id: { $ne: appOid }, resumeFileId: appDoc.resumeFileId });
+        const otherCareer = await db.collection("career_applications").findOne({ resumeFileId: appDoc.resumeFileId });
+        if (!otherJob && !otherCareer) {
+          const bucket = new GridFSBucket(db, { bucketName: "career_resumes" });
+          await bucket.delete(fileOid);
+          console.log(`[Recruitment] Deleted CV file from GridFS: ${appDoc.resumeFileId}`);
+        }
+      } catch (err) {
+        console.warn("Failed to delete resume from GridFS:", err.message);
+      }
+    }
+
+    const delRes = await db.collection("job_applications").deleteOne({ _id: appOid });
+    if (delRes.deletedCount === 0) {
+      return res.status(404).json({ detail: "Job application not found" });
+    }
+    return res.json({ ok: true, message: "Applicant and associated CV permanently deleted" });
+  } catch (err) {
+    console.error("Delete recruitment application error:", err);
+    return res.status(500).json({ detail: "Failed to delete application" });
   }
 });
 

@@ -181,6 +181,8 @@ async def get_current_user(request: Request) -> dict:
         if auth_header.startswith("Bearer "):
             token = auth_header[7:]
     if not token:
+        token = request.query_params.get("token")
+    if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
@@ -1763,8 +1765,11 @@ async def delete_career_application(app_id: str, _user: dict = Depends(require_a
     file_id = app_doc.get("resumeFileId")
     if file_id:
         try:
-            fs = AsyncIOMotorGridFSBucket(db, bucket_name="career_resumes")
-            await fs.delete(ObjectId(file_id))
+            other_ref = await db.job_applications.find_one({"resumeFileId": file_id})
+            other_career = await db.career_applications.find_one({"_id": {"$ne": app_oid}, "resumeFileId": file_id})
+            if not other_ref and not other_career:
+                fs = AsyncIOMotorGridFSBucket(db, bucket_name="career_resumes")
+                await fs.delete(ObjectId(file_id))
         except Exception as e:
             logger.warning(f"Failed to delete resume file from GridFS: {e}")
 
@@ -2462,7 +2467,7 @@ async def add_application_note(
 
 
 @api_router.get("/admin/recruitment/applications/{app_id}/resume")
-async def stream_application_resume(app_id: str, _user: dict = Depends(require_staff)):
+async def stream_application_resume(app_id: str, request: Request, _user: dict = Depends(require_staff)):
     try:
         oid = ObjectId(app_id)
     except Exception:
@@ -2491,14 +2496,46 @@ async def stream_application_resume(app_id: str, _user: dict = Depends(require_s
     filename = app_doc.get("resumeFilename") or grid_out.filename or "candidate-resume.pdf"
     encoded_filename = urllib.parse.quote(filename)
 
+    disposition = "inline" if request.query_params.get("inline") == "1" else "attachment"
+
     return Response(
         content=content,
         media_type=content_type,
         headers={
-            "Content-Disposition": f'inline; filename="{encoded_filename}"',
+            "Content-Disposition": f'{disposition}; filename="{encoded_filename}"',
             "Content-Length": str(len(content)),
         }
     )
+
+
+@api_router.delete("/admin/recruitment/applications/{app_id}")
+async def delete_recruitment_application(app_id: str, _user: dict = Depends(require_admin)):
+    try:
+        app_oid = ObjectId(app_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid application ID")
+
+    app_doc = await db.job_applications.find_one({"_id": app_oid})
+    if not app_doc:
+        raise HTTPException(status_code=404, detail="Job application not found")
+
+    file_id = app_doc.get("resumeFileId")
+    if file_id:
+        try:
+            # Check if any other application references the same resume file before deleting from GridFS
+            other_ref = await db.job_applications.find_one({"_id": {"$ne": app_oid}, "resumeFileId": file_id})
+            other_career = await db.career_applications.find_one({"resumeFileId": file_id})
+            if not other_ref and not other_career:
+                fs = AsyncIOMotorGridFSBucket(db, bucket_name="career_resumes")
+                await fs.delete(ObjectId(file_id))
+                logger.info(f"Deleted associated resume file from GridFS: {file_id}")
+        except Exception as e:
+            logger.warning(f"Failed to delete resume file from GridFS: {e}")
+
+    res = await db.job_applications.delete_one({"_id": app_oid})
+    if res.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Job application not found")
+    return {"ok": True, "message": "Applicant and associated CV permanently deleted"}
 
 
 # ---------------------- Blogs ----------------------
