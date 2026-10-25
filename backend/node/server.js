@@ -489,6 +489,49 @@ function serializeJobOpening(doc, isAdmin = false) {
   return res;
 }
 
+async function attachLiveApplicationCounts(db, jobDocs) {
+  if (!Array.isArray(jobDocs) || jobDocs.length === 0) return jobDocs;
+  try {
+    const ids = jobDocs.map((d) => d._id).filter(Boolean);
+    const strIds = ids.map(String);
+
+    const [oidCounts, strCounts] = await Promise.all([
+      db.collection("job_applications").aggregate([
+        { $match: { jobId: { $in: ids } } },
+        { $group: { _id: "$jobId", count: { $sum: 1 } } }
+      ]).toArray(),
+      db.collection("job_applications").aggregate([
+        { $match: { jobId: { $in: strIds } } },
+        { $group: { _id: "$jobId", count: { $sum: 1 } } }
+      ]).toArray()
+    ]);
+
+    const countMap = new Map();
+    for (const c of oidCounts) {
+      countMap.set(String(c._id), c.count);
+    }
+    for (const c of strCounts) {
+      const key = String(c._id);
+      countMap.set(key, (countMap.get(key) || 0) + c.count);
+    }
+
+    return jobDocs.map((doc) => {
+      const live = countMap.get(String(doc._id)) ?? 0;
+      if (doc.applicationsCount !== live) {
+        db.collection("job_openings").updateOne(
+          { _id: doc._id },
+          { $set: { applicationsCount: live } }
+        ).catch(() => {});
+        doc.applicationsCount = live;
+      }
+      return doc;
+    });
+  } catch (err) {
+    console.error("attachLiveApplicationCounts error:", err);
+    return jobDocs;
+  }
+}
+
 function serializeJobApplication(doc) {
   if (!doc) return null;
   return {
@@ -2900,7 +2943,7 @@ app.get("/api/admin/recruitment/dashboard", requireStaff, async (req, res) => {
         withdrawn: withdrawnApps,
       },
       recentApplications: recentApps.map(serializeJobApplication),
-      recentJobs: recentJobs.map((j) => serializeJobOpening(j, true)),
+      recentJobs: (await attachLiveApplicationCounts(db, recentJobs)).map((j) => serializeJobOpening(j, true)),
     });
   } catch (err) {
     console.error("Recruitment dashboard error:", err);
@@ -2931,7 +2974,8 @@ app.get("/api/admin/recruitment/jobs", requireStaff, async (req, res) => {
     }
 
     const docs = await db.collection("job_openings").find(query).sort({ createdAt: -1 }).toArray();
-    return res.json(docs.map((d) => serializeJobOpening(d, true)));
+    const enrichedDocs = await attachLiveApplicationCounts(db, docs);
+    return res.json(enrichedDocs.map((d) => serializeJobOpening(d, true)));
   } catch (err) {
     console.error("Admin list jobs error:", err);
     return res.status(500).json({ detail: "Failed to fetch job openings" });
@@ -3023,6 +3067,14 @@ app.get("/api/admin/recruitment/jobs/:id", requireStaff, async (req, res) => {
       doc = await db.collection("job_openings").findOne({ slug: id.toLowerCase().trim() });
     }
     if (!doc) return res.status(404).json({ detail: "Job opening not found" });
+
+    const liveCount = await db.collection("job_applications").countDocuments({
+      $or: [{ jobId: doc._id }, { jobId: String(doc._id) }],
+    });
+    if (doc.applicationsCount !== liveCount) {
+      db.collection("job_openings").updateOne({ _id: doc._id }, { $set: { applicationsCount: liveCount } }).catch(() => {});
+      doc.applicationsCount = liveCount;
+    }
 
     return res.json(serializeJobOpening(doc, true));
   } catch (err) {
@@ -3135,28 +3187,36 @@ app.get("/api/admin/recruitment/applications", requireStaff, async (req, res) =>
     const db = getDb();
     const { jobId, status, search, page, limit } = req.query;
 
-    const query = {};
+    const filters = [];
     if (jobId && jobId !== "All") {
       if (ObjectId.isValid(jobId)) {
-        query.jobId = new ObjectId(jobId);
+        filters.push({
+          $or: [{ jobId: new ObjectId(jobId) }, { jobId: String(jobId) }, { jobSlug: jobId }],
+        });
       } else {
-        query.jobSlug = jobId;
+        filters.push({
+          $or: [{ jobSlug: jobId }, { jobId: jobId }],
+        });
       }
     }
     if (status && status !== "All") {
-      query.status = { $regex: new RegExp(`^${status.trim()}$`, "i") };
+      filters.push({ status: { $regex: new RegExp(`^${status.trim()}$`, "i") } });
     }
     if (search && search.trim()) {
       const s = search.trim();
-      query.$or = [
-        { name: { $regex: s, $options: "i" } },
-        { email: { $regex: s, $options: "i" } },
-        { phone: { $regex: s, $options: "i" } },
-        { referenceNumber: { $regex: s, $options: "i" } },
-        { currentCompany: { $regex: s, $options: "i" } },
-        { jobTitle: { $regex: s, $options: "i" } },
-      ];
+      filters.push({
+        $or: [
+          { name: { $regex: s, $options: "i" } },
+          { email: { $regex: s, $options: "i" } },
+          { phone: { $regex: s, $options: "i" } },
+          { referenceNumber: { $regex: s, $options: "i" } },
+          { currentCompany: { $regex: s, $options: "i" } },
+          { jobTitle: { $regex: s, $options: "i" } },
+        ],
+      });
     }
+
+    const query = filters.length > 0 ? { $and: filters } : {};
 
     const pageSize = Math.min(parseInt(limit, 10) || 50, 100);
     const pageNum = Math.max(parseInt(page, 10) || 1, 1);
@@ -3364,6 +3424,22 @@ app.delete("/api/admin/recruitment/applications/:id", requireAdmin, async (req, 
     if (delRes.deletedCount === 0) {
       return res.status(404).json({ detail: "Job application not found" });
     }
+
+    if (appDoc.jobId) {
+      const remainingCount = await db.collection("job_applications").countDocuments({
+        $or: [
+          ObjectId.isValid(appDoc.jobId) ? { jobId: new ObjectId(appDoc.jobId) } : null,
+          { jobId: String(appDoc.jobId) },
+        ].filter(Boolean),
+      });
+      if (ObjectId.isValid(appDoc.jobId)) {
+        await db.collection("job_openings").updateOne(
+          { _id: new ObjectId(appDoc.jobId) },
+          { $set: { applicationsCount: remainingCount } }
+        ).catch(() => {});
+      }
+    }
+
     return res.json({ ok: true, message: "Applicant and associated CV permanently deleted" });
   } catch (err) {
     console.error("Delete recruitment application error:", err);
