@@ -27,23 +27,23 @@ export default function DeleteConfirmModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-[#18181b] border border-red-500/40 rounded-[8px] max-w-md w-full p-6 text-ivory shadow-2xl space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-[#FAF8F5] border border-rose-300 rounded-[8px] max-w-md w-full p-6 text-[#1C1C1C] shadow-2xl space-y-4">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0">
+          <div className="w-10 h-10 rounded-full bg-rose-100 border border-rose-300 flex items-center justify-center text-rose-600 shrink-0">
             <Trash2 className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-display text-ivory">{title}</h3>
-            <p className="text-xs text-ivory/70 mt-1 leading-relaxed">
+            <h3 className="text-lg font-display font-medium text-[#1C1C1C]">{title}</h3>
+            <p className="text-xs text-[#1C1C1C]/75 mt-1 leading-relaxed">
               Are you sure you want to permanently delete this {itemType.toLowerCase()}:{" "}
-              <strong className="text-ivory font-semibold">{itemName}</strong>?
+              <strong className="text-[#1C1C1C] font-semibold">{itemName}</strong>?
             </p>
           </div>
         </div>
 
-        <div className="p-3.5 bg-red-950/30 border border-red-500/30 rounded-[4px] text-[11px] text-red-200 leading-relaxed space-y-1">
-          <div className="font-semibold text-red-300 flex items-center gap-1.5">
+        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-[4px] text-[11px] text-rose-800 leading-relaxed space-y-1">
+          <div className="font-semibold text-rose-700 flex items-center gap-1.5">
             <AlertTriangle className="w-3.5 h-3.5" />
             Permanent Deletion Warning:
           </div>
@@ -58,7 +58,7 @@ export default function DeleteConfirmModal({
             type="button"
             onClick={onCancel}
             disabled={isDeleting}
-            className="px-4 py-2 border border-copper/20 hover:border-copper/40 text-ivory/70 hover:text-ivory text-xs uppercase tracking-[0.1em] rounded-[4px] transition-colors"
+            className="px-4 py-2 border border-copper/30 hover:border-copper text-[#1C1C1C] hover:bg-white text-xs uppercase tracking-[0.1em] rounded-[4px] transition-colors cursor-pointer font-medium"
           >
             Cancel
           </button>
@@ -66,7 +66,7 @@ export default function DeleteConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={isDeleting}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs uppercase tracking-[0.1em] rounded-[4px] transition-colors disabled:opacity-50 shadow-md"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs uppercase tracking-[0.1em] rounded-[4px] transition-colors disabled:opacity-50 shadow-md cursor-pointer"
           >
             {isDeleting ? (
               <>

@@ -29,6 +29,8 @@ import {
 } from "lucide-react";
 import api, { formatApiErrorDetail } from "@/lib/api";
 import { toast } from "sonner";
+import ApplicantDetailsModal from "@/components/admin/ApplicantDetailsModal";
+import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
 
 const STAGES = [
   "New",
@@ -210,17 +212,18 @@ export default function AdminRecruitmentApplicationsPage() {
     }
   };
 
-  const handleUpdateStatus = async (e) => {
-    e.preventDefault();
-    if (!selectedApp || updatingStatus || newStatus === selectedApp.status) return;
+  const handleUpdateStatus = async (targetStatus, reason) => {
+    const finalStatus = (typeof targetStatus === "string" ? targetStatus : newStatus);
+    const finalReason = (typeof reason === "string" ? reason : statusReason);
+    if (!selectedApp || updatingStatus || finalStatus === selectedApp.status) return;
 
     try {
       setUpdatingStatus(true);
       const res = await api.patch(`/admin/recruitment/applications/${selectedApp.id}/status`, {
-        status: newStatus,
-        reason: statusReason.trim() || `Moved to ${newStatus}`,
+        status: finalStatus,
+        reason: finalReason.trim() || `Moved to ${finalStatus}`,
       });
-      toast.success(res.data?.message || `Status updated to ${newStatus}`);
+      toast.success(res.data?.message || `Status updated to ${finalStatus}`);
 
       // Refresh application details and lists
       const refreshed = await api.get(`/admin/recruitment/applications/${selectedApp.id}`);
@@ -236,14 +239,14 @@ export default function AdminRecruitmentApplicationsPage() {
     }
   };
 
-  const handleAddNote = async (e) => {
-    e.preventDefault();
-    if (!selectedApp || addingNote || !newNote.trim()) return;
+  const handleAddNote = async (noteText) => {
+    const finalNote = (typeof noteText === "string" ? noteText : newNote);
+    if (!selectedApp || addingNote || !finalNote.trim()) return;
 
     try {
       setAddingNote(true);
       const res = await api.post(`/admin/recruitment/applications/${selectedApp.id}/notes`, {
-        note: newNote.trim(),
+        note: finalNote.trim(),
       });
       toast.success("Recruiter note added!");
       setNewNote("");
@@ -858,412 +861,39 @@ export default function AdminRecruitmentApplicationsPage() {
         </div>
       )}
 
-      {/* APPLICANT DETAILS SLIDE-OVER SIDE PANEL / MODAL */}
-      {selectedApp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#18181b] border border-copper/30 rounded-[10px] max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl p-6 sm:p-8 text-ivory">
-            {/* Modal Header */}
-            <div className="flex items-start justify-between border-b border-copper/15 pb-5 mb-6">
-              <div>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="font-mono text-xs font-bold text-copper tracking-wider px-2 py-0.5 rounded bg-copper/10 border border-copper/25">
-                    REF: {selectedApp.referenceNumber || selectedApp.id}
-                  </span>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-[3px] text-[10px] font-mono tracking-wider uppercase border font-semibold ${
-                      STATUS_BADGE_CLASSES[selectedApp.status] || "border-copper/30 text-copper"
-                    }`}
-                  >
-                    {selectedApp.status}
-                  </span>
-                </div>
-                <h2 className="font-display text-2xl text-ivory mt-1">{selectedApp.name}</h2>
-                <p className="text-xs text-ivory/60 mt-0.5">
-                  Applied for:{" "}
-                  <strong className="text-copper font-medium">{selectedApp.jobTitle}</strong>
-                  {selectedApp.department && (
-                    <span className="text-ivory/40"> • {selectedApp.department}</span>
-                  )}
-                </p>
-              </div>
+      {/* STANDARDIZED APPLICANT DETAILS MODAL */}
+      <ApplicantDetailsModal
+        isOpen={Boolean(selectedApp)}
+        applicant={selectedApp}
+        onClose={closeCandidateDrawer}
+        onDownloadCv={handleDownloadResume}
+        isDownloading={downloadingId === selectedApp?.id}
+        onUpdateStatus={handleUpdateStatus}
+        isUpdatingStatus={updatingStatus}
+        availableStatuses={STAGES}
+        onSaveNotes={handleAddNote}
+        isSavingNotes={addingNote}
+        onDelete={(app) =>
+          setDeleteCandidate({
+            id: app.id,
+            name: app.name,
+            jobTitle: app.jobTitle,
+            referenceNumber: app.referenceNumber,
+          })
+        }
+      />
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={closeCandidateDrawer}
-                  className="p-2 text-ivory/60 hover:text-copper hover:bg-charcoal rounded transition-colors"
-                  title="Close details"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Quick Actions Toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-charcoal rounded-[6px] border border-copper/20 mb-6">
-              <div className="flex items-center gap-2">
-                {selectedApp.hasResume || selectedApp.resumeFileId ? (
-                  <button
-                    type="button"
-                    onClick={() => handleDownloadResume(selectedApp)}
-                    disabled={downloadingId === selectedApp.id}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.12em] rounded-[4px] transition-colors shadow-sm disabled:opacity-50"
-                  >
-                    {downloadingId === selectedApp.id ? (
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Download className="w-3.5 h-3.5" />
-                    )}
-                    <span>Download CV (PDF)</span>
-                  </button>
-                ) : (
-                  <span className="text-xs text-ivory/40 italic flex items-center gap-1.5">
-                    <FileX className="w-4 h-4" />
-                    No downloadable CV uploaded
-                  </span>
-                )}
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setDeleteCandidate({
-                    id: selectedApp.id,
-                    name: selectedApp.name,
-                    jobTitle: selectedApp.jobTitle,
-                    referenceNumber: selectedApp.referenceNumber,
-                  })
-                }
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-500/10 text-xs uppercase tracking-[0.1em] rounded-[4px] transition-colors"
-                title="Permanently remove candidate and CV"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete Applicant</span>
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="space-y-6">
-              {/* Stage Transition Control Box */}
-              <div className="bg-charcoal/80 border border-copper/25 rounded-[6px] p-5 space-y-3">
-                <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-copper block">
-                  Update Candidate Stage
-                </span>
-
-                <form onSubmit={handleUpdateStatus} className="space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <select
-                      value={newStatus}
-                      onChange={(e) => setNewStatus(e.target.value)}
-                      className="h-10 px-3 bg-[#18181b] border border-copper/25 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
-                    >
-                      {STAGES.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-
-                    <input
-                      type="text"
-                      value={statusReason}
-                      onChange={(e) => setStatusReason(e.target.value)}
-                      placeholder="Optional stage transition reason..."
-                      className="h-10 px-3 bg-[#18181b] border border-copper/20 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper sm:col-span-1"
-                    />
-
-                    <button
-                      type="submit"
-                      disabled={updatingStatus || newStatus === selectedApp.status}
-                      className="h-10 px-4 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.15em] rounded-[4px] transition-colors disabled:opacity-40"
-                    >
-                      {updatingStatus ? "Updating…" : "Update Stage"}
-                    </button>
-                  </div>
-                </form>
-              </div>
-
-              {/* Candidate Contact & Professional Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-5 rounded-[6px] bg-charcoal/60 border border-copper/15 text-xs">
-                <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
-                    Email Address
-                  </span>
-                  <a
-                    href={`mailto:${selectedApp.email}`}
-                    className="text-ivory font-medium hover:text-copper underline underline-offset-2"
-                  >
-                    {selectedApp.email}
-                  </a>
-                </div>
-                <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
-                    Phone Number
-                  </span>
-                  <a
-                    href={`tel:${selectedApp.phone}`}
-                    className="text-ivory font-medium font-mono hover:text-copper"
-                  >
-                    {selectedApp.phone}
-                  </a>
-                </div>
-                <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
-                    Total Experience
-                  </span>
-                  <p className="text-ivory font-medium">
-                    {selectedApp.experienceYears != null ? `${selectedApp.experienceYears} Years` : "Not specified"}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
-                    Current Organization
-                  </span>
-                  <p className="text-ivory font-medium">{selectedApp.currentCompany || "Not specified"}</p>
-                </div>
-                <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
-                    Current CTC
-                  </span>
-                  <p className="text-ivory font-medium">{selectedApp.currentCtc || "Not disclosed"}</p>
-                </div>
-                <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
-                    Expected CTC
-                  </span>
-                  <p className="text-ivory font-medium">{selectedApp.expectedCtc || "Not disclosed"}</p>
-                </div>
-                <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
-                    Notice Period
-                  </span>
-                  <p className="text-ivory font-medium">
-                    {selectedApp.noticePeriodDays != null ? `${selectedApp.noticePeriodDays} Days` : "Not specified"}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
-                    Location
-                  </span>
-                  <p className="text-ivory font-medium">{selectedApp.location || "Kolkata, West Bengal"}</p>
-                </div>
-                <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
-                    Application Date
-                  </span>
-                  <p className="text-ivory font-medium font-mono">
-                    {selectedApp.createdAt
-                      ? new Date(selectedApp.createdAt).toLocaleString("en-IN")
-                      : "—"}
-                  </p>
-                </div>
-              </div>
-
-              {/* CV File Storage Details Card */}
-              <div className="p-5 rounded-[6px] bg-charcoal/60 border border-copper/15 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-copper" />
-                    <span className="text-[10px] tracking-[0.2em] uppercase text-copper font-semibold">
-                      Stored Resume Document (GridFS)
-                    </span>
-                  </div>
-                  <p className="text-xs text-ivory font-medium font-mono">
-                    {selectedApp.resumeFilename || (selectedApp.hasResume ? "applicant-resume.pdf" : "None")}
-                  </p>
-                  <p className="text-[11px] text-ivory/50">
-                    {selectedApp.hasResume || selectedApp.resumeFileId
-                      ? "Protected file storage in career_resumes bucket. Ready for verified staff download."
-                      : "Candidate did not attach a resume file during application."}
-                  </p>
-                </div>
-
-                {(selectedApp.hasResume || selectedApp.resumeFileId) && (
-                  <button
-                    type="button"
-                    onClick={() => handleDownloadResume(selectedApp)}
-                    disabled={downloadingId === selectedApp.id}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.12em] rounded-[4px] transition-colors shadow-sm shrink-0 disabled:opacity-50"
-                  >
-                    {downloadingId === selectedApp.id ? (
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Download className="w-3.5 h-3.5" />
-                    )}
-                    <span>Download CV (PDF)</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Cover Note */}
-              {selectedApp.coverNote && (
-                <div className="p-5 rounded-[6px] bg-charcoal/60 border border-copper/15 text-xs">
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper font-semibold block mb-2">
-                    Cover Letter / Candidate Message
-                  </span>
-                  <p className="text-ivory/85 whitespace-pre-wrap leading-relaxed bg-[#18181b] p-3 rounded border border-copper/10 font-sans">
-                    {selectedApp.coverNote}
-                  </p>
-                </div>
-              )}
-
-              {/* Stage Transition History Audit Trail */}
-              {selectedApp.statusHistory && selectedApp.statusHistory.length > 0 && (
-                <div className="p-5 rounded-[6px] bg-charcoal/60 border border-copper/15 text-xs space-y-3">
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper font-semibold block">
-                    Stage Transition Audit Log
-                  </span>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {selectedApp.statusHistory.map((h, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-start justify-between gap-3 text-xs border-b border-copper/10 pb-2 last:border-0"
-                      >
-                        <div>
-                          <span className="font-semibold text-ivory">{h.toStatus}</span>
-                          {h.reason && <p className="text-[11px] text-ivory/60 mt-0.5">{h.reason}</p>}
-                        </div>
-                        <div className="text-right text-[10px] text-ivory/45 font-mono">
-                          <div>{h.changedBy || "Staff"}</div>
-                          <div>
-                            {h.changedAt ? new Date(h.changedAt).toLocaleString("en-IN") : ""}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Private Recruiter Notes Section */}
-              <div className="p-5 rounded-[6px] bg-charcoal/60 border border-copper/15 text-xs space-y-4">
-                <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-copper block">
-                  Private Recruiter Notes
-                </span>
-
-                <form onSubmit={handleAddNote} className="space-y-3">
-                  <textarea
-                    rows={2}
-                    value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
-                    placeholder="Add an internal evaluation note, interview feedback, or review comments..."
-                    className="w-full p-3 bg-[#18181b] border border-copper/20 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper"
-                  />
-                  <div className="flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={addingNote || !newNote.trim()}
-                      className="px-4 py-1.5 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.12em] rounded-[4px] transition-colors disabled:opacity-40"
-                    >
-                      {addingNote ? "Saving…" : "Save Internal Note"}
-                    </button>
-                  </div>
-                </form>
-
-                {selectedApp.notes && selectedApp.notes.length > 0 && (
-                  <div className="space-y-2 pt-2 border-t border-copper/15 max-h-48 overflow-y-auto">
-                    {selectedApp.notes.map((n, idx) => (
-                      <div key={idx} className="p-3 bg-[#18181b] rounded-[4px] border border-copper/10 text-xs">
-                        <p className="text-ivory/90 whitespace-pre-wrap leading-relaxed">{n.note}</p>
-                        <div className="flex items-center justify-between text-[10px] text-ivory/45 font-mono mt-2 pt-1 border-t border-copper/10">
-                          <span>By: {n.author || "Recruiter"}</span>
-                          <span>{n.createdAt ? new Date(n.createdAt).toLocaleString("en-IN") : ""}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="mt-6 pt-4 border-t border-copper/15 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={closeCandidateDrawer}
-                className="px-4 py-2 border border-copper/20 hover:border-copper/40 text-ivory/70 hover:text-ivory text-xs uppercase tracking-[0.1em] rounded-[4px] transition-colors"
-              >
-                Close Panel
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  setDeleteCandidate({
-                    id: selectedApp.id,
-                    name: selectedApp.name,
-                    jobTitle: selectedApp.jobTitle,
-                    referenceNumber: selectedApp.referenceNumber,
-                  })
-                }
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-red-950/40 border border-red-500/30 hover:bg-red-900/60 text-red-400 hover:text-red-200 text-xs uppercase tracking-[0.1em] rounded-[4px] transition-colors"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete Record</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* CONFIRMATION DIALOG: PERMANENT APPLICANT DELETION */}
-      {deleteCandidate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#18181b] border border-red-500/40 rounded-[8px] max-w-md w-full p-6 text-ivory shadow-2xl space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0">
-                <Trash2 className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-lg font-display text-ivory">Permanently Delete Applicant</h3>
-                <p className="text-xs text-ivory/70 mt-1 leading-relaxed">
-                  Are you sure you want to delete the candidate application for{" "}
-                  <strong className="text-ivory font-semibold">{deleteCandidate.name}</strong> applied for{" "}
-                  <span className="text-copper font-medium">{deleteCandidate.jobTitle}</span>?
-                </p>
-              </div>
-            </div>
-
-            <div className="p-3.5 bg-red-950/30 border border-red-500/30 rounded-[4px] text-[11px] text-red-200 leading-relaxed space-y-1">
-              <div className="font-semibold text-red-300 flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5" />
-                Permanent Deletion Warning:
-              </div>
-              <div>
-                This action is irreversible. The applicant's contact details, experience, notes history, and associated PDF CV document will be permanently removed from MongoDB and GridFS storage.
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => !isDeleting && setDeleteCandidate(null)}
-                disabled={isDeleting}
-                className="px-4 py-2 border border-copper/20 hover:border-copper/40 text-ivory/70 hover:text-ivory text-xs uppercase tracking-[0.1em] rounded-[4px] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmDeleteApplicant}
-                disabled={isDeleting}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs uppercase tracking-[0.1em] rounded-[4px] transition-colors disabled:opacity-50 shadow-md"
-              >
-                {isDeleting ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Deleting Record…</span>
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Permanently Delete</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* STANDARDIZED DELETION CONFIRMATION DIALOG */}
+      <DeleteConfirmModal
+        isOpen={Boolean(deleteCandidate)}
+        title="Permanently Delete Applicant"
+        itemName={deleteCandidate?.name}
+        itemType="Candidate Application"
+        warning="This action is irreversible. The applicant's contact details, experience, notes history, and associated PDF CV document will be permanently removed from MongoDB and GridFS storage."
+        onConfirm={confirmDeleteApplicant}
+        onCancel={() => !isDeleting && setDeleteCandidate(null)}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

@@ -432,66 +432,67 @@ export default function AdminResaleLeadsPage() {
 
       {/* Enquiry Detail Modal */}
       {selectedLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#18181b] border border-copper/30 rounded-lg max-w-lg w-full p-6 text-ivory shadow-2xl space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#FAF8F5] border border-copper/30 rounded-lg max-w-lg w-full p-6 text-[#1C1C1C] shadow-2xl space-y-5">
             <div className="flex items-start justify-between border-b border-copper/20 pb-4">
               <div>
-                <div className="text-[10px] tracking-[0.2em] uppercase text-copper font-medium">
+                <div className="text-[10px] tracking-[0.2em] uppercase text-copper font-semibold">
                   Resale Enquiry Details
                 </div>
-                <h3 className="text-xl font-display font-light text-white mt-1">
+                <h3 className="text-xl font-display font-medium text-[#1C1C1C] mt-1">
                   {selectedLead.name || "Anonymous Enquiry"}
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedLead(null)}
-                className="text-ivory/40 hover:text-white p-1 rounded transition-colors"
+                className="w-8 h-8 rounded-full border border-copper/20 hover:border-copper flex items-center justify-center text-[#1C1C1C]/60 hover:text-copper bg-white hover:bg-[#FAF8F5] transition-colors shrink-0 cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3 p-3 rounded bg-zinc-900/60 border border-copper/15">
+              <div className="grid grid-cols-2 gap-3 p-3.5 rounded bg-white border border-copper/20 shadow-sm">
                 <div>
-                  <div className="text-ivory/40 uppercase text-[10px]">Phone Number</div>
+                  <div className="text-[#1C1C1C]/50 uppercase text-[10px] font-semibold">Phone Number</div>
                   {selectedLead.phone ? (
                     <a
                       href={`tel:${selectedLead.phone}`}
-                      className="text-copper hover:underline font-mono text-xs mt-0.5 inline-block"
+                      className="text-copper hover:underline font-mono text-xs mt-0.5 inline-block font-medium"
                     >
                       {selectedLead.phone}
                     </a>
                   ) : (
-                    <span className="text-ivory/60">—</span>
+                    <span className="text-[#1C1C1C]/50">—</span>
                   )}
                 </div>
                 <div>
-                  <div className="text-ivory/40 uppercase text-[10px]">Email Address</div>
+                  <div className="text-[#1C1C1C]/50 uppercase text-[10px] font-semibold">Email Address</div>
                   {selectedLead.email ? (
                     <a
                       href={`mailto:${selectedLead.email}`}
-                      className="text-copper hover:underline text-xs mt-0.5 truncate block"
+                      className="text-copper hover:underline text-xs mt-0.5 truncate block font-medium"
                     >
                       {selectedLead.email}
                     </a>
                   ) : (
-                    <span className="text-ivory/60">—</span>
+                    <span className="text-[#1C1C1C]/50">—</span>
                   )}
                 </div>
               </div>
 
               <div>
-                <div className="text-ivory/40 uppercase text-[10px] mb-1">Target Resale Listing</div>
-                <div className="p-3 rounded bg-zinc-900/60 border border-copper/15 flex items-center justify-between">
-                  <span className="text-white font-medium text-xs">
+                <div className="text-[#1C1C1C]/50 uppercase text-[10px] mb-1 font-semibold">Target Resale Listing</div>
+                <div className="p-3.5 rounded bg-white border border-copper/20 shadow-sm flex items-center justify-between">
+                  <span className="text-[#1C1C1C] font-semibold text-xs">
                     {selectedLead.propertyTitle || "General Resale Consultation"}
                   </span>
                   {selectedLead.resalePropertyId && (
                     <Link
                       to={`/resale/${selectedLead.resalePropertyId}`}
                       target="_blank"
-                      className="text-[11px] text-copper hover:underline inline-flex items-center gap-1 shrink-0 ml-2"
+                      className="text-[11px] text-copper hover:underline inline-flex items-center gap-1 shrink-0 ml-2 font-medium"
                     >
                       <span>Open Listing</span>
                       <ExternalLink className="w-3 h-3" />
@@ -501,30 +502,30 @@ export default function AdminResaleLeadsPage() {
               </div>
 
               <div>
-                <div className="text-ivory/40 uppercase text-[10px] mb-1">Enquiry Message</div>
-                <div className="p-3.5 rounded bg-zinc-900/60 border border-copper/15 text-ivory/80 leading-relaxed text-xs max-h-48 overflow-y-auto">
+                <div className="text-[#1C1C1C]/50 uppercase text-[10px] mb-1 font-semibold">Enquiry Message</div>
+                <div className="p-3.5 rounded bg-white border border-copper/20 shadow-sm text-[#1C1C1C]/85 leading-relaxed text-xs max-h-48 overflow-y-auto">
                   {selectedLead.message || "No custom message provided with this enquiry."}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div>
-                  <div className="text-ivory/40 uppercase text-[10px] mb-1">Enquiry Status</div>
+                  <div className="text-[#1C1C1C]/50 uppercase text-[10px] mb-1 font-semibold">Enquiry Status</div>
                   <select
                     value={selectedLead.status || "New"}
                     onChange={(e) => updateStatus(selectedLead.id, e.target.value)}
-                    className="w-full px-3 py-1.5 bg-zinc-900 border border-copper/30 rounded text-xs text-white focus:outline-none focus:border-copper cursor-pointer"
+                    className="w-full px-3 py-2 bg-white border border-copper/30 rounded text-xs text-[#1C1C1C] font-medium focus:outline-none focus:border-copper cursor-pointer shadow-sm"
                   >
                     {STATUS_OPTIONS.map((st) => (
-                      <option key={st} value={st} className="bg-zinc-900 text-white">
+                      <option key={st} value={st}>
                         {st}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <div className="text-ivory/40 uppercase text-[10px] mb-1">Submission Date</div>
-                  <div className="px-3 py-1.5 bg-zinc-900/60 border border-copper/15 rounded text-xs text-ivory/70">
+                  <div className="text-[#1C1C1C]/50 uppercase text-[10px] mb-1 font-semibold">Submission Date</div>
+                  <div className="px-3 py-2 bg-white border border-copper/20 rounded text-xs text-[#1C1C1C]/70 shadow-sm font-mono">
                     {selectedLead.createdAt
                       ? new Date(selectedLead.createdAt).toLocaleString("en-IN")
                       : "—"}
@@ -544,7 +545,7 @@ export default function AdminResaleLeadsPage() {
                       title: selectedLead.propertyTitle || "Resale Enquiry",
                     });
                   }}
-                  className="px-3 py-1.5 rounded text-xs text-rose-400 hover:bg-rose-500/10 border border-rose-500/20 transition-colors"
+                  className="px-3.5 py-2 rounded text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
                 >
                   Delete Enquiry
                 </button>
@@ -552,7 +553,7 @@ export default function AdminResaleLeadsPage() {
               <button
                 type="button"
                 onClick={() => setSelectedLead(null)}
-                className="ml-auto px-4 py-1.5 bg-copper hover:bg-copper-light text-white text-xs uppercase tracking-wider rounded transition-colors font-semibold"
+                className="ml-auto px-5 py-2 border border-copper/30 hover:border-copper text-[#1C1C1C] hover:bg-white text-xs uppercase tracking-wider rounded transition-colors font-medium cursor-pointer"
               >
                 Close
               </button>

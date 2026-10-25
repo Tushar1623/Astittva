@@ -26,6 +26,8 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import ApplicantDetailsModal from "@/components/admin/ApplicantDetailsModal";
+import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
 
 const CAREER_STATUSES = [
   "New",
@@ -143,15 +145,17 @@ export default function AdminCareerApplicationsPage() {
     }
   };
 
-  const saveNotes = async () => {
+  const saveNotes = async (noteText) => {
     if (!selectedApp) return;
+    const finalNotes = noteText !== undefined ? noteText : editingNotes;
     setSavingNotes(true);
     try {
-      await api.patch(`/admin/leads/career/${selectedApp.id}`, { notes: editingNotes });
+      await api.patch(`/admin/leads/career/${selectedApp.id}`, { notes: finalNotes });
       setApplications((prev) =>
-        prev.map((a) => (a.id === selectedApp.id ? { ...a, notes: editingNotes } : a))
+        prev.map((a) => (a.id === selectedApp.id ? { ...a, notes: finalNotes } : a))
       );
-      setSelectedApp((prev) => ({ ...prev, notes: editingNotes }));
+      setSelectedApp((prev) => ({ ...prev, notes: finalNotes }));
+      setEditingNotes(finalNotes);
       toast.success("Internal notes saved successfully");
     } catch (e) {
       toast.error(formatApiErrorDetail(e.response?.data?.detail) || "Failed to save notes");
@@ -756,293 +760,38 @@ export default function AdminCareerApplicationsPage() {
         </div>
       )}
 
-      {/* APPLICANT DETAILS SIDE PANEL / MODAL */}
-      {selectedApp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#18181b] border border-copper/30 rounded-[10px] max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl p-6 sm:p-8 text-ivory">
-            {/* Header */}
-            <div className="flex items-start justify-between border-b border-copper/15 pb-5 mb-6">
-              <div>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="font-mono text-xs font-bold text-copper tracking-wider px-2 py-0.5 rounded bg-copper/10 border border-copper/25">
-                    ID: {selectedApp.id}
-                  </span>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-[3px] text-[10px] font-mono tracking-wider uppercase border font-semibold ${
-                      STATUS_BADGE_CLASSES[selectedApp.status] || "border-copper/30 text-copper"
-                    }`}
-                  >
-                    {selectedApp.status || "New"}
-                  </span>
-                </div>
-                <h2 className="font-display text-2xl text-ivory mt-1">{selectedApp.name}</h2>
-                <p className="text-xs text-ivory/60 mt-0.5">
-                  Applied for:{" "}
-                  <strong className="text-copper font-medium">
-                    {selectedApp.jobTitle || "General Career Opportunity"}
-                  </strong>
-                  {selectedApp.department && (
-                    <span className="text-ivory/40"> • {selectedApp.department}</span>
-                  )}
-                </p>
-              </div>
+      {/* STANDARDIZED APPLICANT DETAILS MODAL */}
+      <ApplicantDetailsModal
+        isOpen={Boolean(selectedApp)}
+        applicant={selectedApp}
+        onClose={() => setSelectedApp(null)}
+        onDownloadCv={downloadResume}
+        isDownloading={downloadingId === selectedApp?.id}
+        onUpdateStatus={(st) => updateStatus(selectedApp.id, st)}
+        isUpdatingStatus={updatingStatus}
+        availableStatuses={CAREER_STATUSES}
+        onSaveNotes={saveNotes}
+        isSavingNotes={savingNotes}
+        onDelete={(app) =>
+          setDeleteCandidate({
+            id: app.id,
+            name: app.name,
+            jobTitle: app.jobTitle || "Career Applicant",
+          })
+        }
+      />
 
-              <button
-                type="button"
-                onClick={() => setSelectedApp(null)}
-                className="p-2 text-ivory/60 hover:text-copper hover:bg-charcoal rounded transition-colors"
-                title="Close"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Quick Actions Toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-charcoal rounded-[6px] border border-copper/20 mb-6">
-              <div className="flex items-center gap-2">
-                {selectedApp.hasResumeFile || selectedApp.resumeFileId || (selectedApp.resumeUrl && selectedApp.resumeUrl.includes("/resume")) ? (
-                  <button
-                    type="button"
-                    onClick={() => downloadResume(selectedApp)}
-                    disabled={downloadingId === selectedApp.id}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.12em] rounded-[4px] transition-colors shadow-sm disabled:opacity-50"
-                  >
-                    {downloadingId === selectedApp.id ? (
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Download className="w-3.5 h-3.5" />
-                    )}
-                    <span>Download CV (PDF)</span>
-                  </button>
-                ) : (
-                  <span className="text-xs text-ivory/40 italic flex items-center gap-1.5">
-                    <FileX className="w-4 h-4" />
-                    No downloadable CV uploaded
-                  </span>
-                )}
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setDeleteCandidate({
-                    id: selectedApp.id,
-                    name: selectedApp.name,
-                    jobTitle: selectedApp.jobTitle || "Career Applicant",
-                  })
-                }
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-500/10 text-xs uppercase tracking-[0.1em] rounded-[4px] transition-colors"
-                title="Permanently remove application"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete Applicant</span>
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="space-y-6">
-              {/* Status Update Control */}
-              <div className="bg-charcoal/80 border border-copper/25 rounded-[6px] p-5 space-y-3">
-                <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-copper block">
-                  Application Status Transition
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {CAREER_STATUSES.map((st) => (
-                    <button
-                      key={st}
-                      type="button"
-                      disabled={updatingStatus}
-                      onClick={() => updateStatus(selectedApp.id, st)}
-                      className={`px-3 py-1.5 rounded-[4px] text-xs uppercase tracking-[0.1em] transition-all font-medium ${
-                        selectedApp.status === st
-                          ? "bg-copper text-white shadow-sm ring-1 ring-copper"
-                          : "bg-[#18181b] border border-copper/25 text-ivory/70 hover:text-ivory hover:border-copper"
-                      }`}
-                    >
-                      {st}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Applicant Details Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-5 rounded-[6px] bg-charcoal/60 border border-copper/15 text-xs">
-                <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
-                    Email Address
-                  </span>
-                  <a
-                    href={`mailto:${selectedApp.email}`}
-                    className="text-ivory font-medium hover:text-copper underline underline-offset-2"
-                  >
-                    {selectedApp.email}
-                  </a>
-                </div>
-                <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
-                    Phone Number
-                  </span>
-                  <a
-                    href={`tel:${selectedApp.phone}`}
-                    className="text-ivory font-medium font-mono hover:text-copper"
-                  >
-                    {selectedApp.phone}
-                  </a>
-                </div>
-                <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
-                    Experience
-                  </span>
-                  <p className="text-ivory font-medium">{selectedApp.experience || "Not specified"}</p>
-                </div>
-                <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
-                    Location
-                  </span>
-                  <p className="text-ivory font-medium">{selectedApp.location || "Kolkata, West Bengal"}</p>
-                </div>
-                <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
-                    Department Preference
-                  </span>
-                  <p className="text-ivory font-medium">{selectedApp.department || "General"}</p>
-                </div>
-                <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
-                    Application Date
-                  </span>
-                  <p className="text-ivory font-medium font-mono">
-                    {selectedApp.createdAt || selectedApp.created_at
-                      ? new Date(selectedApp.createdAt || selectedApp.created_at).toLocaleString("en-IN")
-                      : "—"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Cover Letter / Message */}
-              {selectedApp.message && (
-                <div className="p-5 rounded-[6px] bg-charcoal/60 border border-copper/15 text-xs">
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper font-semibold block mb-2">
-                    Cover Letter / Applicant Message
-                  </span>
-                  <p className="text-ivory/85 whitespace-pre-wrap leading-relaxed bg-[#18181b] p-3 rounded border border-copper/10 font-sans">
-                    {selectedApp.message}
-                  </p>
-                </div>
-              )}
-
-              {/* Internal Notes */}
-              <div className="p-5 rounded-[6px] bg-charcoal/60 border border-copper/15 text-xs space-y-3">
-                <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-copper block">
-                  Administrative &amp; Recruiter Notes
-                </span>
-                <textarea
-                  rows={3}
-                  value={editingNotes}
-                  onChange={(e) => setEditingNotes(e.target.value)}
-                  placeholder="Record interview notes, candidate assessment, or background check findings..."
-                  className="w-full p-3 bg-[#18181b] border border-copper/20 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper"
-                />
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    disabled={savingNotes}
-                    onClick={saveNotes}
-                    className="px-4 py-2 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.12em] rounded-[4px] transition-colors disabled:opacity-50"
-                  >
-                    {savingNotes ? "Saving Notes…" : "Save Notes"}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="mt-6 pt-4 border-t border-copper/15 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setSelectedApp(null)}
-                className="px-4 py-2 border border-copper/20 hover:border-copper/40 text-ivory/70 hover:text-ivory text-xs uppercase tracking-[0.1em] rounded-[4px] transition-colors"
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  setDeleteCandidate({
-                    id: selectedApp.id,
-                    name: selectedApp.name,
-                    jobTitle: selectedApp.jobTitle || "Career Applicant",
-                  })
-                }
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-red-950/40 border border-red-500/30 hover:bg-red-900/60 text-red-400 hover:text-red-200 text-xs uppercase tracking-[0.1em] rounded-[4px] transition-colors"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete Record</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* CONFIRMATION DIALOG: PERMANENT APPLICANT DELETION */}
-      {deleteCandidate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#18181b] border border-red-500/40 rounded-[8px] max-w-md w-full p-6 text-ivory shadow-2xl space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0">
-                <Trash2 className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-lg font-display text-ivory">Permanently Delete Applicant</h3>
-                <p className="text-xs text-ivory/70 mt-1 leading-relaxed">
-                  Are you sure you want to delete the career application for{" "}
-                  <strong className="text-ivory font-semibold">{deleteCandidate.name}</strong> applied for{" "}
-                  <span className="text-copper font-medium">{deleteCandidate.jobTitle}</span>?
-                </p>
-              </div>
-            </div>
-
-            <div className="p-3.5 bg-red-950/30 border border-red-500/30 rounded-[4px] text-[11px] text-red-200 leading-relaxed space-y-1">
-              <div className="font-semibold text-red-300 flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5" />
-                Permanent Deletion Warning:
-              </div>
-              <div>
-                This action is irreversible. The applicant record and associated PDF CV stored in GridFS will be permanently removed from MongoDB storage.
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => !isDeleting && setDeleteCandidate(null)}
-                disabled={isDeleting}
-                className="px-4 py-2 border border-copper/20 hover:border-copper/40 text-ivory/70 hover:text-ivory text-xs uppercase tracking-[0.1em] rounded-[4px] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmDelete}
-                disabled={isDeleting}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs uppercase tracking-[0.1em] rounded-[4px] transition-colors disabled:opacity-50 shadow-md"
-              >
-                {isDeleting ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Deleting Record…</span>
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Permanently Delete</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* STANDARDIZED DELETION CONFIRMATION DIALOG */}
+      <DeleteConfirmModal
+        isOpen={Boolean(deleteCandidate)}
+        title="Permanently Delete Applicant"
+        itemName={deleteCandidate?.name}
+        itemType="Career Application"
+        warning="This action is irreversible. The applicant record and associated PDF CV stored in GridFS will be permanently removed from MongoDB storage."
+        onConfirm={confirmDelete}
+        onCancel={() => !isDeleting && setDeleteCandidate(null)}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }
