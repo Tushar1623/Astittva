@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import api, { formatApiErrorDetail } from "@/lib/api";
 import { toast } from "sonner";
+import AdminHeader from "@/components/admin/AdminHeader";
 
 export default function AdminRecruitmentJobFormPage() {
   const { id } = useParams();
@@ -201,54 +202,26 @@ export default function AdminRecruitmentJobFormPage() {
 
   return (
     <div data-testid="admin-recruitment-job-form" className="space-y-8 max-w-5xl">
-      {/* Top Header */}
-      <div>
-        <Link
-          to="/admin/recruitment/jobs"
-          className="inline-flex items-center gap-2 text-ivory/60 hover:text-copper text-xs tracking-[0.25em] uppercase mb-4 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to Vacancies
-        </Link>
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-copper/15">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-copper">
-                RECRUITMENT CONSOLE
-              </span>
-              <span className="text-ivory/30">•</span>
-              <span className="text-[10px] tracking-[0.2em] uppercase text-ivory/50">
-                VACANCY CONFIGURATOR
-              </span>
-            </div>
-            <h1 className="font-display font-light text-3xl sm:text-4xl text-ivory">
-              {isEdit ? "Edit Vacancy" : "Create New Vacancy"}
-            </h1>
-            <p className="text-ivory/55 text-sm mt-1">
-              Configure role specifications, qualifications, compensation brackets, and publishing visibility.
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={saving}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.15em] rounded-[4px] transition-colors shadow-sm disabled:opacity-50"
-          >
-            {saving ? (
-              <>
-                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Saving…</span>
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                <span>{isEdit ? "Save Changes" : "Publish Vacancy"}</span>
-              </>
-            )}
-          </button>
-        </div>
-      </div>
+      <AdminHeader
+        category="Recruitment Console"
+        title={isEdit ? "Edit Vacancy" : "Create New Vacancy"}
+        subtitle="Configure role specifications, qualifications, compensation brackets, and publishing visibility."
+        actions={[
+          {
+            label: "Back to Vacancies",
+            icon: ArrowLeft,
+            to: "/admin/recruitment/jobs",
+            variant: "outline",
+          },
+          {
+            label: saving ? "Saving…" : (isEdit ? "Save Changes" : "Publish Vacancy"),
+            icon: Save,
+            variant: "primary",
+            onClick: handleSubmit,
+            disabled: saving,
+          },
+        ]}
+      />
 
       {serverError && (
         <div className="bg-red-950/20 border border-red-500/30 rounded-[6px] p-4 text-red-600 text-xs sm:text-sm flex items-center gap-3">

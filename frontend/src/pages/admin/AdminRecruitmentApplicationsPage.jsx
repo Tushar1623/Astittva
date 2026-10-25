@@ -174,6 +174,7 @@ export default function AdminRecruitmentApplicationsPage() {
       setCurrentPage(1);
     }, 250);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, statusFilter, jobIdFilter]);
 
   // Open candidate details if `id` parameter is in URL
@@ -182,6 +183,7 @@ export default function AdminRecruitmentApplicationsPage() {
     if (candidateId && (!selectedApp || selectedApp.id !== candidateId)) {
       openCandidateDrawer(candidateId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const openCandidateDrawer = async (appId) => {

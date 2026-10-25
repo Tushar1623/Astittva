@@ -7,24 +7,12 @@ import {
   Clock,
   Plus,
   ArrowRight,
-  Eye,
-  FileText,
-  Calendar,
-  Building,
   ExternalLink,
   RefreshCw,
 } from "lucide-react";
 import api, { formatApiErrorDetail } from "@/lib/api";
-
-const STATUS_BADGE_CLASSES = {
-  New: "border-blue-500/40 text-blue-700 bg-blue-500/10",
-  "Under Review": "border-amber-500/40 text-amber-700 bg-amber-500/10",
-  Shortlisted: "border-emerald-500/40 text-emerald-700 bg-emerald-500/10",
-  "Interview Scheduled": "border-purple-500/40 text-purple-700 bg-purple-500/10",
-  Selected: "border-green-600/40 text-green-700 bg-green-600/10",
-  Rejected: "border-red-500/40 text-red-700 bg-red-500/10",
-  Withdrawn: "border-zinc-500/40 text-zinc-600 bg-zinc-500/10",
-};
+import AdminHeader from "@/components/admin/AdminHeader";
+import StatusBadge from "@/components/admin/StatusBadge";
 
 export default function AdminRecruitmentDashboardPage() {
   const [data, setData] = useState(null);
@@ -38,7 +26,6 @@ export default function AdminRecruitmentDashboardPage() {
       const res = await api.get("/admin/recruitment/dashboard");
       setData(res.data);
     } catch (err) {
-      console.error("Failed to load recruitment dashboard:", err);
       setError(formatApiErrorDetail(err.response?.data?.detail));
     } finally {
       setLoading(false);
@@ -51,16 +38,18 @@ export default function AdminRecruitmentDashboardPage() {
 
   if (loading) {
     return (
-      <div className="text-ivory/50 text-center py-20 tracking-[0.3em] uppercase text-xs">
-        Loading Recruitment Analytics…
+      <div className="text-ivory/50 text-center py-20 tracking-[0.25em] uppercase text-xs">
+        Loading Recruitment Analytics...
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="text-center py-16 border border-copper/20 bg-charcoal-2/30 rounded-[8px] p-6">
-        <p className="text-red-600 font-medium text-sm mb-3">{error || "Failed to load dashboard data."}</p>
+      <div className="text-center py-16 border border-copper/20 bg-charcoal-2/30 rounded-[6px] p-6">
+        <p className="text-rose-500 font-medium text-sm mb-3">
+          {error || "Failed to load dashboard data."}
+        </p>
         <button
           onClick={loadDashboard}
           className="inline-flex items-center gap-2 px-4 py-2 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.15em] rounded-[4px] transition-colors"
@@ -75,142 +64,166 @@ export default function AdminRecruitmentDashboardPage() {
   const { summary = {}, byStatus = {}, recentApplications = [], recentJobs = [] } = data;
 
   return (
-    <div data-testid="admin-recruitment-dashboard" className="space-y-10">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-copper/15">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-copper">
-              RECRUITMENT CONSOLE
-            </span>
-            <span className="text-ivory/30">•</span>
-            <span className="text-[10px] tracking-[0.2em] uppercase text-ivory/50">
-              TALENT ACQUISITION
-            </span>
+    <div data-testid="admin-recruitment-dashboard" className="space-y-8">
+      {/* Header */}
+      <AdminHeader
+        category="Recruitment Console"
+        title="Recruitment Overview"
+        subtitle="Real-time talent acquisition metrics, job openings, and applicant pipeline tracking."
+        actions={[
+          {
+            label: "Refresh",
+            icon: RefreshCw,
+            variant: "outline",
+            onClick: loadDashboard,
+          },
+          {
+            label: "Post New Opening",
+            icon: Plus,
+            to: "/admin/recruitment/jobs/new",
+            variant: "primary",
+          },
+          {
+            label: "Public Job Board",
+            icon: ExternalLink,
+            to: "/careers/jobs",
+            variant: "outline",
+          },
+        ]}
+      />
+
+      {/* Primary KPI Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-charcoal p-5 rounded-[6px] border border-copper/20 shadow-sm relative overflow-hidden group hover:border-copper/40 transition-colors">
+          <div className="flex items-center justify-between mb-3">
+            <Briefcase className="w-5 h-5 text-copper" strokeWidth={1.75} />
+            <Link
+              to="/admin/recruitment/jobs"
+              className="text-[10px] text-copper hover:underline uppercase tracking-wider font-semibold inline-flex items-center gap-1"
+            >
+              Openings <ArrowRight className="w-3 h-3" />
+            </Link>
           </div>
-          <h1 className="font-display font-light text-3xl sm:text-4xl text-ivory mb-2">
-            Recruitment Overview
-          </h1>
-          <p className="text-ivory/55 font-light text-sm">
-            Real-time metrics, vacancy monitoring, and applicant tracking across active Kolkata hiring pipelines.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <Link
-            to="/admin/recruitment/jobs/new"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.15em] rounded-[4px] transition-colors shadow-sm"
-          >
-            <Plus className="w-4 h-4" /> Post New Opening
-          </Link>
-          <Link
-            to="/careers/jobs"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-2 border border-copper/30 hover:border-copper text-xs font-semibold uppercase tracking-[0.15em] text-ivory/80 hover:text-white rounded-[4px] transition-colors"
-          >
-            <span>Public Job Board</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-      </div>
-
-      {/* Signature Multi-Tile KPI Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-copper/15 border border-copper/20 rounded-[6px] overflow-hidden">
-        <div className="bg-charcoal p-6">
-          <Briefcase className="w-5 h-5 text-copper mb-4" strokeWidth={1.5} />
           <div className="text-3xl font-display font-light text-ivory">
             {summary.totalJobs ?? 0}
           </div>
-          <div className="text-[10px] tracking-[0.25em] uppercase text-ivory/50 mt-2">
+          <div className="text-[10px] tracking-[0.2em] uppercase text-ivory/50 mt-1">
             Total Vacancies
           </div>
-          <div className="text-xs text-ivory/50 mt-1 flex gap-2 font-mono">
-            <span className="text-emerald-700 font-medium">{summary.publishedJobs || 0} Published</span>
+          <div className="text-xs text-ivory/60 mt-2 flex gap-2 font-mono">
+            <span className="text-emerald-500 font-medium">
+              {summary.publishedJobs || 0} Published
+            </span>
             <span>•</span>
             <span>{summary.draftJobs || 0} Draft</span>
           </div>
         </div>
 
-        <div className="bg-charcoal p-6">
-          <Users className="w-5 h-5 text-[#C89A55] mb-4" strokeWidth={1.5} />
+        <div className="bg-charcoal p-5 rounded-[6px] border border-copper/20 shadow-sm relative overflow-hidden group hover:border-copper/40 transition-colors">
+          <div className="flex items-center justify-between mb-3">
+            <Users className="w-5 h-5 text-[#C89A55]" strokeWidth={1.75} />
+            <Link
+              to="/admin/recruitment/applications"
+              className="text-[10px] text-[#C89A55] hover:underline uppercase tracking-wider font-semibold inline-flex items-center gap-1"
+            >
+              Candidates <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
           <div className="text-3xl font-display font-light text-ivory">
             {summary.totalApplications ?? 0}
           </div>
-          <div className="text-[10px] tracking-[0.25em] uppercase text-ivory/50 mt-2">
-            Total Applicants
+          <div className="text-[10px] tracking-[0.2em] uppercase text-ivory/50 mt-1">
+            Total Candidates
           </div>
-          <div className="text-xs text-blue-700 font-medium mt-1 font-mono">
+          <div className="text-xs text-blue-500 font-medium mt-2 font-mono">
             {byStatus.new || 0} New Pending Review
           </div>
         </div>
 
-        <div className="bg-charcoal p-6">
-          <Clock className="w-5 h-5 text-[#C89A55] mb-4" strokeWidth={1.5} />
-          <div className="text-3xl font-display font-light text-ivory">
-            {(byStatus.underReview || 0) + (byStatus.shortlisted || 0) + (byStatus.interviewScheduled || 0)}
+        <div className="bg-charcoal p-5 rounded-[6px] border border-copper/20 shadow-sm relative overflow-hidden group hover:border-copper/40 transition-colors">
+          <div className="flex items-center justify-between mb-3">
+            <Clock className="w-5 h-5 text-amber-500" strokeWidth={1.75} />
+            <Link
+              to="/admin/recruitment/applications"
+              className="text-[10px] text-amber-500 hover:underline uppercase tracking-wider font-semibold inline-flex items-center gap-1"
+            >
+              Active <ArrowRight className="w-3 h-3" />
+            </Link>
           </div>
-          <div className="text-[10px] tracking-[0.25em] uppercase text-ivory/50 mt-2">
+          <div className="text-3xl font-display font-light text-ivory">
+            {(byStatus.underReview || 0) +
+              (byStatus.shortlisted || 0) +
+              (byStatus.interviewScheduled || 0)}
+          </div>
+          <div className="text-[10px] tracking-[0.2em] uppercase text-ivory/50 mt-1">
             In Active Pipeline
           </div>
-          <div className="text-xs text-purple-700 font-medium mt-1 font-mono">
-            {byStatus.interviewScheduled || 0} Interview Scheduled
+          <div className="text-xs text-purple-500 font-medium mt-2 font-mono">
+            {byStatus.interviewScheduled || 0} Interviews Scheduled
           </div>
         </div>
 
-        <div className="bg-charcoal p-6">
-          <CheckCircle2 className="w-5 h-5 text-[#2E7D32] mb-4" strokeWidth={1.5} />
+        <div className="bg-charcoal p-5 rounded-[6px] border border-copper/20 shadow-sm relative overflow-hidden group hover:border-copper/40 transition-colors">
+          <div className="flex items-center justify-between mb-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-500" strokeWidth={1.75} />
+            <Link
+              to="/admin/recruitment/applications"
+              className="text-[10px] text-emerald-500 hover:underline uppercase tracking-wider font-semibold inline-flex items-center gap-1"
+            >
+              Hired <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
           <div className="text-3xl font-display font-light text-ivory">
             {byStatus.selected ?? 0}
           </div>
-          <div className="text-[10px] tracking-[0.25em] uppercase text-ivory/50 mt-2">
-            Offers &amp; Selected
+          <div className="text-[10px] tracking-[0.2em] uppercase text-ivory/50 mt-1">
+            Selected &amp; Hired
           </div>
-          <div className="text-xs text-ivory/50 mt-1 font-mono">
+          <div className="text-xs text-ivory/50 mt-2 font-mono">
             {byStatus.rejected || 0} Rejected · {byStatus.withdrawn || 0} Withdrawn
           </div>
         </div>
       </div>
 
-      {/* SECTION: Pipeline Stages Breakdown */}
-      <div className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-copper/15 mb-6">
+      {/* Pipeline Stages Breakdown */}
+      <div className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-7">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-copper/15 mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-[6px] bg-[#C89A55]/15 border border-[#C89A55]/30 flex items-center justify-center text-[#C89A55]">
-              <Users className="w-5 h-5" strokeWidth={1.75} />
+            <div className="w-9 h-9 rounded-[4px] bg-[#C89A55]/15 border border-[#C89A55]/30 flex items-center justify-center text-[#C89A55]">
+              <Users className="w-4 h-4" strokeWidth={1.75} />
             </div>
             <div>
-              <h2 className="font-display text-xl text-ivory">Recruitment Pipeline Stages</h2>
+              <h2 className="font-display text-lg text-ivory">Recruitment Pipeline Stages</h2>
               <p className="text-xs text-ivory/50">
-                Track candidates across application review, interviews, and final offers
+                Candidate distribution across qualification, interview scheduling, and offer release
               </p>
             </div>
           </div>
           <Link
             to="/admin/recruitment/applications"
-            className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-copper hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-copper hover:underline transition-colors"
           >
-            <span>Open Pipeline Console</span>
-            <span>→</span>
+            <span>Open Candidate Desk</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           {[
-            { label: "New", count: byStatus.new || 0, color: "text-blue-700 bg-blue-500/10 border-blue-500/25" },
-            { label: "Under Review", count: byStatus.underReview || 0, color: "text-amber-700 bg-amber-500/10 border-amber-500/25" },
-            { label: "Shortlisted", count: byStatus.shortlisted || 0, color: "text-emerald-700 bg-emerald-500/10 border-emerald-500/25" },
-            { label: "Interview Scheduled", count: byStatus.interviewScheduled || 0, color: "text-purple-700 bg-purple-500/10 border-purple-500/25" },
-            { label: "Selected", count: byStatus.selected || 0, color: "text-green-700 bg-green-600/10 border-green-600/25" },
-            { label: "Rejected", count: byStatus.rejected || 0, color: "text-red-700 bg-red-500/10 border-red-500/25" },
-            { label: "Withdrawn", count: byStatus.withdrawn || 0, color: "text-zinc-600 bg-zinc-500/10 border-zinc-500/25" },
+            { label: "New", count: byStatus.new || 0, color: "border-blue-500/30 text-blue-500" },
+            { label: "Under Review", count: byStatus.underReview || 0, color: "border-amber-500/30 text-amber-500" },
+            { label: "Shortlisted", count: byStatus.shortlisted || 0, color: "border-emerald-500/30 text-emerald-500" },
+            { label: "Interview Scheduled", count: byStatus.interviewScheduled || 0, color: "border-purple-500/30 text-purple-500" },
+            { label: "Selected", count: byStatus.selected || 0, color: "border-green-600/30 text-green-600" },
+            { label: "Rejected", count: byStatus.rejected || 0, color: "border-rose-500/30 text-rose-500" },
+            { label: "Withdrawn", count: byStatus.withdrawn || 0, color: "border-zinc-500/30 text-zinc-400" },
           ].map((stage, idx) => (
             <Link
               key={idx}
               to={`/admin/recruitment/applications?status=${encodeURIComponent(stage.label)}`}
-              className={`p-3.5 rounded-[4px] border text-center transition-all hover:border-copper/50 bg-charcoal ${stage.color}`}
+              className={`p-3.5 rounded-[4px] border text-center transition-all hover:border-copper/60 bg-charcoal ${stage.color}`}
             >
-              <div className="text-2xl font-display font-normal">{stage.count}</div>
+              <div className="text-2xl font-display font-light">{stage.count}</div>
               <div className="text-[10px] uppercase tracking-[0.15em] mt-1 font-semibold truncate">
                 {stage.label}
               </div>
@@ -219,30 +232,30 @@ export default function AdminRecruitmentDashboardPage() {
         </div>
       </div>
 
-      {/* TWO-COLUMN SECTION: Recent Applications & Recent Openings */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Two-Column: Recent Applications & Recent Openings */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Applications Card */}
         <div className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-copper/15 mb-4">
               <div className="flex items-center gap-2.5">
                 <Users className="w-4 h-4 text-copper" />
-                <h3 className="font-display text-lg text-ivory">Recent Applications</h3>
+                <h3 className="font-display text-base text-ivory">Recent Candidates</h3>
               </div>
               <Link
                 to="/admin/recruitment/applications"
-                className="text-xs text-copper hover:text-white font-semibold uppercase tracking-[0.12em] transition-colors"
+                className="text-xs text-copper hover:underline font-semibold uppercase tracking-[0.12em] transition-colors"
               >
                 View All →
               </Link>
             </div>
 
             {recentApplications.length === 0 ? (
-              <div className="text-center py-12 border border-copper/15 bg-charcoal-2/20 text-ivory/60 italic rounded-[6px]">
+              <div className="text-center py-10 border border-copper/15 bg-charcoal-2/20 text-ivory/60 italic rounded-[4px] text-xs">
                 No candidate applications received yet.
               </div>
             ) : (
-              <div className="border border-copper/15 rounded-[6px] overflow-hidden bg-charcoal-2/20">
+              <div className="border border-copper/15 rounded-[4px] overflow-hidden bg-charcoal-2/20">
                 <table className="w-full text-xs">
                   <thead className="bg-charcoal-2/80 text-ivory/60 text-[10px] tracking-[0.2em] uppercase border-b border-copper/15">
                     <tr>
@@ -251,11 +264,11 @@ export default function AdminRecruitmentDashboardPage() {
                       <th className="text-left p-3 font-normal">Status</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-copper/10">
                     {recentApplications.map((app) => (
                       <tr
                         key={app.id}
-                        className="border-t border-copper/10 hover:bg-charcoal-2/40 transition-colors"
+                        className="hover:bg-charcoal-2/40 transition-colors"
                       >
                         <td className="p-3">
                           <Link
@@ -264,17 +277,15 @@ export default function AdminRecruitmentDashboardPage() {
                           >
                             {app.name}
                           </Link>
-                          <div className="text-[10px] text-ivory/45 font-mono">Ref: {app.referenceNumber}</div>
+                          <div className="text-[10px] text-ivory/45 font-mono">
+                            Ref: {app.referenceNumber}
+                          </div>
                         </td>
-                        <td className="p-3 text-ivory/70 truncate max-w-[140px]">{app.jobTitle}</td>
+                        <td className="p-3 text-ivory/70 truncate max-w-[140px]">
+                          {app.jobTitle}
+                        </td>
                         <td className="p-3">
-                          <span
-                            className={`text-[9px] tracking-[0.15em] uppercase px-2 py-0.5 rounded-[2px] border font-medium ${
-                              STATUS_BADGE_CLASSES[app.status] || "border-copper/30 text-copper"
-                            }`}
-                          >
-                            {app.status}
-                          </span>
+                          <StatusBadge status={app.status} />
                         </td>
                       </tr>
                     ))}
@@ -284,10 +295,10 @@ export default function AdminRecruitmentDashboardPage() {
             )}
           </div>
 
-          <div className="pt-4 border-t border-copper/15 mt-6 text-center">
+          <div className="pt-4 border-t border-copper/15 mt-5 text-center">
             <Link
               to="/admin/recruitment/applications"
-              className="text-xs font-semibold uppercase tracking-[0.15em] text-copper hover:text-white transition-colors"
+              className="text-xs font-semibold uppercase tracking-[0.15em] text-copper hover:underline transition-colors"
             >
               Open Candidate Pipeline Console →
             </Link>
@@ -300,22 +311,22 @@ export default function AdminRecruitmentDashboardPage() {
             <div className="flex items-center justify-between pb-4 border-b border-copper/15 mb-4">
               <div className="flex items-center gap-2.5">
                 <Briefcase className="w-4 h-4 text-copper" />
-                <h3 className="font-display text-lg text-ivory">Recent Vacancies</h3>
+                <h3 className="font-display text-base text-ivory">Recent Vacancies</h3>
               </div>
               <Link
                 to="/admin/recruitment/jobs"
-                className="text-xs text-copper hover:text-white font-semibold uppercase tracking-[0.12em] transition-colors"
+                className="text-xs text-copper hover:underline font-semibold uppercase tracking-[0.12em] transition-colors"
               >
                 Manage All →
               </Link>
             </div>
 
             {recentJobs.length === 0 ? (
-              <div className="text-center py-12 border border-copper/15 bg-charcoal-2/20 text-ivory/60 italic rounded-[6px]">
+              <div className="text-center py-10 border border-copper/15 bg-charcoal-2/20 text-ivory/60 italic rounded-[4px] text-xs">
                 No job vacancies published yet.
               </div>
             ) : (
-              <div className="border border-copper/15 rounded-[6px] overflow-hidden bg-charcoal-2/20">
+              <div className="border border-copper/15 rounded-[4px] overflow-hidden bg-charcoal-2/20">
                 <table className="w-full text-xs">
                   <thead className="bg-charcoal-2/80 text-ivory/60 text-[10px] tracking-[0.2em] uppercase border-b border-copper/15">
                     <tr>
@@ -324,11 +335,11 @@ export default function AdminRecruitmentDashboardPage() {
                       <th className="text-right p-3 font-normal">Applicants</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-copper/10">
                     {recentJobs.map((job) => (
                       <tr
                         key={job.id}
-                        className="border-t border-copper/10 hover:bg-charcoal-2/40 transition-colors"
+                        className="hover:bg-charcoal-2/40 transition-colors"
                       >
                         <td className="p-3">
                           <Link
@@ -337,20 +348,12 @@ export default function AdminRecruitmentDashboardPage() {
                           >
                             {job.title}
                           </Link>
-                          <div className="text-[10px] text-ivory/45">{job.department} • {job.location}</div>
+                          <div className="text-[10px] text-ivory/45">
+                            {job.department} • {job.location}
+                          </div>
                         </td>
                         <td className="p-3">
-                          <span
-                            className={`text-[9px] tracking-[0.15em] uppercase px-2 py-0.5 rounded-[2px] border font-medium ${
-                              job.status === "published"
-                                ? "border-green-600/30 text-green-700 bg-green-500/10"
-                                : job.status === "draft"
-                                ? "border-amber-600/30 text-amber-700 bg-amber-500/10"
-                                : "border-copper/30 text-copper"
-                            }`}
-                          >
-                            {job.status}
-                          </span>
+                          <StatusBadge status={job.status} />
                         </td>
                         <td className="p-3 text-right font-mono font-medium text-copper">
                           {job.applicationsCount || 0}
@@ -363,10 +366,10 @@ export default function AdminRecruitmentDashboardPage() {
             )}
           </div>
 
-          <div className="pt-4 border-t border-copper/15 mt-6 flex items-center justify-between">
+          <div className="pt-4 border-t border-copper/15 mt-5 flex items-center justify-between">
             <Link
               to="/admin/recruitment/jobs/new"
-              className="text-xs font-semibold uppercase tracking-[0.15em] text-copper hover:text-white transition-colors"
+              className="text-xs font-semibold uppercase tracking-[0.15em] text-copper hover:underline transition-colors"
             >
               + Create New Vacancy
             </Link>

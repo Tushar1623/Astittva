@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, driveDirectFallbackUrl, fileUrl } from "@/lib/api";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, X, Save } from "lucide-react";
 import { toast } from "sonner";
+import AdminHeader from "@/components/admin/AdminHeader";
 
 const emptyProperty = {
   project_name: "",
@@ -172,22 +173,30 @@ export default function AdminPropertyFormPage() {
   }
 
   return (
-    <div data-testid="admin-property-form">
-      <Link to="/admin/properties" className="inline-flex items-center gap-2 text-copper text-xs tracking-[0.3em] uppercase mb-8 hover:text-rose-gold">
-        <ArrowLeft className="w-4 h-4" /> Back to Properties
-      </Link>
-
-      <div className="mb-12">
-        <div className="overline mb-3">{isEdit ? "Edit" : "Create"}</div>
-        <h1 className="font-display font-light text-3xl sm:text-4xl text-ivory">
-          {isEdit ? form.project_name || "Property" : "Add New Property"}
-        </h1>
-      </div>
+    <div data-testid="admin-property-form" className="space-y-8 max-w-5xl">
+      <AdminHeader
+        category="Property Portfolio"
+        title={isEdit ? form.project_name || "Edit Property" : "Add New Property"}
+        subtitle="Configure real estate development details, pricing, Google Drive imagery, and RERA compliance."
+        actions={[
+          {
+            label: "Back to Properties",
+            icon: ArrowLeft,
+            to: "/admin/properties",
+            variant: "outline",
+          },
+        ]}
+      />
 
       <form onSubmit={submit} className="space-y-8">
         {/* Basic */}
-        <section className="border border-copper/15 p-8">
-          <h3 className="overline mb-6">Basic Details</h3>
+        <section className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-6">
+          <div className="flex items-center gap-3 pb-3 border-b border-copper/15">
+            <div className="w-2 h-2 rounded-full bg-copper" />
+            <h2 className="text-sm font-semibold tracking-wider uppercase text-ivory">
+              1. Basic Project Details
+            </h2>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
               <label className="input-label">Project Name *</label>
@@ -261,9 +270,14 @@ export default function AdminPropertyFormPage() {
         </section>
 
           {/* Images */}
-          <section className="border border-copper/15 p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="overline">Images</h3>
+          <section className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-6">
+            <div className="flex items-center justify-between pb-3 border-b border-copper/15">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-copper" />
+                <h2 className="text-sm font-semibold tracking-wider uppercase text-ivory">
+                  2. Project Imagery (Google Drive &amp; CDN)
+                </h2>
+              </div>
               {Array.isArray(form.images) && form.images.length > 0 && (
                 <span className="text-copper text-xs tracking-wider">
                   {form.images.length} Image{form.images.length !== 1 ? "s" : ""} Attached
@@ -278,7 +292,7 @@ export default function AdminPropertyFormPage() {
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
                     {driveImages.map((path) => (
-                      <div key={path} className="relative group border border-copper/20 bg-charcoal/30 flex flex-col overflow-hidden">
+                      <div key={path} className="relative group border border-copper/20 bg-charcoal/30 flex flex-col overflow-hidden rounded-[4px]">
                         <div className="aspect-[4/3] w-full overflow-hidden relative">
                           <img
                             loading="lazy"
@@ -300,7 +314,7 @@ export default function AdminPropertyFormPage() {
                             type="button"
                             onClick={() => removeImage(path)}
                             data-testid="remove-image"
-                            className="absolute top-1 right-1 w-7 h-7 bg-charcoal/90 border border-copper/40 flex items-center justify-center text-copper hover:bg-copper hover:text-charcoal transition"
+                            className="absolute top-1 right-1 w-7 h-7 bg-charcoal/90 border border-copper/40 flex items-center justify-center text-copper hover:bg-copper hover:text-charcoal transition rounded"
                             title="Remove image"
                           >
                             <X className="w-4 h-4" />
@@ -355,8 +369,13 @@ export default function AdminPropertyFormPage() {
           </section>
 
         {/* Details */}
-        <section className="border border-copper/15 p-8">
-          <h3 className="overline mb-6">Additional Details</h3>
+        <section className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-6">
+          <div className="flex items-center gap-3 pb-3 border-b border-copper/15">
+            <div className="w-2 h-2 rounded-full bg-copper" />
+            <h2 className="text-sm font-semibold tracking-wider uppercase text-ivory">
+              3. Specifications &amp; Amenities
+            </h2>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="input-label">RERA Number</label>
@@ -393,7 +412,7 @@ export default function AdminPropertyFormPage() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {form.amenities.map((a) => (
-                  <span key={a} className="border border-copper/30 text-ivory/80 text-xs px-3 py-1.5 flex items-center gap-2">
+                  <span key={a} className="border border-copper/30 text-ivory/80 text-xs px-3 py-1.5 flex items-center gap-2 rounded">
                     {a}
                     <button type="button" onClick={() => setForm((f) => ({ ...f, amenities: f.amenities.filter((x) => x !== a) }))} className="text-copper hover:text-rose-gold">
                       <X className="w-3 h-3" />
@@ -406,8 +425,13 @@ export default function AdminPropertyFormPage() {
         </section>
 
         {/* Status */}
-        <section className="border border-copper/15 p-8">
-          <h3 className="overline mb-6">Visibility</h3>
+        <section className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-6">
+          <div className="flex items-center gap-3 pb-3 border-b border-copper/15">
+            <div className="w-2 h-2 rounded-full bg-copper" />
+            <h2 className="text-sm font-semibold tracking-wider uppercase text-ivory">
+              4. Publication &amp; Feature Visibility
+            </h2>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="input-label">Status</label>
@@ -432,11 +456,21 @@ export default function AdminPropertyFormPage() {
           </div>
         </section>
 
-        <div className="flex gap-4">
-          <button type="submit" disabled={saving} data-testid="form-submit" className="btn-primary disabled:opacity-50">
+        <div className="flex items-center gap-4 pt-4 border-t border-copper/15">
+          <button
+            type="submit"
+            disabled={saving}
+            data-testid="form-submit"
+            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.15em] rounded-[4px] transition-colors shadow-sm disabled:opacity-50"
+          >
             {saving ? "Saving..." : (isEdit ? "Update Property" : "Create Property")}
           </button>
-          <Link to="/admin/properties" className="btn-outline">Cancel</Link>
+          <Link
+            to="/admin/properties"
+            className="px-5 py-2.5 border border-copper/30 hover:border-copper text-xs font-semibold uppercase tracking-[0.15em] text-ivory/80 hover:text-white rounded-[4px] transition-colors"
+          >
+            Cancel
+          </Link>
         </div>
       </form>
     </div>

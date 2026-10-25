@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { NavLink, Outlet, useLocation, useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { LOGO_URL } from "@/lib/site";
@@ -15,6 +15,10 @@ import {
   Briefcase,
   Repeat,
   BadgePercent,
+  ExternalLink,
+  ChevronRight,
+  Shield,
+  User,
 } from "lucide-react";
 import Seo from "@/components/Seo";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -25,14 +29,12 @@ export default function AdminLayout() {
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Auto-close the mobile drawer on route change so tapping a link doesn't
-  // leave the drawer covering the newly rendered page.
+  // Auto-close the mobile drawer on route change
   useEffect(() => {
     setDrawerOpen(false);
   }, [location.pathname]);
 
-  // Lock body scroll while the drawer is open on mobile so the background
-  // page doesn't scroll under the fingers.
+  // Lock body scroll while the drawer is open on mobile
   useEffect(() => {
     if (!drawerOpen) return undefined;
     document.body.style.overflow = "hidden";
@@ -81,10 +83,42 @@ export default function AdminLayout() {
       : []),
   ];
 
+  // Dynamic breadcrumb items based on current path
+  const breadcrumb = useMemo(() => {
+    const p = location.pathname.replace(/\/$/, "");
+    if (p === "/admin") return [{ label: "Console" }, { label: "Dashboard" }];
+    if (p === "/admin/properties") return [{ label: "Inventory" }, { label: "Properties" }];
+    if (p === "/admin/properties/new") return [{ label: "Properties", to: "/admin/properties" }, { label: "New Property" }];
+    if (p.startsWith("/admin/properties/") && p.endsWith("/edit"))
+      return [{ label: "Properties", to: "/admin/properties" }, { label: "Edit Property" }];
+    if (p === "/admin/resale") return [{ label: "Secondary Market" }, { label: "Resale Inventory" }];
+    if (p === "/admin/resale/new") return [{ label: "Resale", to: "/admin/resale" }, { label: "Add Resale" }];
+    if (p.startsWith("/admin/resale/") && p.endsWith("/edit"))
+      return [{ label: "Resale", to: "/admin/resale" }, { label: "Edit Resale" }];
+    if (p === "/admin/blogs") return [{ label: "Editorial" }, { label: "Blogs & Articles" }];
+    if (p === "/admin/blogs/new") return [{ label: "Blogs", to: "/admin/blogs" }, { label: "New Blog" }];
+    if (p.startsWith("/admin/blogs/") && p.endsWith("/edit"))
+      return [{ label: "Blogs", to: "/admin/blogs" }, { label: "Edit Blog" }];
+    if (p === "/admin/leads/property") return [{ label: "Leads" }, { label: "Property Inquiries" }];
+    if (p === "/admin/leads/resale") return [{ label: "Leads" }, { label: "Resale Inquiries" }];
+    if (p === "/admin/leads/careers") return [{ label: "Leads" }, { label: "Career Applications" }];
+    if (p === "/admin/recruitment") return [{ label: "Recruitment" }, { label: "Overview" }];
+    if (p === "/admin/recruitment/jobs") return [{ label: "Recruitment" }, { label: "Job Openings" }];
+    if (p === "/admin/recruitment/jobs/new")
+      return [{ label: "Job Openings", to: "/admin/recruitment/jobs" }, { label: "New Vacancy" }];
+    if (p.startsWith("/admin/recruitment/jobs/") && p.endsWith("/edit"))
+      return [{ label: "Job Openings", to: "/admin/recruitment/jobs" }, { label: "Edit Vacancy" }];
+    if (p === "/admin/recruitment/applications")
+      return [{ label: "Recruitment" }, { label: "Candidate Pipeline" }];
+    if (p === "/admin/users") return [{ label: "System" }, { label: "Staff & RBAC" }];
+    return [{ label: "Console" }, { label: "Admin" }];
+  }, [location.pathname]);
+
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-charcoal">
       <Seo title="Admin Console | Astittva Marketing" noIndex={true} path={location.pathname} />
-      {/* Mobile top bar — visible < lg. Sticky so admin can always reach the menu. */}
+
+      {/* Mobile top bar — visible < lg */}
       <div className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 h-14 bg-charcoal border-b border-copper/15">
         <div className="flex items-center gap-2 min-w-0">
           <img
@@ -107,7 +141,7 @@ export default function AdminLayout() {
         </button>
       </div>
 
-      {/* Mobile-only overlay while the drawer is open. Tap outside to dismiss. */}
+      {/* Mobile-only overlay */}
       <div
         className={`lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${
           drawerOpen ? "opacity-100" : "opacity-0 pointer-events-none"
@@ -117,11 +151,7 @@ export default function AdminLayout() {
         data-testid="admin-drawer-overlay"
       />
 
-      {/*
-        Single sidebar for both breakpoints. On <lg it's `fixed` and slides in from
-        the left; on ≥lg it collapses back into the normal flex row. Only ONE copy of
-        each nav item exists so there are no duplicated data-testids to trip E2E tests.
-      */}
+      {/* Sidebar (Responsive drawer on mobile, static on desktop) */}
       <aside
         data-testid="admin-sidebar"
         className={`
@@ -133,19 +163,19 @@ export default function AdminLayout() {
           lg:static lg:translate-x-0 lg:w-64 lg:max-w-none lg:z-auto lg:bg-charcoal-2/30 lg:shrink-0
         `}
       >
-        <div className="p-6 border-b border-copper/15 flex items-center justify-between">
+        <div className="p-5 border-b border-copper/15 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
             <img
               src={LOGO_URL}
               alt="Astittva"
-              className="h-10 w-10 object-contain shrink-0"
+              className="h-9 w-9 object-contain shrink-0"
             />
             <div className="leading-tight min-w-0">
-              <div className="text-ivory font-display tracking-[0.25em] text-xs">
+              <div className="text-ivory font-display tracking-[0.25em] text-xs font-medium">
                 ASTITTVA
               </div>
-              <div className="text-copper text-[10px] tracking-[0.4em]">
-                ADMIN
+              <div className="text-copper text-[10px] tracking-[0.4em] uppercase font-semibold">
+                ADMIN CONSOLE
               </div>
             </div>
           </div>
@@ -160,7 +190,7 @@ export default function AdminLayout() {
           </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
+        <nav className="flex-1 p-3.5 space-y-4 overflow-y-auto">
           {navSections.map((sec, sIdx) => (
             <div key={sIdx} className="space-y-1">
               {sec.title && (
@@ -175,9 +205,9 @@ export default function AdminLayout() {
                   end={it.end}
                   data-testid={`nav-admin-${it.label.toLowerCase().replace(/\s+/g, "-")}`}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3.5 py-2.5 text-xs tracking-[0.16em] uppercase rounded-[4px] transition ${
+                    `flex items-center gap-3 px-3.5 py-2.5 text-xs tracking-[0.14em] uppercase rounded-[4px] transition ${
                       isActive
-                        ? "bg-copper/15 text-copper border-l-2 border-copper font-medium"
+                        ? "bg-copper/15 text-copper border-l-2 border-copper font-medium shadow-sm"
                         : "text-ivory/65 hover:text-ivory hover:bg-charcoal-2/60"
                     }`
                   }
@@ -190,36 +220,114 @@ export default function AdminLayout() {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-copper/15">
-          <div className="px-2 mb-3 min-w-0">
-            <div className="text-ivory text-sm truncate">{user?.name}</div>
-            <div className="text-copper text-[10px] tracking-[0.3em] uppercase">
-              {user?.role}
+        <div className="p-4 border-t border-copper/15 bg-charcoal/50">
+          <div className="px-2 mb-3 min-w-0 flex items-center justify-between">
+            <div className="min-w-0">
+              <div className="text-ivory text-xs font-medium truncate">{user?.name || "Admin"}</div>
+              <div className="text-copper text-[10px] tracking-[0.25em] uppercase">
+                {user?.role || "Staff"}
+              </div>
             </div>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
           </div>
           <Link
             to="/"
-            className="flex items-center gap-2 text-ivory/60 hover:text-copper text-xs tracking-[0.2em] uppercase px-2 mb-3.5 transition"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 text-ivory/60 hover:text-copper text-xs tracking-[0.15em] uppercase px-2 mb-2 transition"
           >
-            <Globe className="w-4 h-4" /> Live Website
+            <Globe className="w-3.5 h-3.5" />
+            <span>Live Website</span>
+            <ExternalLink className="w-2.5 h-2.5 ml-auto text-ivory/40" />
           </Link>
           <button
             onClick={onLogout}
             data-testid="admin-logout"
-            className="flex items-center gap-2 text-ivory/60 hover:text-copper text-xs tracking-[0.2em] uppercase px-2"
+            className="w-full flex items-center gap-2 text-ivory/60 hover:text-rose-400 text-xs tracking-[0.15em] uppercase px-2 py-1 transition rounded hover:bg-rose-500/10 text-left"
           >
-            <LogOut className="w-4 h-4" /> Logout
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Logout</span>
           </button>
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0 overflow-y-auto">
-        <div className="p-4 sm:p-6 lg:p-12 max-w-7xl mx-auto w-full">
-          <ErrorBoundary>
-            <Outlet />
-          </ErrorBoundary>
-        </div>
-      </main>
+      {/* Main Content Area with Desktop Shell Header */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Desktop Top Header Bar (≥ lg) */}
+        <header className="hidden lg:flex items-center justify-between px-8 h-14 border-b border-copper/15 bg-charcoal/60 backdrop-blur-md sticky top-0 z-30">
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-2 text-xs">
+            {breadcrumb.map((bc, idx) => (
+              <span key={idx} className="flex items-center gap-2">
+                {idx > 0 && <ChevronRight className="w-3 h-3 text-ivory/30" />}
+                {bc.to ? (
+                  <Link
+                    to={bc.to}
+                    className="text-ivory/60 hover:text-copper uppercase tracking-wider text-[11px] transition-colors"
+                  >
+                    {bc.label}
+                  </Link>
+                ) : (
+                  <span
+                    className={`uppercase tracking-wider text-[11px] ${
+                      idx === breadcrumb.length - 1
+                        ? "text-ivory font-medium"
+                        : "text-ivory/50"
+                    }`}
+                  >
+                    {bc.label}
+                  </span>
+                )}
+              </span>
+            ))}
+          </div>
+
+          {/* Quick Header Controls */}
+          <div className="flex items-center gap-4">
+            <Link
+              to="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-ivory/60 hover:text-copper transition-colors px-2.5 py-1 rounded border border-copper/15 hover:border-copper/40"
+            >
+              <Globe className="w-3 h-3" />
+              <span>astittva.in</span>
+              <ExternalLink className="w-2.5 h-2.5 text-ivory/40" />
+            </Link>
+
+            <div className="h-4 w-px bg-copper/20" />
+
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-copper/15 border border-copper/30 flex items-center justify-center text-copper text-xs font-medium">
+                {(user?.name || "A")[0].toUpperCase()}
+              </div>
+              <div className="text-left leading-tight hidden xl:block">
+                <div className="text-xs text-ivory font-medium">{user?.name || "Administrator"}</div>
+                <div className="text-[10px] text-copper tracking-wider uppercase font-mono">
+                  {user?.role || "admin"}
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={onLogout}
+              title="Logout"
+              className="p-1.5 text-ivory/50 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 min-w-0 overflow-y-auto">
+          <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto w-full">
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

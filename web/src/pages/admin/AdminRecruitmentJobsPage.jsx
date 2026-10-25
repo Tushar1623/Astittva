@@ -1,21 +1,32 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   Briefcase,
   Plus,
-  Search,
   Eye,
   Edit2,
   Trash2,
   RefreshCw,
   ExternalLink,
   Users,
-  Archive,
 } from "lucide-react";
 import api, { formatApiErrorDetail } from "@/lib/api";
 import { toast } from "sonner";
+import AdminHeader from "@/components/admin/AdminHeader";
+import StatusBadge from "@/components/admin/StatusBadge";
+import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
+import AdminPagination from "@/components/admin/AdminPagination";
+import AdminFilterBar from "@/components/admin/AdminFilterBar";
+import AdminEmptyState from "@/components/admin/AdminEmptyState";
 
 const STATUS_FILTERS = ["ALL", "published", "draft", "closed", "archived"];
+const DEPARTMENTS = [
+  "All",
+  "Sales & Advisory",
+  "Marketing",
+  "Operations",
+  "Legal & Advisory",
+];
 
 export default function AdminRecruitmentJobsPage() {
   const [jobs, setJobs] = useState([]);
@@ -25,9 +36,12 @@ export default function AdminRecruitmentJobsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [deptFilter, setDeptFilter] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
 
-  const [deletingId, setDeletingId] = useState(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  // Delete modal state
+  const [deleteTarget, setDeleteTarget] = useState(null); // { id, title }
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchJobs = async () => {
     try {
@@ -42,7 +56,6 @@ export default function AdminRecruitmentJobsPage() {
       });
       setJobs(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      console.error("Failed to fetch admin jobs:", err);
       setJobs([]);
       setError(formatApiErrorDetail(err.response?.data?.detail));
     } finally {
@@ -53,155 +66,169 @@ export default function AdminRecruitmentJobsPage() {
   useEffect(() => {
     const timer = setTimeout(fetchJobs, 250);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, statusFilter, deptFilter]);
 
-  const handleDeleteJob = async (jobId) => {
+  const confirmDeleteJob = async () => {
+    if (!deleteTarget || isDeleting) return;
     try {
-      setDeletingId(jobId);
-      const res = await api.delete(`/admin/recruitment/jobs/${jobId}`);
+      setIsDeleting(true);
+      const res = await api.delete(`/admin/recruitment/jobs/${deleteTarget.id}`);
       if (res.data?.archived) {
         toast.info(res.data.message || "Opening archived to preserve candidate applications.");
       } else {
         toast.success("Job opening deleted successfully.");
       }
-      setConfirmDeleteId(null);
+      setDeleteTarget(null);
       fetchJobs();
     } catch (err) {
-      console.error("Delete job error:", err);
       toast.error(formatApiErrorDetail(err.response?.data?.detail));
     } finally {
-      setDeletingId(null);
+      setIsDeleting(false);
     }
   };
 
+  // Status Counts
+  const statusCounts = useMemo(() => {
+    const counts = { ALL: jobs.length };
+    STATUS_FILTERS.forEach((st) => {
+      if (st !== "ALL") {
+        counts[st] = jobs.filter(
+          (j) => (j.status || "").toLowerCase() === st.toLowerCase()
+        ).length;
+      }
+    });
+    return counts;
+  }, [jobs]);
+
+  const filterTabs = STATUS_FILTERS.map((st) => ({
+    key: st,
+    label: st === "ALL" ? "All Vacancies" : st,
+    count: statusCounts[st] || 0,
+  }));
+
+  // Pagination slice
+  const totalPages = Math.ceil(jobs.length / pageSize) || 1;
+  const paginatedJobs = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return jobs.slice(start, start + pageSize);
+  }, [jobs, currentPage]);
+
   return (
     <div data-testid="admin-recruitment-jobs-page" className="space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-copper/15">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-copper">
-              RECRUITMENT CONSOLE
-            </span>
-            <span className="text-ivory/30">•</span>
-            <span className="text-[10px] tracking-[0.2em] uppercase text-ivory/50">
-              VACANCY MANAGEMENT
-            </span>
-          </div>
-          <h1 className="font-display font-light text-3xl sm:text-4xl text-ivory">
-            Job Vacancies
-          </h1>
-          <p className="text-ivory/55 text-sm mt-1">
-            Manage published job openings, configure job descriptions, and monitor candidate inflow.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Link
-            to="/admin/recruitment/jobs/new"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.15em] rounded-[4px] transition-colors shadow-sm"
-          >
-            <Plus className="w-4 h-4" /> Post New Vacancy
-          </Link>
-          <button
-            onClick={fetchJobs}
-            disabled={loading}
-            title="Refresh"
-            className="p-2 border border-copper/20 hover:border-copper/40 text-ivory/70 hover:text-copper rounded-[4px] transition-colors"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          </button>
-        </div>
-      </div>
+      {/* Header */}
+      <AdminHeader
+        category="Recruitment Console"
+        title="Job Vacancies"
+        subtitle="Manage published career openings, configure requirements, and monitor candidate inflow."
+        actions={[
+          {
+            label: "Refresh",
+            icon: RefreshCw,
+            variant: "outline",
+            onClick: fetchJobs,
+          },
+          {
+            label: "Post New Vacancy",
+            icon: Plus,
+            to: "/admin/recruitment/jobs/new",
+            variant: "primary",
+          },
+        ]}
+      />
 
       {/* Filter and Search Bar */}
-      <div className="bg-charcoal-2/40 border border-copper/15 p-4 rounded-[6px] mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
-        {/* Status Tabs */}
-        <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto">
-          {STATUS_FILTERS.map((st) => (
-            <button
-              key={st}
-              onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1.5 rounded-[4px] text-xs font-medium tracking-[0.08em] uppercase transition-all ${
-                statusFilter === st
-                  ? "bg-copper text-white font-semibold shadow-sm"
-                  : "bg-charcoal/50 text-ivory/70 hover:text-ivory hover:bg-charcoal"
-              }`}
-            >
-              {st}
-              {st === "ALL" ? ` (${jobs.length})` : ""}
-            </button>
+      <AdminFilterBar
+        tabs={filterTabs}
+        activeTab={statusFilter}
+        onTabChange={(tab) => {
+          setStatusFilter(tab);
+          setCurrentPage(1);
+        }}
+        searchValue={search}
+        onSearchChange={(val) => {
+          setSearch(val);
+          setCurrentPage(1);
+        }}
+        searchPlaceholder="Search openings by title, department, location..."
+      >
+        <select
+          value={deptFilter}
+          onChange={(e) => {
+            setDeptFilter(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="h-9 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+        >
+          {DEPARTMENTS.map((dept) => (
+            <option key={dept} value={dept} className="bg-charcoal text-ivory">
+              {dept === "All" ? "All Departments" : dept}
+            </option>
           ))}
-        </div>
-
-        {/* Filters & Search */}
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <select
-            value={deptFilter}
-            onChange={(e) => setDeptFilter(e.target.value)}
-            className="h-9 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
-          >
-            <option value="All">All Departments</option>
-            <option value="Sales & Advisory">Sales &amp; Advisory</option>
-            <option value="Marketing">Marketing</option>
-            <option value="Operations">Operations</option>
-            <option value="Legal & Advisory">Legal &amp; Advisory</option>
-          </select>
-
-          <div className="relative w-full md:w-64">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ivory/40" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search vacancies..."
-              className="w-full h-9 pl-9 pr-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper"
-            />
-          </div>
-        </div>
-      </div>
+        </select>
+      </AdminFilterBar>
 
       {/* Main Table Container */}
       {loading ? (
-        <div className="text-ivory/50 text-center py-20 tracking-[0.3em] uppercase text-xs">
-          Loading Job Vacancies…
+        <div className="text-ivory/50 text-center py-20 tracking-[0.25em] uppercase text-xs">
+          Loading Job Vacancies...
         </div>
       ) : error ? (
-        <div className="text-center py-16 border border-copper/20 bg-charcoal-2/30 rounded-[8px] text-red-600 text-sm">
+        <div className="text-center py-16 border border-copper/20 bg-charcoal-2/30 rounded-[6px] text-rose-500 text-sm">
           {error}
         </div>
       ) : jobs.length === 0 ? (
-        <div className="text-center py-20 border border-copper/15 bg-charcoal-2/20 text-ivory/60 italic rounded-[6px]">
-          {statusFilter === "ALL" && !search
-            ? "No job vacancies posted yet. Create your first opening."
-            : "No vacancies matched your filter criteria."}
-        </div>
+        <AdminEmptyState
+          icon={Briefcase}
+          title="No job vacancies found"
+          message={
+            statusFilter === "ALL" && !search && deptFilter === "All"
+              ? "No job vacancies posted yet. Create your first opening to attract talent."
+              : "No vacancies matched your active filter criteria."
+          }
+          actionLabel={
+            statusFilter === "ALL" && !search && deptFilter === "All"
+              ? "Post New Vacancy"
+              : "Clear Filters"
+          }
+          actionTo={
+            statusFilter === "ALL" && !search && deptFilter === "All"
+              ? "/admin/recruitment/jobs/new"
+              : null
+          }
+          onAction={() => {
+            setSearch("");
+            setStatusFilter("ALL");
+            setDeptFilter("All");
+            setCurrentPage(1);
+          }}
+        />
       ) : (
-        <div className="border border-copper/15 rounded-[6px] overflow-hidden bg-charcoal-2/20">
+        <div className="border border-copper/20 rounded-[6px] overflow-hidden bg-charcoal-2/20 shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-charcoal-2/80 text-ivory/60 text-[10px] tracking-[0.22em] uppercase border-b border-copper/15">
+              <thead className="bg-charcoal-2/80 text-ivory/60 text-[10px] tracking-[0.22em] uppercase border-b border-copper/20">
                 <tr>
-                  <th className="text-left p-4 font-normal">Role Title</th>
-                  <th className="text-left p-4 font-normal hidden md:table-cell">Department</th>
-                  <th className="text-left p-4 font-normal hidden lg:table-cell">Location &amp; Type</th>
-                  <th className="text-left p-4 font-normal">Status</th>
-                  <th className="text-center p-4 font-normal">Applicants</th>
-                  <th className="text-right p-4 font-normal">Actions</th>
+                  <th className="text-left py-3.5 px-4 font-medium">Role Title</th>
+                  <th className="text-left py-3.5 px-4 font-medium hidden md:table-cell">Department</th>
+                  <th className="text-left py-3.5 px-4 font-medium hidden lg:table-cell">Location &amp; Type</th>
+                  <th className="text-left py-3.5 px-4 font-medium">Status</th>
+                  <th className="text-center py-3.5 px-4 font-medium">Applicants</th>
+                  <th className="text-right py-3.5 px-4 font-medium">Actions</th>
                 </tr>
               </thead>
-              <tbody>
-                {jobs.map((job) => (
+              <tbody className="divide-y divide-copper/10">
+                {paginatedJobs.map((job) => (
                   <tr
                     key={job.id}
-                    className="border-t border-copper/10 hover:bg-charcoal-2/40 transition-colors"
+                    className="hover:bg-charcoal-2/40 transition-colors group"
                   >
                     {/* Role Title */}
-                    <td className="p-4">
+                    <td className="py-3.5 px-4">
                       <div className="flex items-center gap-2">
                         <Link
                           to={`/admin/recruitment/jobs/${job.id}/edit`}
-                          className="font-display text-base font-normal text-ivory hover:text-copper transition-colors"
+                          className="font-display text-sm font-medium text-ivory hover:text-copper transition-colors"
                         >
                           {job.title}
                         </Link>
@@ -211,41 +238,31 @@ export default function AdminRecruitmentJobsPage() {
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-ivory/50 mt-0.5">
-                        <span className="font-mono text-[11px]">/careers/jobs/{job.slug}</span>
+                      <div className="text-[11px] text-ivory/50 mt-0.5">
+                        <span className="font-mono">/careers/jobs/{job.slug}</span>
                       </div>
                     </td>
 
                     {/* Department */}
-                    <td className="p-4 text-ivory/70 hidden md:table-cell text-xs">
+                    <td className="py-3.5 px-4 text-ivory/70 hidden md:table-cell text-xs">
                       {job.department}
                     </td>
 
                     {/* Location & Type */}
-                    <td className="p-4 text-ivory/70 hidden lg:table-cell text-xs">
+                    <td className="py-3.5 px-4 text-ivory/70 hidden lg:table-cell text-xs">
                       <div>{job.location}</div>
-                      <div className="text-[10px] text-ivory/45 font-mono">{job.employmentType} · {job.workplaceType}</div>
+                      <div className="text-[10px] text-ivory/45 font-mono">
+                        {job.employmentType} · {job.workplaceType}
+                      </div>
                     </td>
 
                     {/* Status Badge */}
-                    <td className="p-4">
-                      <span
-                        className={`text-[10px] tracking-[0.2em] uppercase px-2.5 py-1 rounded-[3px] border font-medium ${
-                          job.status === "published"
-                            ? "border-green-600/30 text-green-700 bg-green-500/10"
-                            : job.status === "draft"
-                            ? "border-amber-600/30 text-amber-700 bg-amber-500/10"
-                            : job.status === "closed"
-                            ? "border-red-600/30 text-red-700 bg-red-500/10"
-                            : "border-copper/30 text-copper bg-copper/5"
-                        }`}
-                      >
-                        {job.status}
-                      </span>
+                    <td className="py-3.5 px-4">
+                      <StatusBadge status={job.status} />
                     </td>
 
                     {/* Candidates Count */}
-                    <td className="p-4 text-center">
+                    <td className="py-3.5 px-4 text-center">
                       <Link
                         to={`/admin/recruitment/applications?jobId=${job.id}`}
                         className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] bg-charcoal border border-copper/20 hover:border-copper text-xs font-mono font-medium text-copper transition-colors"
@@ -257,7 +274,7 @@ export default function AdminRecruitmentJobsPage() {
                     </td>
 
                     {/* Actions */}
-                    <td className="p-4 text-right">
+                    <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         {job.status === "published" && (
                           <Link
@@ -279,34 +296,19 @@ export default function AdminRecruitmentJobsPage() {
                           <Edit2 className="w-4 h-4" />
                         </Link>
 
-                        {confirmDeleteId === job.id ? (
-                          <div className="inline-flex items-center gap-1 bg-red-950/20 p-1 rounded border border-red-500/30">
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteJob(job.id)}
-                              disabled={deletingId === job.id}
-                              className="px-2 py-0.5 text-[10px] bg-red-600 hover:bg-red-700 text-white rounded font-medium"
-                            >
-                              {deletingId === job.id ? "…" : "Confirm"}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setConfirmDeleteId(null)}
-                              className="px-1.5 py-0.5 text-[10px] text-ivory/60 hover:text-ivory"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => setConfirmDeleteId(job.id)}
-                            className="p-1.5 text-ivory/50 hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
-                            title="Delete or Archive Vacancy"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setDeleteTarget({
+                              id: job.id,
+                              title: job.title,
+                            })
+                          }
+                          className="p-1.5 text-ivory/50 hover:text-rose-500 hover:bg-rose-500/10 rounded transition-colors"
+                          title="Delete or Archive Vacancy"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -314,8 +316,32 @@ export default function AdminRecruitmentJobsPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          <AdminPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={jobs.length}
+            pageSize={pageSize}
+          />
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={Boolean(deleteTarget)}
+        title="Delete Job Vacancy"
+        message={
+          deleteTarget
+            ? `Are you sure you want to delete the vacancy "${deleteTarget.title}"? If applicants have already applied, it will be safely archived instead to preserve applicant records.`
+            : ""
+        }
+        confirmLabel="Delete Vacancy"
+        isDeleting={isDeleting}
+        onConfirm={confirmDeleteJob}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

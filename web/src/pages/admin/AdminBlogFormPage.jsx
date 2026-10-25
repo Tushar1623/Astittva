@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner";
 import { sanitizeBlogHtml } from "@/lib/sanitize";
 import { resolveBlogImage, pickBlogFallback } from "@/lib/blogImages";
+import AdminHeader from "@/components/admin/AdminHeader";
 
 const empty = {
   title: "",
@@ -185,30 +186,26 @@ export default function AdminBlogFormPage() {
     : "";
 
   return (
-    <div data-testid="admin-blog-form-page">
-      <Link
-        to="/admin/blogs"
-        className="inline-flex items-center gap-2 text-ivory/60 hover:text-copper text-xs tracking-[0.25em] uppercase mb-8"
-      >
-        <ArrowLeft className="w-4 h-4" /> Back to Blogs
-      </Link>
-
-      <div className="flex items-start justify-between mb-10 gap-6 flex-wrap">
-        <div>
-          <div className="overline mb-3">Editorial</div>
-          <h1 className="font-display font-light text-3xl sm:text-4xl text-ivory">
-            {isEdit ? "Edit Blog" : "New Blog"}
-          </h1>
-        </div>
-        <button
-          type="button"
-          onClick={() => setPreview((p) => !p)}
-          data-testid="toggle-preview"
-          className="btn-outline"
-        >
-          <Eye className="w-4 h-4" /> {preview ? "Hide Preview" : "Preview Body"}
-        </button>
-      </div>
+    <div data-testid="admin-blog-form-page" className="space-y-8">
+      <AdminHeader
+        category="Editorial"
+        title={isEdit ? form.title || "Edit Blog" : "Create New Blog"}
+        subtitle="Author luxury real estate articles, market insights, and investment guides with SEO metadata."
+        actions={[
+          {
+            label: "Back to Blogs",
+            icon: ArrowLeft,
+            to: "/admin/blogs",
+            variant: "outline",
+          },
+          {
+            label: preview ? "Hide Preview" : "Preview Body",
+            icon: Eye,
+            variant: "outline",
+            onClick: () => setPreview((p) => !p),
+          },
+        ]}
+      />
 
       <form onSubmit={(e) => submit(e)} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* MAIN COLUMN */}

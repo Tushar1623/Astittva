@@ -748,7 +748,8 @@ export default function AdminResalePropertyFormPage() {
                           alt=""
                           className="w-full h-full object-cover"
                           onError={(e) => {
-                            e.currentTarget.style.display = "none";
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = "/images/luxe/luxury_villa.webp";
                           }}
                         />
 
