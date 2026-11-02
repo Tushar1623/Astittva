@@ -61,6 +61,24 @@
     <priority>0.85</priority>
   </url>
   <url>
+    <loc>https://astittva.in/locations/em-bypass</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://astittva.in/locations/new-alipore</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://astittva.in/locations/new-town-rajarhat</loc>
+    <lastmod>2026-11-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://astittva.in/calculators/home-loan-emi</loc>
     <lastmod>2026-11-02</lastmod>
     <changefreq>weekly</changefreq>

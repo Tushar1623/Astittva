@@ -24,28 +24,31 @@ const TRUST_SIGNALS = [
 
 const LOCATIONS = [
   {
-    name: "New Town",
-    tag: "Smart City Hub",
+    name: "New Town & Rajarhat",
+    tag: "Smart City & IT Hub",
     img: "/images/luxe/locations_newtown.webp",
-    blurb: "India's first planned smart-city — IT corridors and rising luxury sky-residences.",
-    starting: "₹1.2 Cr",
-    category: "Luxury · Premium",
+    blurb: "India's planned smart-city — Silicon Valley IT corridors, Eco Park, and landmark luxury residences like Town Square.",
+    starting: "₹55 L",
+    category: "Luxury · Investment",
+    link: "/locations/new-town-rajarhat",
   },
   {
-    name: "Rajarhat",
-    tag: "Investment Frontier",
-    img: "/images/luxe/locations_rajarhat.webp",
-    blurb: "The fastest-appreciating corridor of Greater Kolkata, anchored by Eco Park & global IT.",
-    starting: "₹35 L",
-    category: "Premium · Plots",
+    name: "EM Bypass",
+    tag: "Lifeline Corridor",
+    img: "/images/luxe/property_tower.webp",
+    blurb: "Kolkata's high-speed growth artery — Orange Line Metro, super-specialty healthcare, and luxury high-rises.",
+    starting: "₹1.87 Cr",
+    category: "High-Rise · Luxury",
+    link: "/locations/em-bypass",
   },
   {
-    name: "Kolkata",
-    tag: "Cultural Capital",
-    img: "/images/luxe/locations_kolkata.webp",
-    blurb: "A legacy city reimagined — heritage, art, and a new wave of luxury residences.",
-    starting: "₹4.5 Cr",
-    category: "Heritage · Luxury",
+    name: "New Alipore",
+    tag: "Heritage Prestige",
+    img: "/images/luxe/property_heritage_estate.webp",
+    blurb: "South Kolkata's serene heritage enclave — planned green avenues, Majerhat Purple Line metro, and bespoke residences.",
+    starting: "₹2.25 Cr",
+    category: "Heritage · Elite",
+    link: "/locations/new-alipore",
   },
 ];
 
@@ -147,8 +150,8 @@ export default function HomePage() {
   return (
     <div data-testid="home-page">
       <Seo
-        title="Astittva Marketing | Property Consultants in Kolkata"
-        description="Explore properties in Kolkata, New Town, Rajarhat and Salt Lake with Astittva Marketing. Get guidance for buying and investing in real estate."
+        title="Astittva Marketing | Real Estate Company in Kolkata"
+        description="Premier real estate company in Kolkata. Astittva Marketing provides trusted advisory for luxury properties, flats & investments across EM Bypass & New Town."
         path="/"
         schema={[getOrganizationSchema(), getWebSiteSchema()]}
       />
@@ -188,7 +191,7 @@ export default function HomePage() {
               <span
                 className="text-[9px] sm:text-[10px] tracking-[0.4em] sm:tracking-[0.5em] uppercase text-white font-semibold"
                 style={{ textShadow: "0 1px 6px rgba(0,0,0,0.18)" }}
-              >Astittva Marketing · Est. 2026</span>
+              >Premier Real Estate Company in Kolkata · Est. 2026</span>
             </div>
 
             <h1
@@ -206,7 +209,7 @@ export default function HomePage() {
               className="mt-6 sm:mt-9 text-white text-[15px] sm:text-base lg:text-lg max-w-xl leading-[1.75] font-normal"
               style={{ textShadow: "0 1px 6px rgba(0,0,0,0.18)" }}
             >
-              Discover verified residential and commercial opportunities across Kolkata&apos;s fastest-growing real estate destinations — curated by advisors who measure success in decades, not deals.
+              As a premier real estate company in Kolkata, Astittva Marketing curates verified residential and commercial opportunities across EM Bypass, New Town, and South Kolkata — guided by advisors who measure success in decades, not deals.
             </p>
 
             <div className="mt-7 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-5 items-stretch sm:items-center">
@@ -257,7 +260,7 @@ export default function HomePage() {
         <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-16">
           <motion.div {...fadeUp} className="max-w-3xl mb-12 sm:mb-16">
             <div className="eyebrow-line mb-8">
-              <span className="text-[10px] tracking-[0.5em] uppercase text-[#5F5F5F]">The Astittva Difference</span>
+              <span className="text-[10px] tracking-[0.5em] uppercase text-[#5F5F5F]">Leading Real Estate Company in Kolkata</span>
             </div>
             <h2 className="section-title text-3xl sm:text-5xl lg:text-6xl leading-[1.05]">
               A new standard for real estate<br />
@@ -312,7 +315,7 @@ export default function HomePage() {
                 transition={{ duration: 0.8, delay: i * 0.15, ease: [0.22, 1, 0.36, 1] }}
                 className="group relative overflow-hidden cursor-pointer bg-white border border-[#E8DED2] hover:border-[#B87333] transition-all duration-700 shadow-[0_1px_3px_rgba(28,28,28,0.04),0_4px_16px_-8px_rgba(94,31,40,0.06)] hover:shadow-[0_4px_12px_rgba(28,28,28,0.06),0_24px_48px_-16px_rgba(184,115,51,0.22)] hover:-translate-y-1"
               >
-                <Link to={`/properties?city=${encodeURIComponent(loc.name)}`} data-testid={`location-card-${loc.name.toLowerCase().replace(' ', '-')}`}>
+                <Link to={loc.link || `/properties?city=${encodeURIComponent(loc.name)}`} data-testid={`location-card-${loc.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}>
                   <div className="relative aspect-[4/3] overflow-hidden bg-[#F5F1EC]">
                     <img loading="lazy" src={loc.img} alt={loc.name} className="w-full h-full object-cover transition-transform duration-[1.8s] ease-out group-hover:scale-105" />
                     {/* Subtle bottom gradient — only behind chip, photograph stays bright */}
@@ -334,7 +337,7 @@ export default function HomePage() {
                         <div className="font-serif-display text-2xl sm:text-[1.7rem] text-[#1C1C1C] font-semibold tracking-tight">{loc.starting}</div>
                       </div>
                       <div className="inline-flex items-center gap-2 text-[#B87333] text-[10px] tracking-[0.35em] uppercase border-b border-[#B87333]/40 group-hover:border-[#B87333] pb-1 transition-all duration-500 font-semibold">
-                        Discover <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
+                        Explore Locality <ArrowRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
                       </div>
                     </div>
                   </div>
@@ -462,7 +465,7 @@ export default function HomePage() {
                 The next great Indian real estate story <span className="italic text-[#5F5F5F]">is being written here.</span>
               </h2>
               <p className="mt-10 text-[#5F5F5F] leading-[1.85] font-light text-base">
-                Kolkata — and Greater Kolkata in particular — is experiencing a quiet renaissance. Lower entry points than Mumbai or Bangalore, strong rental yields, and a wave of infrastructure that&apos;s redrawing the map of Eastern India.
+                As a leading real estate company in Kolkata, Astittva Marketing guides clients through the city&apos;s quiet renaissance. From high-growth corridors along EM Bypass and New Town to heritage enclaves in New Alipore, Kolkata offers lower entry points than Mumbai or Bangalore, strong rental yields, and transformative metro infrastructure.
               </p>
             </div>
 

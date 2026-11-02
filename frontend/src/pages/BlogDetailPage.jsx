@@ -260,16 +260,18 @@ export default function BlogDetailPage() {
             dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(blog.body) }}
           />
 
-          {/* Contextual Internal Linking */}
+          {/* Contextual Locality & Investment Linking */}
           <div className="mt-12 p-6 rounded-[8px] bg-white border border-[#E8DED2] text-[#1C1C1C]">
-            <h3 className="font-serif text-lg font-bold mb-2">Planning a property investment in Kolkata?</h3>
+            <h3 className="font-serif text-lg font-bold mb-2">Explore Kolkata's Key Real Estate Corridors</h3>
             <p className="text-sm text-[#5F5F5F] mb-4">
-              Explore verified new launches, check home loan affordability, or schedule a 1-on-1 consultation with our senior advisory team.
+              Planning to buy or invest? Explore our comprehensive locality intelligence guides, price benchmarks, and verified developments across Kolkata:
             </p>
             <div className="flex flex-wrap gap-3">
+              <Link to="/locations/em-bypass" className="btn-outline text-xs py-2 px-4">EM Bypass Hub</Link>
+              <Link to="/locations/new-town-rajarhat" className="btn-outline text-xs py-2 px-4">New Town &amp; Rajarhat Hub</Link>
+              <Link to="/locations/new-alipore" className="btn-outline text-xs py-2 px-4">New Alipore Hub</Link>
               <Link to="/properties" className="btn-primary text-xs py-2 px-4">Browse Properties</Link>
               <Link to="/calculators/home-loan-emi" className="btn-outline text-xs py-2 px-4">EMI Calculator</Link>
-              <Link to="/contact" className="btn-outline text-xs py-2 px-4">Book Consultation</Link>
             </div>
           </div>
 

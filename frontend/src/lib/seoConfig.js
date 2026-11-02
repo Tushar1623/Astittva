@@ -35,6 +35,7 @@ export const COMPANY_INFO = {
     "Rajarhat",
     "Salt Lake",
     "EM Bypass",
+    "New Alipore",
     "Action Area I",
     "Action Area II",
     "Action Area III",
@@ -138,6 +139,25 @@ export function buildBreadcrumbSchema(items = []) {
       position: index + 1,
       name: item.name,
       item: item.path.startsWith("http") ? item.path : `${SITE_URL}${item.path}`,
+    })),
+  };
+}
+
+/**
+ * FAQPage Schema Builder
+ * @param {Array<{ q: string, a: string }>} faqs
+ */
+export function buildFaqSchema(faqs = []) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.a,
+      },
     })),
   };
 }

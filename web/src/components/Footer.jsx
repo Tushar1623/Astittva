@@ -129,7 +129,7 @@ export default function Footer() {
               <p className="text-[15px] leading-[1.85] font-normal max-w-md" style={{ color: "#F5EFE7" }}>
                 Verified projects · Strategic investments · End-to-end advisory.
                 <br />
-                Across <span style={{ color: "#E5C68C", fontWeight: 500 }}>New Town, Rajarhat &amp; Kolkata</span> — expanding nationally and into global investment markets.
+                Across <span style={{ color: "#E5C68C", fontWeight: 500 }}>EM Bypass, New Alipore, New Town &amp; Rajarhat</span> — expanding nationally and into global investment markets.
               </p>
 
               {/* Champagne hairline divider */}
@@ -163,18 +163,24 @@ export default function Footer() {
               <ul className="space-y-3.5 text-[14px] text-[#F5EFE7]/90 font-normal">
                 <li><Link to="/" className="hover:text-[#C78B47] transition">Home</Link></li>
                 <li><Link to="/properties" className="hover:text-[#C78B47] transition">Properties</Link></li>
-                <li><Link to="/news" className="hover:text-[#C78B47] transition">News</Link></li>
+                <li><Link to="/resale" className="hover:text-[#C78B47] transition">Resale Homes</Link></li>
+                <li><Link to="/calculators" className="hover:text-[#C78B47] transition">Calculators</Link></li>
+                <li><Link to="/blogs" className="hover:text-[#C78B47] transition">Real Estate Blog</Link></li>
+                <li><Link to="/news" className="hover:text-[#C78B47] transition">Market News</Link></li>
+                <li><Link to="/career" className="hover:text-[#C78B47] transition">Careers</Link></li>
                 <li><Link to="/about" className="hover:text-[#C78B47] transition">About &amp; Contact</Link></li>
                 <li><Link to="/admin/login" className="hover:text-[#C78B47] transition">Admin Portal</Link></li>
               </ul>
             </div>
 
             <div className="md:col-span-2">
-              <h4 className="text-[10px] tracking-[0.4em] uppercase text-[#C78B47] mb-6 font-semibold">Markets</h4>
+              <h4 className="text-[10px] tracking-[0.4em] uppercase text-[#C78B47] mb-6 font-semibold">Locality Hubs</h4>
               <ul className="space-y-3.5 text-[14px] text-[#F5EFE7]/90 font-normal">
-                <li>New Town</li>
-                <li>Rajarhat</li>
-                <li>Kolkata</li>
+                <li><Link to="/locations/new-town-rajarhat" className="hover:text-[#C78B47] transition">New Town &amp; Rajarhat</Link></li>
+                <li><Link to="/locations/em-bypass" className="hover:text-[#C78B47] transition">EM Bypass</Link></li>
+                <li><Link to="/locations/new-alipore" className="hover:text-[#C78B47] transition">New Alipore</Link></li>
+                <li><Link to="/properties?location=Salt+Lake" className="hover:text-[#C78B47] transition">Salt Lake Sector V</Link></li>
+                <li><Link to="/properties" className="hover:text-[#C78B47] transition">All Kolkata Properties</Link></li>
                 <li className="text-[#F5EFE7]/55 italic font-serif-display text-xs pt-2">Greater Kolkata · India · Global</li>
               </ul>
             </div>
@@ -194,13 +200,16 @@ export default function Footer() {
                   <Mail className="w-4 h-4 text-[#C78B47] shrink-0" strokeWidth={1.5} />
                   <a href={`mailto:${EMAIL}`} className="hover:text-[#C78B47] transition">{EMAIL}</a>
                 </li>
+                <li className="pt-1 text-[13px] text-[#C78B47] font-medium tracking-wide">
+                  WBRERA Registration No: [FILL IN]
+                </li>
               </ul>
             </div>
           </div>
 
           {/* Bottom champagne divider strip */}
           <div className="mt-16 sm:mt-20 pt-7 border-t border-[#C78B47]/25 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-[#F5EFE7]/75 text-xs tracking-wider">© {new Date().getFullYear()} <span className="text-[#F5EFE7] font-semibold tracking-[0.1em]">Astittva Marketing</span> · All rights reserved.</p>
+            <p className="text-[#F5EFE7]/75 text-xs tracking-wider">© {new Date().getFullYear()} <span className="text-[#F5EFE7] font-semibold tracking-[0.1em]">Astittva Marketing</span> · All rights reserved. · <span className="text-[#C78B47]">WBRERA Registration No: [FILL IN]</span></p>
             <p className="text-[#F5EFE7]/75 text-[10px] tracking-[0.4em] uppercase">Crafted with conviction · Luxury Real Estate Advisory</p>
           </div>
         </div>

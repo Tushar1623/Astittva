@@ -129,7 +129,7 @@ export default function Footer() {
               <p className="text-[15px] leading-[1.85] font-normal max-w-md" style={{ color: "#F5EFE7" }}>
                 Verified projects · Strategic investments · End-to-end advisory.
                 <br />
-                Across <span style={{ color: "#E5C68C", fontWeight: 500 }}>New Town, Rajarhat &amp; Kolkata</span> — expanding nationally and into global investment markets.
+                Across <span style={{ color: "#E5C68C", fontWeight: 500 }}>EM Bypass, New Alipore, New Town &amp; Rajarhat</span> — expanding nationally and into global investment markets.
               </p>
 
               {/* Champagne hairline divider */}
@@ -174,12 +174,13 @@ export default function Footer() {
             </div>
 
             <div className="md:col-span-2">
-              <h4 className="text-[10px] tracking-[0.4em] uppercase text-[#C78B47] mb-6 font-semibold">Markets</h4>
+              <h4 className="text-[10px] tracking-[0.4em] uppercase text-[#C78B47] mb-6 font-semibold">Locality Hubs</h4>
               <ul className="space-y-3.5 text-[14px] text-[#F5EFE7]/90 font-normal">
-                <li><Link to="/properties?location=New+Town" className="hover:text-[#C78B47] transition">New Town</Link></li>
-                <li><Link to="/properties?location=Rajarhat" className="hover:text-[#C78B47] transition">Rajarhat</Link></li>
-                <li><Link to="/properties?location=Salt+Lake" className="hover:text-[#C78B47] transition">Salt Lake</Link></li>
-                <li><Link to="/properties" className="hover:text-[#C78B47] transition">Kolkata</Link></li>
+                <li><Link to="/locations/new-town-rajarhat" className="hover:text-[#C78B47] transition">New Town &amp; Rajarhat</Link></li>
+                <li><Link to="/locations/em-bypass" className="hover:text-[#C78B47] transition">EM Bypass</Link></li>
+                <li><Link to="/locations/new-alipore" className="hover:text-[#C78B47] transition">New Alipore</Link></li>
+                <li><Link to="/properties?location=Salt+Lake" className="hover:text-[#C78B47] transition">Salt Lake Sector V</Link></li>
+                <li><Link to="/properties" className="hover:text-[#C78B47] transition">All Kolkata Properties</Link></li>
                 <li className="text-[#F5EFE7]/55 italic font-serif-display text-xs pt-2">Greater Kolkata · India · Global</li>
               </ul>
             </div>

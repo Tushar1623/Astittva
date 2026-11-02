@@ -28,6 +28,7 @@ const JobApplyPage = lazy(() => import("@/pages/careers/JobApplyPage"));
 const ApplicationSuccessPage = lazy(() => import("@/pages/careers/ApplicationSuccessPage"));
 const CalculatorsLandingPage = lazy(() => import("@/pages/calculators/CalculatorsLandingPage"));
 const CalculatorDetailPage = lazy(() => import("@/pages/calculators/CalculatorDetailPage"));
+const LocationDetailPage = lazy(() => import("@/pages/LocationDetailPage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 
 const AdminLoginPage = lazy(() => import("@/pages/admin/AdminLoginPage"));
@@ -78,6 +79,10 @@ function App() {
                     <Route path="/" element={<HomePage />} />
                     <Route path="/properties" element={<PropertiesPage />} />
                     <Route path="/properties/:id" element={<PropertyDetailPage />} />
+                    <Route path="/locations/em-bypass" element={<LocationDetailPage locationKey="em-bypass" />} />
+                    <Route path="/locations/new-alipore" element={<LocationDetailPage locationKey="new-alipore" />} />
+                    <Route path="/locations/new-town-rajarhat" element={<LocationDetailPage locationKey="new-town-rajarhat" />} />
+                    <Route path="/locations/:slug" element={<LocationDetailPage />} />
                     <Route path="/news" element={<MarketIntelligencePage />} />
                     <Route path="/market-intelligence" element={<Navigate to="/news" replace />} />
                     <Route path="/blogs" element={<BlogsListPage />} />
