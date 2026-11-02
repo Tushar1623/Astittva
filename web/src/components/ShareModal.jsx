@@ -27,7 +27,7 @@ import { pickPropertyFallback } from "@/components/PropertyCard";
 import { pickBlogFallback } from "@/lib/blogImages";
 import SafeImage from "@/components/SafeImage";
 import { generateQrSvgString, generateBrandedQrPng } from "@/lib/qrCode";
-import { renderShareCardToCanvas, downloadShareCard } from "@/lib/shareCardGenerator";
+import { renderShareCardToCanvas, downloadShareCard, generateShareCardDataUrl, shareCardFile } from "@/lib/shareCardGenerator";
 
 // Brand Platform Icons (Official Vectors)
 function WhatsAppIcon({ className = "w-5 h-5" }) {
@@ -322,16 +322,25 @@ export default function ShareModal({
     }
   }, [item, displayTitle, displayLocation, displayPrice, displayCategory, contentType, canonicalUrl, resolvedImage]);
 
+  // Auto-generate card preview when switching to card tab
+  useEffect(() => {
+    if (isOpen && activeTab === "card" && !cardDataUrl && !generatingCard) {
+      prepareCardPreview();
+    }
+  }, [isOpen, activeTab, cardDataUrl, generatingCard, prepareCardPreview]);
+
   // Switch to Share Card tab
   const handleOpenShareCard = useCallback(() => {
     setActiveTab("card");
-    prepareCardPreview();
-  }, [prepareCardPreview]);
+    if (!cardDataUrl) {
+      prepareCardPreview();
+    }
+  }, [cardDataUrl, prepareCardPreview]);
 
   // Download Share Card
   const handleDownloadCard = useCallback(async () => {
     try {
-      const cleanSlug = displayTitle.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase();
+      const cleanSlug = (displayTitle || "property").replace(/[^a-zA-Z0-9]/g, "-").toLowerCase();
       await downloadShareCard(
         {
           item: {
@@ -346,13 +355,45 @@ export default function ShareModal({
           url: canonicalUrl,
           imageUrl: resolvedImage,
         },
-        `Astittva-${cleanSlug}-Creative.png`
+        `Astittva-${cleanSlug}-Creative.png`,
+        cardDataUrl
       );
       toast.success("Share Card downloaded successfully!");
-    } catch {
+    } catch (e) {
       toast.error("Failed to download share card");
     }
-  }, [item, displayTitle, displayLocation, displayPrice, displayCategory, contentType, canonicalUrl, resolvedImage]);
+  }, [cardDataUrl, item, displayTitle, displayLocation, displayPrice, displayCategory, contentType, canonicalUrl, resolvedImage]);
+
+  // Share Card directly via WhatsApp or mobile share sheet
+  const handleShareCardWhatsApp = useCallback(async () => {
+    try {
+      const cleanSlug = (displayTitle || "property").replace(/[^a-zA-Z0-9]/g, "-").toLowerCase();
+      const filename = `Astittva-${cleanSlug}-Creative.png`;
+      const shared = await shareCardFile(
+        {
+          item: {
+            ...item,
+            project_name: displayTitle,
+            title: displayTitle,
+            location: displayLocation,
+            price_label: displayPrice,
+            property_type: displayCategory,
+          },
+          contentType,
+          url: canonicalUrl,
+          imageUrl: resolvedImage,
+        },
+        filename,
+        constructSharePayload()
+      );
+      if (!shared) {
+        await handleDownloadCard();
+        handleSocialShare("whatsapp");
+      }
+    } catch {
+      handleSocialShare("whatsapp");
+    }
+  }, [displayTitle, item, displayLocation, displayPrice, displayCategory, contentType, canonicalUrl, resolvedImage, constructSharePayload, handleDownloadCard, handleSocialShare]);
 
   // Download Branded QR Code PNG
   const handleDownloadQr = useCallback(async () => {
@@ -813,27 +854,44 @@ export default function ShareModal({
                       <span className="text-xs uppercase tracking-widest text-[#E8DED2]">
                         Rendering Marketing Creative…
                       </span>
+                      <span className="text-[10px] text-white/50">
+                        Preparing verified property details & QR code
+                      </span>
                     </div>
                   ) : cardDataUrl ? (
-                    <img
-                      src={cardDataUrl}
-                      alt="Astittva Share Card Preview"
-                      className="w-full h-auto object-contain block"
-                    />
+                    <div className="relative group">
+                      <img
+                        src={cardDataUrl}
+                        alt="Astittva Share Card Preview"
+                        className="w-full h-auto object-contain block"
+                      />
+                      <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm border border-white/20 px-2 py-0.5 rounded text-[10px] text-white font-mono">
+                        1080 × 1440 HD
+                      </div>
+                    </div>
                   ) : (
-                    <div className="aspect-[3/4] flex flex-col items-center justify-center p-6 text-center text-white/60">
-                      <p className="text-xs">Preparing preview…</p>
+                    <div className="aspect-[3/4] flex flex-col items-center justify-center gap-3 p-6 text-center text-white/70">
+                      <p className="text-xs">Preview ready to render</p>
+                      <button
+                        type="button"
+                        onClick={prepareCardPreview}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#B87333] text-white text-xs font-semibold"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        Generate Preview
+                      </button>
                     </div>
                   )}
                 </div>
 
                 {/* Card Action Controls */}
-                <div className="space-y-2 pt-2">
+                <div className="space-y-2 pt-1 max-w-[380px] mx-auto">
                   <button
                     type="button"
                     onClick={handleDownloadCard}
+                    disabled={generatingCard}
                     data-testid="download-share-card-btn"
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#B87333] hover:bg-[#A35D27] text-white text-xs font-semibold tracking-wider uppercase transition-all shadow-md active:scale-95"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#B87333] hover:bg-[#A35D27] text-white text-xs font-semibold tracking-wider uppercase transition-all shadow-md active:scale-95 disabled:opacity-50"
                   >
                     <Download className="w-4 h-4" />
                     <span>Download Share Card (PNG)</span>
@@ -842,8 +900,8 @@ export default function ShareModal({
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => handleSocialShare("whatsapp")}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-[#25D366]/40 bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 text-xs font-semibold transition-all"
+                      onClick={handleShareCardWhatsApp}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-[#25D366]/40 bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 text-xs font-semibold transition-all shadow-xs"
                     >
                       <WhatsAppIcon className="w-4 h-4" />
                       <span>Share on WhatsApp</span>
@@ -851,7 +909,7 @@ export default function ShareModal({
                     <button
                       type="button"
                       onClick={handleCopy}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-[#E8DED2] bg-white hover:bg-[#F5F1EC] text-[#1C1C1C] text-xs font-semibold transition-all"
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-[#E8DED2] bg-white hover:bg-[#F5F1EC] text-[#1C1C1C] text-xs font-semibold transition-all shadow-xs"
                     >
                       <Copy className="w-3.5 h-3.5" />
                       <span>Copy Link</span>

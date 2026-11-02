@@ -6,6 +6,40 @@
  */
 
 import { drawQrToCanvas } from "./qrCode";
+import { isGoogleDriveImage, driveProxyUrl, driveImageUrl } from "@/lib/api";
+import { pickPropertyFallback } from "@/components/PropertyCard";
+import { pickBlogFallback } from "@/lib/blogImages";
+
+function setLetterSpacing(ctx, val) {
+  try {
+    ctx.letterSpacing = val;
+  } catch (e) {}
+}
+
+function drawRoundRect(ctx, x, y, w, h, r) {
+  if (ctx.roundRect) {
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, r);
+    return;
+  }
+  let radius = r;
+  if (typeof radius === "number") {
+    radius = { tl: radius, tr: radius, br: radius, bl: radius };
+  } else if (!radius) {
+    radius = { tl: 0, tr: 0, br: 0, bl: 0 };
+  }
+  ctx.beginPath();
+  ctx.moveTo(x + radius.tl, y);
+  ctx.lineTo(x + w - radius.tr, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius.tr);
+  ctx.lineTo(x + w, y + h - radius.br);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius.br, y + h);
+  ctx.lineTo(x + radius.bl, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius.bl);
+  ctx.lineTo(x, y + radius.tl);
+  ctx.quadraticCurveTo(x, y, x + radius.tl, y);
+  ctx.closePath();
+}
 
 function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 2) {
   if (!text) return y;
@@ -20,7 +54,6 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 2) {
     if (testWidth > maxWidth && n > 0) {
       linesCount++;
       if (linesCount === maxLines) {
-        // Truncate remaining
         ctx.fillText(line.trim() + "...", x, y);
         return y + lineHeight;
       }
@@ -35,21 +68,96 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 2) {
   return y + lineHeight;
 }
 
-function loadImageSafe(src) {
-  return new Promise((resolve) => {
-    if (!src) return resolve(null);
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = () => {
-      // If CORS or loading failed with crossOrigin, try loading without crossOrigin
-      // Note: without crossOrigin, canvas might be tainted, but fallback solves it
-      resolve(null);
-    };
-    img.src = src;
-    // Timeout safeguard after 4 seconds
-    setTimeout(() => resolve(null), 4000);
-  });
+/**
+ * Build an array of candidate image URLs to try loading, ordered from highest quality to fallback
+ */
+function getCandidateUrls(item = {}, contentType = "property", rawImageUrl = "") {
+  const candidates = [];
+
+  if (rawImageUrl && typeof rawImageUrl === "string" && rawImageUrl.trim()) {
+    candidates.push(rawImageUrl.trim());
+  }
+
+  if (item?.featured_image && typeof item.featured_image === "string") {
+    candidates.push(item.featured_image.trim());
+  }
+
+  if (Array.isArray(item?.images)) {
+    item.images.forEach((img) => {
+      if (typeof img === "string" && img.trim()) candidates.push(img.trim());
+    });
+  }
+
+  const seed = item?.id || item?._id || item?.project_name || item?.title || "astittva";
+  const contextualFallback = contentType === "blog" ? pickBlogFallback(seed) : pickPropertyFallback(seed);
+  if (contextualFallback) {
+    candidates.push(contextualFallback);
+  }
+
+  candidates.push("/images/luxe/luxury_villa.webp");
+
+  // Transform candidates into actual fetchable URLs
+  const resolved = [];
+  for (const c of candidates) {
+    if (isGoogleDriveImage(c)) {
+      resolved.push(driveProxyUrl(c, 1000));
+      resolved.push(driveImageUrl(c, 1000));
+    } else if (c.startsWith("http://") || c.startsWith("https://") || c.startsWith("/")) {
+      resolved.push(c);
+    }
+  }
+
+  return [...new Set(resolved)];
+}
+
+/**
+ * Safely loads an image for the HTML5 canvas without tainting the canvas.
+ * Uses blob conversion via fetch where possible to guarantee same-origin safety.
+ */
+async function loadImageSafeForCanvas(candidateUrls) {
+  for (const url of candidateUrls) {
+    try {
+      // 1. If it's a relative URL from our own origin (e.g. /images/...)
+      if (url.startsWith("/")) {
+        const img = await new Promise((resolve, reject) => {
+          const i = new Image();
+          i.crossOrigin = "anonymous";
+          i.onload = () => resolve(i);
+          i.onerror = reject;
+          i.src = url;
+          setTimeout(() => reject(new Error("Timeout")), 3000);
+        });
+        if (img && img.naturalWidth > 10) {
+          return { img, cleanup: null };
+        }
+      }
+
+      // 2. Fetch remote / proxy URLs as blob to guarantee CORS compliance and avoid canvas taint
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const res = await fetch(url, { signal: controller.signal, mode: "cors" });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const blob = await res.blob();
+        if (blob && blob.size > 200 && blob.type.startsWith("image/")) {
+          const blobUrl = URL.createObjectURL(blob);
+          const img = await new Promise((resolve, reject) => {
+            const i = new Image();
+            i.onload = () => resolve(i);
+            i.onerror = reject;
+            i.src = blobUrl;
+          });
+          if (img && img.naturalWidth > 10) {
+            return { img, cleanup: () => URL.revokeObjectURL(blobUrl) };
+          }
+        }
+      }
+    } catch {
+      // Proceed to next candidate URL
+    }
+  }
+  return { img: null, cleanup: null };
 }
 
 export async function renderShareCardToCanvas(options) {
@@ -61,6 +169,13 @@ export async function renderShareCardToCanvas(options) {
   } = options;
 
   if (typeof document === "undefined") return null;
+
+  // Ensure fonts are ready before drawing
+  try {
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
+  } catch {}
 
   const canvas = document.createElement("canvas");
   const width = 1080;
@@ -80,31 +195,23 @@ export async function renderShareCardToCanvas(options) {
 
   // Subtle ambient radial glow
   const radialGlow = ctx.createRadialGradient(width * 0.8, height * 0.2, 50, width * 0.8, height * 0.2, 500);
-  radialGlow.addColorStop(0, "rgba(184, 115, 51, 0.18)");
+  radialGlow.addColorStop(0, "rgba(184, 115, 51, 0.20)");
   radialGlow.addColorStop(1, "transparent");
   ctx.fillStyle = radialGlow;
   ctx.fillRect(0, 0, width, height);
 
   // 2. Luxury Outer Frame & Border
   ctx.save();
-  ctx.strokeStyle = "rgba(232, 222, 210, 0.25)";
+  ctx.strokeStyle = "rgba(232, 222, 210, 0.28)";
   ctx.lineWidth = 2;
-  if (ctx.roundRect) {
-    ctx.beginPath();
-    ctx.roundRect(28, 28, width - 56, height - 56, 28);
-    ctx.stroke();
-  } else {
-    ctx.strokeRect(28, 28, width - 56, height - 56);
-  }
+  drawRoundRect(ctx, 28, 28, width - 56, height - 56, 28);
+  ctx.stroke();
 
-  // Inner Copper Accent Lines
-  ctx.strokeStyle = "rgba(184, 115, 51, 0.45)";
+  // Inner Copper Accent Border
+  ctx.strokeStyle = "rgba(184, 115, 51, 0.50)";
   ctx.lineWidth = 1;
-  if (ctx.roundRect) {
-    ctx.beginPath();
-    ctx.roundRect(36, 36, width - 72, height - 72, 22);
-    ctx.stroke();
-  }
+  drawRoundRect(ctx, 36, 36, width - 72, height - 72, 22);
+  ctx.stroke();
   ctx.restore();
 
   // 3. Top Header Bar (Emblem + Wordmark + Category Pill)
@@ -113,18 +220,13 @@ export async function renderShareCardToCanvas(options) {
   ctx.fillStyle = "#470811";
   ctx.strokeStyle = "#B87333";
   ctx.lineWidth = 2;
-  if (ctx.roundRect) {
-    ctx.beginPath();
-    ctx.roundRect(64, 58, 56, 56, 12);
-    ctx.fill();
-    ctx.stroke();
-  } else {
-    ctx.fillRect(64, 58, 56, 56);
-  }
+  drawRoundRect(ctx, 64, 58, 56, 56, 12);
+  ctx.fill();
+  ctx.stroke();
 
   // Gold "A" Monogram in emblem
   ctx.fillStyle = "#FAF8F5";
-  ctx.font = 'bold 32px "Cinzel", Georgia, serif';
+  ctx.font = 'bold 32px "Cinzel", "Times New Roman", serif';
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText("A", 92, 86);
@@ -135,13 +237,13 @@ export async function renderShareCardToCanvas(options) {
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = 'bold 26px "Cinzel", Georgia, serif';
-  ctx.letterSpacing = "4px";
+  ctx.font = 'bold 26px "Cinzel", "Times New Roman", serif';
+  setLetterSpacing(ctx, "4px");
   ctx.fillText("ASTITTVA MARKETING", 136, 82);
 
   ctx.fillStyle = "#E8DED2";
   ctx.font = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  ctx.letterSpacing = "3px";
+  setLetterSpacing(ctx, "3px");
   const headerSubtitle =
     contentType === "blog"
       ? "REAL ESTATE JOURNAL • KOLKATA INTELLIGENCE"
@@ -155,15 +257,12 @@ export async function renderShareCardToCanvas(options) {
   ctx.font = 'bold 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
   const badgeWidth = ctx.measureText(badgeLabel).width + 32;
   const badgeX = width - 64 - badgeWidth;
-  ctx.fillStyle = "rgba(184, 115, 51, 0.22)";
-  ctx.strokeStyle = "rgba(184, 115, 51, 0.6)";
+  ctx.fillStyle = "rgba(184, 115, 51, 0.25)";
+  ctx.strokeStyle = "rgba(184, 115, 51, 0.65)";
   ctx.lineWidth = 1;
-  if (ctx.roundRect) {
-    ctx.beginPath();
-    ctx.roundRect(badgeX, 66, badgeWidth, 38, 19);
-    ctx.fill();
-    ctx.stroke();
-  }
+  drawRoundRect(ctx, badgeX, 66, badgeWidth, 38, 19);
+  ctx.fill();
+  ctx.stroke();
   ctx.fillStyle = "#FAF8F5";
   ctx.textAlign = "center";
   ctx.fillText(badgeLabel, badgeX + badgeWidth / 2, 90);
@@ -173,42 +272,37 @@ export async function renderShareCardToCanvas(options) {
   const imgX = 64;
   const imgY = 142;
   const imgW = width - 128;
-  const imgH = 620;
-  const cornerRadius = 24;
+  const imgH = 610;
+  const cornerRadius = 22;
 
   ctx.save();
-  if (ctx.roundRect) {
-    ctx.beginPath();
-    ctx.roundRect(imgX, imgY, imgW, imgH, cornerRadius);
-    ctx.clip();
-  }
+  drawRoundRect(ctx, imgX, imgY, imgW, imgH, cornerRadius);
+  ctx.clip();
 
-  // Load actual image
-  const loadedImg = await loadImageSafe(imageUrl);
+  // Load safe image
+  const candidateUrls = getCandidateUrls(item, contentType, imageUrl);
+  const { img: loadedImg, cleanup } = await loadImageSafeForCanvas(candidateUrls);
+
   if (loadedImg) {
-    try {
-      // Cover fit
-      const imgRatio = loadedImg.width / loadedImg.height;
-      const targetRatio = imgW / imgH;
-      let sw, sh, sx, sy;
+    // Cover fit
+    const imgRatio = loadedImg.width / loadedImg.height;
+    const targetRatio = imgW / imgH;
+    let sw, sh, sx, sy;
 
-      if (imgRatio > targetRatio) {
-        sh = loadedImg.height;
-        sw = loadedImg.height * targetRatio;
-        sx = (loadedImg.width - sw) / 2;
-        sy = 0;
-      } else {
-        sw = loadedImg.width;
-        sh = loadedImg.width / targetRatio;
-        sx = 0;
-        sy = (loadedImg.height - sh) / 2;
-      }
-
-      ctx.drawImage(loadedImg, sx, sy, sw, sh, imgX, imgY, imgW, imgH);
-    } catch {
-      // If canvas tainted, fallback to pattern
-      drawLuxuryImageFallback(ctx, imgX, imgY, imgW, imgH, item);
+    if (imgRatio > targetRatio) {
+      sh = loadedImg.height;
+      sw = loadedImg.height * targetRatio;
+      sx = (loadedImg.width - sw) / 2;
+      sy = 0;
+    } else {
+      sw = loadedImg.width;
+      sh = loadedImg.width / targetRatio;
+      sx = 0;
+      sy = (loadedImg.height - sh) / 2;
     }
+
+    ctx.drawImage(loadedImg, sx, sy, sw, sh, imgX, imgY, imgW, imgH);
+    if (cleanup) cleanup();
   } else {
     drawLuxuryImageFallback(ctx, imgX, imgY, imgW, imgH, item);
   }
@@ -216,7 +310,7 @@ export async function renderShareCardToCanvas(options) {
   // Bottom shadow vignette over image for readable chips
   const imgGrad = ctx.createLinearGradient(0, imgY + imgH - 180, 0, imgY + imgH);
   imgGrad.addColorStop(0, "transparent");
-  imgGrad.addColorStop(1, "rgba(10, 1, 2, 0.85)");
+  imgGrad.addColorStop(1, "rgba(10, 1, 2, 0.88)");
   ctx.fillStyle = imgGrad;
   ctx.fillRect(imgX, imgY + imgH - 180, imgW, 180);
 
@@ -226,11 +320,8 @@ export async function renderShareCardToCanvas(options) {
   ctx.save();
   ctx.strokeStyle = "rgba(232, 222, 210, 0.35)";
   ctx.lineWidth = 1.5;
-  if (ctx.roundRect) {
-    ctx.beginPath();
-    ctx.roundRect(imgX, imgY, imgW, imgH, cornerRadius);
-    ctx.stroke();
-  }
+  drawRoundRect(ctx, imgX, imgY, imgW, imgH, cornerRadius);
+  ctx.stroke();
   ctx.restore();
 
   // Floating Category Chip on Image (Top-Left)
@@ -243,12 +334,9 @@ export async function renderShareCardToCanvas(options) {
   ctx.save();
   ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
   const catWidth = ctx.measureText(categoryText.toUpperCase()).width + 36;
-  ctx.fillStyle = "rgba(250, 248, 245, 0.95)";
-  if (ctx.roundRect) {
-    ctx.beginPath();
-    ctx.roundRect(imgX + 24, imgY + 24, catWidth, 36, 18);
-    ctx.fill();
-  }
+  ctx.fillStyle = "rgba(250, 248, 245, 0.96)";
+  drawRoundRect(ctx, imgX + 24, imgY + 24, catWidth, 36, 18);
+  ctx.fill();
   ctx.fillStyle = "#B87333";
   ctx.beginPath();
   ctx.arc(imgX + 42, imgY + 42, 4, 0, Math.PI * 2);
@@ -265,9 +353,9 @@ export async function renderShareCardToCanvas(options) {
     item.city ||
     (contentType === "blog" ? "Kolkata Real Estate" : "Kolkata, WB");
   ctx.save();
-  ctx.font = '600 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.font = '600 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
   ctx.fillStyle = "#FAF8F5";
-  ctx.shadowColor = "rgba(0,0,0,0.8)";
+  ctx.shadowColor = "rgba(0,0,0,0.85)";
   ctx.shadowBlur = 8;
   ctx.fillText(`📍 ${locationText}`, imgX + 24, imgY + imgH - 24);
   ctx.restore();
@@ -278,7 +366,7 @@ export async function renderShareCardToCanvas(options) {
   // Title
   ctx.save();
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = 'bold 44px "Cinzel", Georgia, serif';
+  ctx.font = 'bold 44px "Cinzel", "Times New Roman", serif';
   ctx.textAlign = "left";
   const titleText = item.project_name || item.title || "Exclusive Astittva Property";
   cursorY = wrapText(ctx, titleText, 64, cursorY, width - 128, 52, 2);
@@ -292,12 +380,12 @@ export async function renderShareCardToCanvas(options) {
   ctx.save();
   ctx.fillStyle = "#B87333";
   ctx.font = '600 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  ctx.letterSpacing = "1.5px";
+  setLetterSpacing(ctx, "1.5px");
   ctx.fillText(subline.toUpperCase(), 64, cursorY + 12);
   ctx.restore();
   cursorY += 42;
 
-  // Property Highlights row (Bedrooms, Bathrooms, Area - only if non-empty!)
+  // Dynamic Property Highlights
   const highlights = [];
   if (contentType === "property") {
     if (item.bedrooms) highlights.push(`${item.bedrooms}`);
@@ -322,14 +410,11 @@ export async function renderShareCardToCanvas(options) {
       const w = ctx.measureText(hl).width + 36;
       if (hlX + w < width - 64) {
         ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
-        ctx.strokeStyle = "rgba(232, 222, 210, 0.3)";
+        ctx.strokeStyle = "rgba(232, 222, 210, 0.35)";
         ctx.lineWidth = 1;
-        if (ctx.roundRect) {
-          ctx.beginPath();
-          ctx.roundRect(hlX, cursorY, w, 38, 19);
-          ctx.fill();
-          ctx.stroke();
-        }
+        drawRoundRect(ctx, hlX, cursorY, w, 38, 19);
+        ctx.fill();
+        ctx.stroke();
         ctx.fillStyle = "#E8DED2";
         ctx.textAlign = "center";
         ctx.fillText(hl, hlX + w / 2, cursorY + 24);
@@ -357,29 +442,21 @@ export async function renderShareCardToCanvas(options) {
     bannerGrad.addColorStop(1, "#520C16");
 
     ctx.fillStyle = bannerGrad;
-    if (ctx.roundRect) {
-      ctx.beginPath();
-      ctx.roundRect(64, cursorY, bannerW, bannerH, 18);
-      ctx.fill();
-    } else {
-      ctx.fillRect(64, cursorY, bannerW, bannerH);
-    }
+    drawRoundRect(ctx, 64, cursorY, bannerW, bannerH, 18);
+    ctx.fill();
 
     ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
     ctx.lineWidth = 1;
-    if (ctx.roundRect) {
-      ctx.beginPath();
-      ctx.roundRect(64, cursorY, bannerW, bannerH, 18);
-      ctx.stroke();
-    }
+    drawRoundRect(ctx, 64, cursorY, bannerW, bannerH, 18);
+    ctx.stroke();
 
-    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
     ctx.font = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.letterSpacing = "2px";
+    setLetterSpacing(ctx, "2px");
     ctx.fillText("EXCLUSIVE OFFERING", 92, cursorY + 28);
 
     ctx.fillStyle = "#FFFFFF";
-    ctx.font = 'bold 30px "Cinzel", Georgia, serif';
+    ctx.font = 'bold 30px "Cinzel", "Times New Roman", serif';
     ctx.fillText(priceText, 92, cursorY + 58);
 
     ctx.textAlign = "right";
@@ -407,7 +484,7 @@ export async function renderShareCardToCanvas(options) {
   // Left Footer Info
   ctx.save();
   ctx.fillStyle = "#FAF8F5";
-  ctx.font = 'bold 22px "Cinzel", Georgia, serif';
+  ctx.font = 'bold 22px "Cinzel", "Times New Roman", serif';
   ctx.fillText("ASTITTVA ADVISORY DESK", 64, footerY + 36);
 
   ctx.fillStyle = "#B87333";
@@ -429,13 +506,8 @@ export async function renderShareCardToCanvas(options) {
   ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
   ctx.shadowBlur = 18;
   ctx.shadowOffsetY = 6;
-  if (ctx.roundRect) {
-    ctx.beginPath();
-    ctx.roundRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 18);
-    ctx.fill();
-  } else {
-    ctx.fillRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize);
-  }
+  drawRoundRect(ctx, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 18);
+  ctx.fill();
   ctx.restore();
 
   // Draw QR code modules
@@ -452,7 +524,7 @@ export async function renderShareCardToCanvas(options) {
   ctx.save();
   ctx.fillStyle = "#FAF8F5";
   ctx.font = '600 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  ctx.letterSpacing = "1px";
+  setLetterSpacing(ctx, "1px");
   ctx.textAlign = "center";
   ctx.fillText("SCAN TO VIEW LISTING", qrBoxX + qrBoxSize / 2, qrBoxY + qrBoxSize + 22);
   ctx.restore();
@@ -469,7 +541,7 @@ function drawLuxuryImageFallback(ctx, x, y, w, h, item) {
   ctx.fillRect(x, y, w, h);
 
   // Geometric Luxury Grid Lines
-  ctx.strokeStyle = "rgba(184, 115, 51, 0.15)";
+  ctx.strokeStyle = "rgba(184, 115, 51, 0.18)";
   ctx.lineWidth = 1;
   for (let i = 0; i < w; i += 60) {
     ctx.beginPath();
@@ -485,13 +557,13 @@ function drawLuxuryImageFallback(ctx, x, y, w, h, item) {
   }
 
   // Astittva Watermark in center
-  ctx.fillStyle = "rgba(232, 222, 210, 0.25)";
-  ctx.font = 'bold 48px "Cinzel", Georgia, serif';
+  ctx.fillStyle = "rgba(232, 222, 210, 0.30)";
+  ctx.font = 'bold 48px "Cinzel", "Times New Roman", serif';
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText("ASTITTVA", x + w / 2, y + h / 2 - 20);
   ctx.font = '600 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  ctx.letterSpacing = "4px";
+  setLetterSpacing(ctx, "4px");
   ctx.fillText("VERIFIED LUXURY PORTFOLIO", x + w / 2, y + h / 2 + 25);
 }
 
@@ -504,23 +576,71 @@ export async function generateShareCardDataUrl(options) {
   try {
     return canvas.toDataURL("image/png");
   } catch (err) {
-    console.error("Failed to export Share Card Data URL:", err);
+    console.warn("toDataURL failed, attempting blob fallback:", err);
+    try {
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (blob) return URL.createObjectURL(blob);
+    } catch {}
     return "";
   }
 }
 
 /**
+ * Generate Share Card as Blob
+ */
+export async function generateShareCardBlob(options) {
+  const canvas = await renderShareCardToCanvas(options);
+  if (!canvas) return null;
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), "image/png");
+  });
+}
+
+/**
  * Trigger immediate download of the share card
  */
-export async function downloadShareCard(options, filename = "Astittva-Share-Card.png") {
-  const dataUrl = await generateShareCardDataUrl(options);
-  if (!dataUrl) throw new Error("Could not generate share card");
+export async function downloadShareCard(options, filename = "Astittva-Share-Card.png", existingDataUrl = null) {
+  let fileUrl = existingDataUrl;
+
+  if (!fileUrl) {
+    fileUrl = await generateShareCardDataUrl(options);
+  }
+
+  if (!fileUrl) {
+    const blob = await generateShareCardBlob(options);
+    if (blob) fileUrl = URL.createObjectURL(blob);
+  }
+
+  if (!fileUrl) throw new Error("Could not generate share card");
 
   const a = document.createElement("a");
-  a.href = dataUrl;
+  a.href = fileUrl;
   a.download = filename;
   document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
+  setTimeout(() => {
+    document.body.removeChild(a);
+  }, 100);
   return true;
+}
+
+/**
+ * Share card via native navigator.share with files (mobile)
+ */
+export async function shareCardFile(options, filename = "Astittva-Share-Card.png", text = "") {
+  if (typeof navigator === "undefined" || !navigator.share) return false;
+
+  const blob = await generateShareCardBlob(options);
+  if (!blob) return false;
+
+  const file = new File([blob], filename, { type: "image/png" });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    await navigator.share({
+      title: options?.item?.project_name || options?.item?.title || "Astittva Listing",
+      text: text || "Check out this verified property on Astittva Marketing",
+      files: [file],
+    });
+    return true;
+  }
+  return false;
 }
