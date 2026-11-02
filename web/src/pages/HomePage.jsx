@@ -10,6 +10,8 @@ import CinematicHero from "@/components/CinematicHero";
 import SafeImage from "@/components/SafeImage";
 import Seo from "@/components/Seo";
 import { getOrganizationSchema, getWebSiteSchema } from "@/lib/seoConfig";
+import ShareButton from "@/components/ShareButton";
+import seedProperties from "@/data/seedProperties.json";
 
 const TEXTURE = "https://static.prod-images.emergentagent.com/jobs/50ac1e2c-4ee3-4d48-ad5e-fd37063ae3c0/images/1f5da7f44ad5aab6c1f6ab3c12df3ec89723084c1042e95749a6b4658dcffcc6.png";
 
@@ -81,7 +83,20 @@ const fadeUp = {
 
 
 export default function HomePage() {
-  const [projects, setProjects] = useState([]);
+  const [projects, setProjects] = useState(() => {
+    try {
+      const cached = localStorage.getItem("astitva_cache_properties");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const featured = parsed.filter((p) => p.featured || p.is_featured);
+          return featured.length > 0 ? featured.slice(0, 6) : parsed.slice(0, 6);
+        }
+      }
+    } catch (e) {}
+    const seedFeatured = (seedProperties || []).filter((p) => p.featured || p.is_featured);
+    return seedFeatured.length > 0 ? seedFeatured.slice(0, 6) : (seedProperties || []).slice(0, 6);
+  });
   const initialForm = { prefix: "Mr", first_name: "", last_name: "", phone_code: "+91", email: "", phone: "", interest: "", budget: "", message: "" };
   const [formData, setFormData] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
@@ -90,8 +105,12 @@ export default function HomePage() {
 
   useEffect(() => {
     api.get("/properties", { params: { featured: true, limit: 6 } })
-      .then(({ data }) => setProjects(data))
-      .catch(() => setProjects([]));
+      .then(({ data }) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setProjects(data);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const handleSubmit = async (e) => {
@@ -356,7 +375,7 @@ export default function HomePage() {
                   className="group"
                   data-testid={`project-card-${p.id}`}
                 >
-                  <Link to={`/properties/${p.id}`}>
+                  <Link to={`/properties/${p.id}`} className="block">
                     <div className="aspect-[4/3] overflow-hidden bg-[#FAF8F5]">
                       {(() => {
                         const fallback = pickPropertyFallback(p.id);
@@ -391,12 +410,34 @@ export default function HomePage() {
                       </div>
                       <h3 className="font-serif-display text-2xl text-ivory mb-3 group-hover:text-copper transition-colors duration-500">{p.project_name}</h3>
                       <p className="text-[#5F5F5F] text-sm font-light line-clamp-2 leading-[1.7]">{p.description}</p>
-                      <div className="mt-6 flex items-center justify-between pt-6 border-t border-[#E8DED2]">
-                        <span className="text-ivory/80 font-serif-display text-base italic">{p.price_label || "Price on request"}</span>
-                        <ArrowRight className="w-4 h-4 text-copper transition-transform duration-500 group-hover:translate-x-1" />
-                      </div>
                     </div>
                   </Link>
+                  <div className="mt-6 flex items-center justify-between pt-6 border-t border-[#E8DED2]">
+                    <span className="text-ivory/80 font-serif-display text-base italic">{p.price_label || "Price on request"}</span>
+                    <div className="flex items-center gap-3">
+                      <ShareButton
+                        title={p.project_name}
+                        location={p.location || p.city || "Kolkata"}
+                        price={p.price_label || (p.starting_price ? `₹${p.starting_price.toLocaleString("en-IN")}` : "")}
+                        propertyType={p.property_type || "Luxury Property"}
+                        category={p.category || "Residential"}
+                        description={p.description}
+                        url={`https://astittva.in/properties/${p.id}`}
+                        image={p.featured_image || (Array.isArray(p.images) ? p.images[0] : "") || pickPropertyFallback(p.id)}
+                        type="property"
+                        variant="iconOnly"
+                        className="w-8 h-8 !p-0"
+                        label=""
+                      />
+                      <Link
+                        to={`/properties/${p.id}`}
+                        className="p-1 text-copper transition-transform duration-500 group-hover:translate-x-1"
+                        aria-label={`View ${p.project_name}`}
+                      >
+                        <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    </div>
+                  </div>
                 </motion.div>
               ))}
             </div>

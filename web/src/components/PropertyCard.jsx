@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, MapPin } from "lucide-react";
 import { isGoogleDriveImage, driveImageUrl, driveDirectFallbackUrl, fileUrl } from "@/lib/api";
 import SafeImage from "@/components/SafeImage";
+import ShareButton from "@/components/ShareButton";
 
 const FALLBACK_IMAGES = [
   "/images/luxe/luxury_villa.webp",
@@ -109,12 +110,28 @@ export default function PropertyCard({
             <div className="text-[9px] tracking-[0.3em] uppercase text-[#737373] mb-0.5">Starting</div>
             <span className="text-ivory font-serif-display text-lg font-medium">{price}</span>
           </div>
-          <Link
-            to={`/properties/${p.id}`}
-            className="inline-flex items-center gap-1.5 text-copper text-xs tracking-[0.2em] uppercase font-medium hover:text-copper-hover transition-transform duration-300 group-hover:translate-x-1"
-          >
-            Explore <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          <div className="flex items-center gap-2.5">
+            <ShareButton
+              title={p.project_name}
+              location={p.location ? `${p.location}, ${p.city || "Kolkata"}` : (p.city || "Kolkata")}
+              price={price}
+              propertyType={p.bedrooms ? `${p.bedrooms} ${p.property_type || "Apartment"}` : (p.property_type || "Luxury Property")}
+              category={p.property_category}
+              description={p.description}
+              url={`https://astittva.in/properties/${p.id}`}
+              image={primaryCandidate}
+              type="property"
+              variant="iconOnly"
+              className="w-8 h-8 !p-0"
+              label=""
+            />
+            <Link
+              to={`/properties/${p.id}`}
+              className="inline-flex items-center gap-1.5 text-copper text-xs tracking-[0.2em] uppercase font-medium hover:text-copper-hover transition-transform duration-300 group-hover:translate-x-1"
+            >
+              Explore <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
       </div>
     </motion.article>

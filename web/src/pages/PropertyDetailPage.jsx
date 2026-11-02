@@ -10,6 +10,26 @@ import Seo from "@/components/Seo";
 import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import ShareButton from "@/components/ShareButton";
 import SafeImage from "@/components/SafeImage";
+import seedProperties from "@/data/seedProperties.json";
+
+function findInitialProperty(id) {
+  if (!id) return null;
+  try {
+    const cached = localStorage.getItem("astitva_cache_properties");
+    if (cached) {
+      const list = JSON.parse(cached);
+      if (Array.isArray(list)) {
+        const found = list.find((p) => String(p.id) === String(id) || String(p._id) === String(id));
+        if (found) return found;
+      }
+    }
+  } catch (e) {}
+  if (Array.isArray(seedProperties)) {
+    const found = seedProperties.find((p) => String(p.id) === String(id) || String(p._id) === String(id));
+    if (found) return found;
+  }
+  return null;
+}
 
 // Per-property dynamic SEO: title/description/canonical/OG/Twitter + RealEstateListing JSON-LD.
 function PropertySeo({ property, id }) {
@@ -112,16 +132,20 @@ function PropertySeo({ property, id }) {
 
 export default function PropertyDetailPage() {
   const { id } = useParams();
-  const [property, setProperty] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [property, setProperty] = useState(() => findInitialProperty(id));
+  const [loading, setLoading] = useState(() => !findInitialProperty(id));
   const [activeImg, setActiveImg] = useState(0);
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    const initial = findInitialProperty(id);
+    if (!initial) setLoading(true);
     api.get(`/properties/${id}`)
       .then(({ data }) => setProperty(data))
-      .catch(() => setProperty(false))
+      .catch(() => {
+        if (!initial) setProperty(false);
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -213,6 +237,7 @@ export default function PropertyDetailPage() {
             location={property.location ? `${property.location}, ${property.city || "Kolkata"}` : (property.city || "Kolkata")}
             price={property.price_label || (property.starting_price ? `₹${property.starting_price.toLocaleString("en-IN")}` : "Price on Request")}
             propertyType={property.bedrooms ? `${property.bedrooms} ${property.property_type || "Apartment"}` : (property.property_type || "Luxury Property")}
+            category={property.property_category || ""}
             description={property.description}
             url={`https://astittva.in/properties/${id}`}
             image={primaryImage}
@@ -404,6 +429,7 @@ export default function PropertyDetailPage() {
                     location={property.location ? `${property.location}, ${property.city || "Kolkata"}` : (property.city || "Kolkata")}
                     price={property.price_label || (property.starting_price ? `₹${property.starting_price.toLocaleString("en-IN")}` : "Price on Request")}
                     propertyType={property.bedrooms ? `${property.bedrooms} ${property.property_type || "Apartment"}` : (property.property_type || "Luxury Property")}
+            category={property.property_category || ""}
                     description={property.description}
                     url={`https://astittva.in/properties/${id}`}
                     image={primaryImage}

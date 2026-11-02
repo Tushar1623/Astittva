@@ -6,6 +6,7 @@ import api, { isGoogleDriveImage, driveImageUrl, driveDirectFallbackUrl, fileUrl
 import Seo from "@/components/Seo";
 import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import SafeImage from "@/components/SafeImage";
+import seedProperties from "@/data/seedProperties.json";
 
 // ---------- Filter option catalogues (per Astittva brand brief) ----------
 const LOCATIONS = [
@@ -79,8 +80,14 @@ function pickFallback(id) {
 
 export default function PropertiesPage() {
   const [params, setParams] = useSearchParams();
-  const [properties, setProperties] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [properties, setProperties] = useState(() => {
+    try {
+      const cached = localStorage.getItem("astitva_cache_properties");
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return seedProperties || [];
+  });
+  const [loading, setLoading] = useState(() => properties.length === 0);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   // Current filter values from URL — single source of truth, shareable links work
@@ -106,7 +113,6 @@ export default function PropertiesPage() {
   }, [location, property_type, budget, builder, availability, category]);
 
   useEffect(() => {
-    setLoading(true);
     const q = {};
     if (location) q.location = location;
     if (property_type) q.property_type = property_type;
@@ -120,9 +126,23 @@ export default function PropertiesPage() {
         if (b.max != null) q.max_price = b.max;
       }
     }
+    const hasFilter = Object.keys(q).length > 0;
+    if (hasFilter) setLoading(true);
+
     api.get("/properties", { params: q })
-      .then(({ data }) => setProperties(data))
-      .catch(() => setProperties([]))
+      .then(({ data }) => {
+        if (Array.isArray(data)) {
+          setProperties(data);
+          if (!hasFilter && data.length > 0) {
+            try {
+              localStorage.setItem("astitva_cache_properties", JSON.stringify(data));
+            } catch {}
+          }
+        }
+      })
+      .catch(() => {
+        if (hasFilter) setProperties([]);
+      })
       .finally(() => setLoading(false));
   }, [location, property_type, budget, builder, availability, category]);
 

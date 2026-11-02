@@ -97,19 +97,7 @@ export default function ResaleDetailPage() {
     }
   };
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator
-        .share({
-          title: property?.title || "Resale Property at Astittva",
-          url: window.location.href,
-        })
-        .catch(() => {});
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast.success("Property link copied to clipboard");
-    }
-  };
+
 
   if (loading) {
     return (
@@ -214,6 +202,7 @@ export default function ResaleDetailPage() {
             location={property.locality || property.location || "Kolkata"}
             price={formatPriceINR(property.price)}
             propertyType={property.bedrooms ? `${property.bedrooms} BHK Resale Flat` : (property.propertyType || "Resale Property")}
+            category={property.propertyType || "Resale Property"}
             description={property.description}
             url={`https://astittva.in/resale/${property.id}`}
             image={gallery[0]}

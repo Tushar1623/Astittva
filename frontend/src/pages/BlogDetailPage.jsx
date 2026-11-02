@@ -9,6 +9,26 @@ import { sanitizeBlogHtml } from "@/lib/sanitize";
 import { resolveBlogImage, pickBlogFallback } from "@/lib/blogImages";
 import ShareButton from "@/components/ShareButton";
 import SafeImage from "@/components/SafeImage";
+import seedBlogs from "@/data/seedBlogs.json";
+
+function findInitialBlog(slug) {
+  if (!slug) return null;
+  try {
+    const cached = localStorage.getItem("astitva_cache_blogs");
+    if (cached) {
+      const list = JSON.parse(cached);
+      if (Array.isArray(list)) {
+        const found = list.find((b) => String(b.slug) === String(slug) || String(b.id) === String(slug) || String(b._id) === String(slug));
+        if (found) return found;
+      }
+    }
+  } catch (e) {}
+  if (Array.isArray(seedBlogs)) {
+    const found = seedBlogs.find((b) => String(b.slug) === String(slug) || String(b.id) === String(slug) || String(b._id) === String(slug));
+    if (found) return found;
+  }
+  return null;
+}
 
 function formatDate(iso) {
   if (!iso) return "";
@@ -25,18 +45,21 @@ function formatDate(iso) {
 
 export default function BlogDetailPage() {
   const { slug } = useParams();
-  const [blog, setBlog] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [blog, setBlog] = useState(() => findInitialBlog(slug));
+  const [loading, setLoading] = useState(() => !findInitialBlog(slug));
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
+    const initial = findInitialBlog(slug);
+    if (!initial) {
+      setLoading(true);
+    }
     setNotFound(false);
     api
       .get(`/blogs/${slug}`)
       .then(({ data }) => setBlog(data))
       .catch((e) => {
-        if (e?.response?.status === 404) setNotFound(true);
+        if (!initial && e?.response?.status === 404) setNotFound(true);
       })
       .finally(() => setLoading(false));
   }, [slug]);
@@ -161,6 +184,9 @@ export default function BlogDetailPage() {
                 url={`https://astittva.in/blogs/${blog.slug}`}
                 image={img}
                 type="blog"
+                category={blog.category || ""}
+                author={blog.author || ""}
+                date={formatDate(blog.publish_date || blog.created_at)}
                 variant="light"
                 label="Share"
               />
@@ -260,6 +286,9 @@ export default function BlogDetailPage() {
                 url={`https://astittva.in/blogs/${blog.slug}`}
                 image={img}
                 type="blog"
+                category={blog.category || ""}
+                author={blog.author || ""}
+                date={formatDate(blog.publish_date || blog.created_at)}
                 variant="light"
                 label="Share Article"
               />

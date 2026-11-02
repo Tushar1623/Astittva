@@ -7,6 +7,8 @@ import { resolveBlogImage, pickBlogFallback } from "@/lib/blogImages";
 import Seo from "@/components/Seo";
 import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import SafeImage from "@/components/SafeImage";
+import seedBlogs from "@/data/seedBlogs.json";
+import ShareButton from "@/components/ShareButton";
 
 function formatDate(iso) {
   if (!iso) return "";
@@ -78,13 +80,28 @@ function BlogCard({ blog, idx }) {
           </p>
         )}
 
-        <Link
+        <div className="mt-auto flex items-center justify-between pt-4 border-t border-[#E8DED2]">
+          <Link
           to={`/blogs/${blog.slug}`}
           className="mt-auto inline-flex items-center gap-2 text-[10px] tracking-[0.3em] uppercase text-copper hover:text-copper-hover transition w-fit"
         >
           Read Story
           <ArrowUpRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </Link>
+          <ShareButton
+            title={blog.title}
+            description={blog.short_description || ""}
+            url={`https://astittva.in/blogs/${blog.slug}`}
+            image={img}
+            type="blog"
+            category={blog.category || ""}
+            author={blog.author || ""}
+            date={formatDate(blog.publish_date || blog.created_at)}
+            variant="iconOnly"
+            className="w-8 h-8 !p-0"
+            label=""
+          />
+        </div>
       </div>
     </motion.article>
   );
@@ -110,14 +127,27 @@ function BlogSkeleton({ idx }) {
 }
 
 export default function BlogsListPage() {
-  const [blogs, setBlogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [blogs, setBlogs] = useState(() => {
+    try {
+      const cached = localStorage.getItem("astitva_cache_blogs");
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return seedBlogs || [];
+  });
+  const [loading, setLoading] = useState(() => blogs.length === 0);
 
   useEffect(() => {
     api
       .get("/blogs")
-      .then(({ data }) => setBlogs(Array.isArray(data) ? data : []))
-      .catch(() => setBlogs([]))
+      .then(({ data }) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setBlogs(data);
+          try {
+            localStorage.setItem("astitva_cache_blogs", JSON.stringify(data));
+          } catch {}
+        }
+      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
