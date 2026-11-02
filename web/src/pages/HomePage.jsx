@@ -416,6 +416,7 @@ export default function HomePage() {
                     <span className="text-ivory/80 font-serif-display text-base italic">{p.price_label || "Price on request"}</span>
                     <div className="flex items-center gap-3">
                       <ShareButton
+                        item={p}
                         title={p.project_name}
                         location={p.location || p.city || "Kolkata"}
                         price={p.price_label || (p.starting_price ? `₹${p.starting_price.toLocaleString("en-IN")}` : "")}

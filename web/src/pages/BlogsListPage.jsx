@@ -89,6 +89,7 @@ function BlogCard({ blog, idx }) {
           <ArrowUpRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </Link>
           <ShareButton
+            item={blog}
             title={blog.title}
             description={blog.short_description || ""}
             url={`https://astittva.in/blogs/${blog.slug}`}

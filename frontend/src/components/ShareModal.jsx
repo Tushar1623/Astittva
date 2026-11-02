@@ -1,56 +1,89 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Copy, Check, Share2, Sparkles, MapPin } from "lucide-react";
+import {
+  X,
+  Copy,
+  Check,
+  Share2,
+  ExternalLink,
+  MapPin,
+  Sparkles,
+  QrCode,
+  Download,
+  PenLine,
+  Building2,
+  Bed,
+  Droplets,
+  Maximize2,
+  ArrowLeft,
+  Calendar,
+  Image as ImageIcon,
+  Smartphone,
+  Eye,
+} from "lucide-react";
 import { toast } from "sonner";
-import { SITE_URL } from "@/lib/seoConfig";
+import { pickPropertyFallback } from "@/components/PropertyCard";
+import { pickBlogFallback } from "@/lib/blogImages";
 import SafeImage from "@/components/SafeImage";
+import { generateQrSvgString, generateBrandedQrPng } from "@/lib/qrCode";
+import { renderShareCardToCanvas, downloadShareCard } from "@/lib/shareCardGenerator";
 
-// Official platform branded SVGs with precise viewBox & brand colors
-function WhatsAppIcon({ className = "w-6 h-6" }) {
+// Brand Platform Icons (Official Vectors)
+function WhatsAppIcon({ className = "w-5 h-5" }) {
   return (
-    <svg viewBox="0 0 24 24" fill="#25D366" className={className}>
-      <path d="M12.031 2C6.495 2 2 6.494 2 12.029c0 1.97.57 3.81 1.554 5.367L2 22l4.75-1.52A9.957 9.957 0 0 0 12.031 22c5.534 0 10.029-4.495 10.029-10.029C22.06 6.494 17.565 2 12.031 2zm0 18.358a8.31 8.31 0 0 1-4.24-1.157l-.304-.18-2.82.902.902-2.75-.198-.314A8.307 8.307 0 0 1 3.704 12.03c0-4.591 3.736-8.327 8.327-8.327 4.592 0 8.328 3.736 8.328 8.327 0 4.592-3.736 8.328-8.328 8.328zm4.567-6.236c-.25-.125-1.48-.73-1.71-.813-.23-.083-.396-.125-.563.125-.166.25-.646.813-.792.98-.146.166-.292.187-.542.062s-1.057-.39-2.013-1.242c-.744-.664-1.247-1.484-1.393-1.734-.146-.25-.015-.385.11-.51.112-.112.25-.292.375-.438s.167-.25.25-.417c.083-.167.042-.313-.02-.438-.063-.125-.563-1.354-.772-1.854-.203-.487-.41-.421-.563-.429l-.479-.008c-.167 0-.438.063-.667.313s-.875.854-.875 2.083c0 1.229.896 2.417 1.021 2.583.125.167 1.765 2.696 4.276 3.781.598.258 1.064.413 1.428.528.601.191 1.148.164 1.58.1.482-.072 1.48-.604 1.688-1.188.208-.583.208-1.083.146-1.188-.063-.104-.23-.166-.48-.291z" />
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12.031 2C6.504 2 2.016 6.488 2.016 12.016c0 1.953.563 3.774 1.54 5.313L2 22l4.828-1.516a9.98 9.98 0 005.203 1.531h.004c5.523 0 10.016-4.488 10.016-10.015C22.05 6.488 17.558 2 12.031 2zm0 18.281a8.26 8.26 0 01-4.218-1.156l-.305-.18-2.859.9.953-2.781-.195-.312A8.243 8.243 0 013.75 12.016c0-4.563 3.719-8.281 8.281-8.281 4.563 0 8.281 3.719 8.281 8.281 0 4.563-3.718 8.281-8.281 8.281zm4.532-6.195c-.25-.125-1.469-.727-1.695-.813-.227-.086-.391-.125-.555.125-.164.25-.648.813-.797.977-.148.164-.297.188-.547.063-.25-.125-1.05-.387-2.008-1.242-.742-.664-1.242-1.484-1.387-1.734-.148-.25-.016-.383.109-.508.113-.113.25-.297.375-.445.125-.148.164-.25.25-.414.086-.164.043-.313-.023-.438-.063-.125-.555-1.336-.762-1.836-.2-.488-.406-.422-.555-.43-.14-.008-.305-.008-.469-.008s-.43.063-.656.313c-.227.25-.859.84-.859 2.051s.883 2.375 1.008 2.543c.125.164 1.734 2.656 4.203 3.719.586.25 1.047.406 1.406.52.594.188 1.133.164 1.563.098.477-.07 1.469-.602 1.672-1.18.203-.578.203-1.07.141-1.18-.063-.109-.227-.172-.477-.297z" />
     </svg>
   );
 }
 
-function FacebookIcon({ className = "w-6 h-6" }) {
+function FacebookIcon({ className = "w-5 h-5" }) {
   return (
-    <svg viewBox="0 0 24 24" fill="#1877F2" className={className}>
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
     </svg>
   );
 }
 
-function LinkedInIcon({ className = "w-6 h-6" }) {
+function LinkedInIcon({ className = "w-5 h-5" }) {
   return (
-    <svg viewBox="0 0 24 24" fill="#0A66C2" className={className}>
-      <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451c.979 0 1.778-.773 1.778-1.729V1.73C24 .774 23.205 0 22.222 0h.003z" />
     </svg>
   );
 }
 
-function XTwitterIcon({ className = "w-6 h-6" }) {
+function XIcon({ className = "w-5 h-5" }) {
   return (
-    <svg viewBox="0 0 24 24" fill="#0F1419" className={className}>
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
     </svg>
   );
 }
 
-function TelegramIcon({ className = "w-6 h-6" }) {
+function TelegramIcon({ className = "w-5 h-5" }) {
   return (
-    <svg viewBox="0 0 24 24" fill="#229ED9" className={className}>
-      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.197 1.006.128.832.942z" />
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.121l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.832.942z" />
     </svg>
   );
 }
 
-/**
- * Standardised Unified ShareModal Component
- *
- * Implements a shared luxury light design system supporting both Property and Blog sharing.
- */
+const PROPERTY_MESSAGE_SUGGESTIONS = [
+  "Take a look at this property.",
+  "Sharing a property you might like.",
+  "Interesting property in this location.",
+  "Worth checking out!",
+];
+
+const BLOG_MESSAGE_SUGGESTIONS = [
+  "Take a look at this article.",
+  "Interesting read on Kolkata real estate.",
+  "Valuable insights from Astittva Journal.",
+  "Worth checking out!",
+];
+
 export default function ShareModal({
   isOpen,
   onClose,
@@ -58,424 +91,854 @@ export default function ShareModal({
   description = "",
   url = "",
   image = "",
-  type = "property", // "property" | "blog" | "generic"
-  location = "",
   price = "",
-  propertyType = "",
+  location = "",
   category = "",
-  author = "",
-  date = "",
+  propertyType = "",
+  contentType = "property", // 'property' or 'blog'
+  item = {},
 }) {
+  const [mounted, setMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState("share"); // 'share', 'card', 'qr'
   const [copied, setCopied] = useState(false);
-  const [canNativeShare, setCanNativeShare] = useState(false);
+  const [personalNote, setPersonalNote] = useState("");
+  const [showNoteInput, setShowNoteInput] = useState(false);
+  const [generatingCard, setGeneratingCard] = useState(false);
+  const [cardDataUrl, setCardDataUrl] = useState("");
+  const [downloadingQr, setDownloadingQr] = useState(false);
+  const modalRef = useRef(null);
 
-  // Compute absolute clean canonical share URL
-  const shareUrl = React.useMemo(() => {
-    if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
-      return url;
-    }
-    if (typeof window !== "undefined") {
-      const origin = window.location.origin;
-      return url ? `${origin}${url.startsWith("/") ? url : `/${url}`}` : window.location.href;
-    }
-    return `${SITE_URL}${url.startsWith("/") ? url : `/${url}`}`;
-  }, [url]);
-
-  // Check Web Share API capability
+  // Client-side hydration check for Portal
   useEffect(() => {
-    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
-      setCanNativeShare(true);
-    }
+    setMounted(true);
   }, []);
 
-  // Lock body scroll and handle Escape key
+  // Compute canonical URL
+  const canonicalUrl = useMemo(() => {
+    if (url && (url.startsWith("http://") || url.startsWith("https://"))) return url;
+    if (typeof window !== "undefined") {
+      if (url && url.startsWith("/")) return `${window.location.origin}${url}`;
+      return window.location.href;
+    }
+    return url || "https://astittva.in";
+  }, [url]);
+
+  // Derived Title & Details
+  const displayTitle = item?.project_name || item?.title || title || "Astittva Listing";
+  const displayLocation = item?.location || item?.locality || item?.city || location || "Kolkata, WB";
+  const displayPrice = item?.price_label || price || (item?.starting_price ? `₹${Number(item.starting_price).toLocaleString("en-IN")}` : "");
+  const displayCategory = item?.property_type || item?.category || category || propertyType || (contentType === "blog" ? "Market Insights" : "Residential");
+
+  // Dynamic Property Highlights
+  const dynamicHighlights = useMemo(() => {
+    if (contentType !== "property") return [];
+    const list = [];
+    if (item?.bedrooms) list.push({ icon: Bed, label: `${item.bedrooms}` });
+    if (item?.bathrooms) list.push({ icon: Droplets, label: `${item.bathrooms} Baths` });
+    if (item?.area_sqft) {
+      const areaVal = typeof item.area_sqft === "number" ? `${item.area_sqft} sq.ft.` : `${item.area_sqft}`;
+      list.push({ icon: Maximize2, label: areaVal });
+    }
+    if (item?.possession_date) list.push({ icon: Calendar, label: `Possession: ${item.possession_date}` });
+    return list;
+  }, [item, contentType]);
+
+  // Blog Highlights
+  const blogDate = useMemo(() => {
+    if (contentType !== "blog") return "";
+    const raw = item?.publish_date || item?.created_at;
+    if (!raw) return "";
+    try {
+      return new Date(raw).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+    } catch {
+      return "";
+    }
+  }, [item, contentType]);
+
+  // Fallback image pipeline
+  const fallbackImg = useMemo(() => {
+    const seedId = item?.id || item?._id || displayTitle;
+    return contentType === "blog" ? pickBlogFallback(seedId) : pickPropertyFallback(seedId);
+  }, [item, displayTitle, contentType]);
+
+  const resolvedImage = image || item?.featured_image || (Array.isArray(item?.images) ? item.images[0] : "") || fallbackImg;
+
+  // Reset tab on open
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab("share");
+      setCopied(false);
+      setPersonalNote("");
+      setShowNoteInput(false);
+      setCardDataUrl("");
+    }
+  }, [isOpen]);
+
+  // CRITICAL FIX: Lock body scroll while open + support Escape key
   useEffect(() => {
     if (!isOpen) return;
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handleKeyDown);
+
     const originalOverflow = document.body.style.overflow;
+    const originalPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
     document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = originalOverflow;
+      document.body.style.paddingRight = originalPaddingRight;
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen, onClose]);
 
-  // Format custom WhatsApp text matching requirements
-  const whatsAppText = React.useMemo(() => {
-    if (type === "property") {
+  // Construct dynamic share message with optional personal note
+  const constructSharePayload = useCallback(() => {
+    const notePrefix = personalNote.trim() ? `${personalNote.trim()}\n\n` : "";
+    if (contentType === "property") {
       const parts = [
-        "Check out this property on Astittva!",
-        title ? `🏡 ${title}` : null,
-        location ? `📍 Location: ${location}` : null,
-        price ? `💰 Price: ${price}` : null,
-        propertyType ? `🏷️ Type: ${propertyType}` : null,
-        category ? `✨ Category: ${category}` : null,
-        "",
-        `View Details: ${shareUrl}`,
-      ].filter(Boolean);
-      return parts.join("\n");
-    } else if (type === "blog") {
-      const cleanDesc = description ? description.slice(0, 150).trim() + (description.length > 150 ? "…" : "") : "";
-      const parts = [
-        "Read this article on Astittva:",
-        `📰 ${title}`,
-        category ? `🏷️ Category: ${category}` : null,
-        author ? `✍️ By: ${author}` : null,
-        date ? `📅 Date: ${date}` : null,
-        cleanDesc ? `\n${cleanDesc}` : null,
-        "",
-        `Read More: ${shareUrl}`,
+        `${notePrefix}Check out ${displayTitle} on Astittva Marketing`,
+        displayLocation ? `📍 Location: ${displayLocation}` : null,
+        displayPrice ? `💰 ${displayPrice}` : null,
+        `🔗 ${canonicalUrl}`,
       ].filter(Boolean);
       return parts.join("\n");
     } else {
-      const cleanDesc = description ? description.slice(0, 150).trim() + (description.length > 150 ? "…" : "") : "";
       const parts = [
-        title ? `✨ ${title}` : "Check this out on Astittva:",
-        cleanDesc ? `\n${cleanDesc}` : null,
-        "",
-        `Explore: ${shareUrl}`,
+        `${notePrefix}${displayTitle}`,
+        description ? `"${description.slice(0, 140)}..."` : null,
+        `Read more on Astittva Journal: ${canonicalUrl}`,
       ].filter(Boolean);
       return parts.join("\n");
     }
-  }, [type, title, location, price, propertyType, category, author, date, description, shareUrl]);
+  }, [personalNote, contentType, displayTitle, displayLocation, displayPrice, canonicalUrl, description]);
 
-  // Twitter/X formatted text
-  const xText = React.useMemo(() => {
-    if (type === "property") {
-      return `Explore ${title}${location ? ` in ${location}` : ""}, Kolkata on @AstittvaMarketing:`;
-    }
-    if (type === "blog") {
-      return `Read "${title}" on Astittva Kolkata Real Estate Journal:`;
-    }
-    return `Check out ${title} on Astittva:`;
-  }, [type, title, location]);
-
-  // Copy to clipboard with graceful fallback
-  const handleCopyLink = async () => {
-    let success = false;
+  // Clipboard copy
+  const handleCopy = useCallback(async () => {
     try {
       if (navigator?.clipboard?.writeText) {
-        await navigator.clipboard.writeText(shareUrl);
-        success = true;
-      }
-    } catch {
-      success = false;
-    }
-
-    if (!success) {
-      try {
-        const textArea = document.createElement("textarea");
-        textArea.value = shareUrl;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-9999px";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
+        await navigator.clipboard.writeText(canonicalUrl);
+      } else {
+        const input = document.createElement("input");
+        input.value = canonicalUrl;
+        document.body.appendChild(input);
+        input.select();
         document.execCommand("copy");
-        textArea.remove();
-        success = true;
-      } catch {
-        success = false;
+        document.body.removeChild(input);
       }
-    }
-
-    if (success) {
       setCopied(true);
-      toast.success("Link copied to clipboard successfully!");
+      toast.success("Link copied to clipboard!");
       setTimeout(() => setCopied(false), 2500);
-    } else {
-      toast.error("Could not copy link automatically. Please select and copy the link below.");
+    } catch {
+      toast.error("Failed to copy link");
     }
-  };
+  }, [canonicalUrl]);
 
-  // Device native share
-  const handleNativeShare = async () => {
-    if (!navigator.share) return;
-    try {
-      await navigator.share({
-        title: title || "Astittva Real Estate",
-        text:
-          type === "property"
-            ? `Check out ${title} on Astittva`
-            : type === "blog"
-              ? `Read "${title}" on Astittva Journal`
-              : title,
-        url: shareUrl,
-      });
-      onClose();
-    } catch (err) {
-      // User cancelled or share aborted
-      if (err.name !== "AbortError") {
-        console.warn("Share failed:", err);
+  // Native Web Share API
+  const handleNativeShare = useCallback(async () => {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: displayTitle,
+          text: constructSharePayload(),
+          url: canonicalUrl,
+        });
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          handleCopy();
+        }
       }
+    } else {
+      handleCopy();
     }
-  };
+  }, [displayTitle, constructSharePayload, canonicalUrl, handleCopy]);
 
-  const platforms = [
-    {
-      id: "whatsapp",
-      name: "WhatsApp",
-      icon: WhatsAppIcon,
-      action: () => {
-        const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsAppText)}`;
-        window.open(url, "_blank", "noopener,noreferrer");
-        onClose();
-      },
-    },
-    {
-      id: "facebook",
-      name: "Facebook",
-      icon: FacebookIcon,
-      action: () => {
-        const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
-        window.open(url, "_blank", "noopener,noreferrer");
-        onClose();
-      },
-    },
-    {
-      id: "linkedin",
-      name: "LinkedIn",
-      icon: LinkedInIcon,
-      action: () => {
-        const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
-        window.open(url, "_blank", "noopener,noreferrer");
-        onClose();
-      },
-    },
-    {
-      id: "x",
-      name: "X",
-      icon: XTwitterIcon,
-      action: () => {
-        const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(xText)}&url=${encodeURIComponent(shareUrl)}`;
-        window.open(url, "_blank", "noopener,noreferrer");
-        onClose();
-      },
-    },
-    {
-      id: "telegram",
-      name: "Telegram",
-      icon: TelegramIcon,
-      action: () => {
-        const url = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}`;
-        window.open(url, "_blank", "noopener,noreferrer");
-        onClose();
-      },
-    },
-  ];
+  // Social sharing handlers
+  const handleSocialShare = useCallback((platform) => {
+    const payloadText = constructSharePayload();
+    const encodedUrl = encodeURIComponent(canonicalUrl);
+    const encodedText = encodeURIComponent(payloadText);
 
-  return (
+    let targetUrl = "";
+    switch (platform) {
+      case "whatsapp":
+        targetUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
+        break;
+      case "facebook":
+        targetUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+        break;
+      case "linkedin":
+        targetUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+        break;
+      case "x":
+        targetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+          personalNote.trim() ? `${personalNote.trim()} ${displayTitle}` : displayTitle
+        )}&url=${encodedUrl}&hashtags=Astittva,LuxuryRealEstate,Kolkata`;
+        break;
+      case "telegram":
+        targetUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
+        break;
+      default:
+        break;
+    }
+
+    if (targetUrl) {
+      window.open(targetUrl, "_blank", "noopener,noreferrer,width=640,height=580");
+    }
+  }, [constructSharePayload, canonicalUrl, personalNote, displayTitle]);
+
+  // Generate Share Card Preview
+  const prepareCardPreview = useCallback(async () => {
+    setGeneratingCard(true);
+    try {
+      const dataUrl = await generateShareCardDataUrl({
+        item: {
+          ...item,
+          project_name: displayTitle,
+          title: displayTitle,
+          location: displayLocation,
+          price_label: displayPrice,
+          property_type: displayCategory,
+        },
+        contentType,
+        url: canonicalUrl,
+        imageUrl: resolvedImage,
+      });
+      setCardDataUrl(dataUrl);
+    } catch (e) {
+      console.error(e);
+      toast.error("Could not generate share card preview");
+    } finally {
+      setGeneratingCard(false);
+    }
+  }, [item, displayTitle, displayLocation, displayPrice, displayCategory, contentType, canonicalUrl, resolvedImage]);
+
+  // Switch to Share Card tab
+  const handleOpenShareCard = useCallback(() => {
+    setActiveTab("card");
+    prepareCardPreview();
+  }, [prepareCardPreview]);
+
+  // Download Share Card
+  const handleDownloadCard = useCallback(async () => {
+    try {
+      const cleanSlug = displayTitle.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase();
+      await downloadShareCard(
+        {
+          item: {
+            ...item,
+            project_name: displayTitle,
+            title: displayTitle,
+            location: displayLocation,
+            price_label: displayPrice,
+            property_type: displayCategory,
+          },
+          contentType,
+          url: canonicalUrl,
+          imageUrl: resolvedImage,
+        },
+        `Astittva-${cleanSlug}-Creative.png`
+      );
+      toast.success("Share Card downloaded successfully!");
+    } catch {
+      toast.error("Failed to download share card");
+    }
+  }, [item, displayTitle, displayLocation, displayPrice, displayCategory, contentType, canonicalUrl, resolvedImage]);
+
+  // Download Branded QR Code PNG
+  const handleDownloadQr = useCallback(async () => {
+    setDownloadingQr(true);
+    try {
+      const dataUrl = await generateBrandedQrPng(canonicalUrl, displayTitle, displayLocation);
+      if (!dataUrl) throw new Error("QR generation failed");
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      const cleanSlug = displayTitle.replace(/[^a-zA-Z0-9]/g, "-").toLowerCase();
+      a.download = `Astittva-${cleanSlug}-QRCode.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      toast.success("QR Code downloaded!");
+    } catch {
+      toast.error("Failed to download QR code");
+    } finally {
+      setDownloadingQr(false);
+    }
+  }, [canonicalUrl, displayTitle, displayLocation]);
+
+  if (!isOpen || !mounted) return null;
+
+  const modalContent = (
     <AnimatePresence>
-      {isOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="share-modal-title"
-          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      <div
+        data-testid="share-studio-overlay"
+        className="fixed inset-0 z-[10000] flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto bg-black/75 backdrop-blur-md"
+        onClick={onClose}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="share-studio-title"
+      >
+        <motion.div
+          ref={modalRef}
+          initial={{ opacity: 0, scale: 0.94, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.94, y: 16 }}
+          transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+          className="relative w-full max-w-[540px] max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] flex flex-col bg-[#FAF8F5] border border-[#E8DED2] rounded-2xl shadow-[0_24px_60px_-15px_rgba(28,28,28,0.38)] overflow-hidden my-auto"
+          onClick={(e) => e.stopPropagation()}
         >
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
-          />
-
-          {/* Dialog Container */}
-          <motion.div
-            initial={{ opacity: 0, y: 30, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 30, scale: 0.97 }}
-            transition={{ type: "spring", damping: 26, stiffness: 320 }}
-            className="relative w-full max-w-lg bg-[#FAF8F5] border border-[#E8DED2] sm:rounded-2xl rounded-t-2xl shadow-2xl p-5 sm:p-7 text-[#1C1C1C] z-10 max-h-[92vh] overflow-y-auto"
-          >
-            {/* Mobile Sheet Grab Handle */}
-            <div className="w-12 h-1 bg-[#D8CEBF] rounded-full mx-auto mb-4 sm:hidden" />
-
-            {/* Header */}
-            <div className="flex items-start justify-between gap-3 mb-5 border-b border-[#E8DED2] pb-4">
+          {/* ===================== STICKY HEADER ===================== */}
+          <div className="shrink-0 px-5 sm:px-7 pt-5 sm:pt-6 pb-4 border-b border-[#E8DED2] bg-[#FAF8F5]/95 backdrop-blur-sm z-20">
+            <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="inline-flex items-center gap-1.5 text-[10px] tracking-[0.25em] uppercase text-copper font-semibold mb-1">
-                  <Sparkles className="w-3.5 h-3.5 text-copper" />
-                  <span>Share with Network</span>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] tracking-[0.25em] uppercase font-semibold text-[#B87333] bg-[#B87333]/10 border border-[#B87333]/20 mb-2">
+                  <Sparkles className="w-3 h-3" />
+                  Astittva Share Studio
                 </div>
-                <h3 id="share-modal-title" className="font-serif text-2xl sm:text-3xl text-[#1C1C1C] font-normal leading-tight">
-                  {type === "property" ? "Share Property" : type === "blog" ? "Share Article" : "Share"}
-                </h3>
+                <h2 id="share-studio-title" className="font-serif-display text-2xl sm:text-3xl text-[#1C1C1C] leading-tight">
+                  {contentType === "blog" ? "Share this Story" : "Share this Property"}
+                </h2>
+                <p className="text-xs text-[#5F5F5F] font-light mt-0.5">
+                  {contentType === "blog"
+                    ? "Astittva Real Estate Journal • Editorial insights & analysis"
+                    : "Curated real estate portfolio • Verified details & instant sharing"}
+                </p>
               </div>
+
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Close share dialog"
-                className="w-9 h-9 rounded-full bg-white hover:bg-[#FAF8F5] text-[#5F5F5F] hover:text-[#1C1C1C] border border-[#E8DED2] hover:border-copper/40 flex items-center justify-center transition-colors shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-copper/30"
+                aria-label="Close Share Studio"
+                data-testid="share-studio-close-btn"
+                className="w-8 h-8 rounded-full border border-[#E8DED2] bg-white text-[#5F5F5F] hover:text-[#1C1C1C] hover:border-[#B87333] hover:bg-[#F5F1EC] transition-all flex items-center justify-center shrink-0 shadow-xs"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Visual Item Preview Box */}
-            <div className="p-3.5 sm:p-4 rounded-xl bg-white border border-[#E8DED2] flex items-center gap-3.5 shadow-xs mb-5">
-              <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-lg overflow-hidden flex-shrink-0 bg-[#FAF8F5] border border-[#E8DED2]/80">
-                <SafeImage
-                  src={image}
-                  alt={title}
-                  type={type === "blog" ? "blog" : "property"}
-                  seed={title}
-                  width={240}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="min-w-0 flex-1">
-                {type === "property" ? (
-                  <>
-                    {category && (
-                      <div className="inline-flex items-center gap-1.5 text-[9px] tracking-[0.2em] uppercase font-semibold text-copper mb-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-copper" />
-                        <span>{category}</span>
-                      </div>
-                    )}
-                    <h4 className="text-sm sm:text-base font-semibold text-[#1C1C1C] truncate leading-snug">
-                      {title}
-                    </h4>
-                    {location && (
-                      <div className="flex items-center gap-1 text-xs text-[#5F5F5F] mt-1 truncate">
-                        <MapPin className="w-3 h-3 text-copper shrink-0" />
-                        <span className="truncate">{location}</span>
-                      </div>
-                    )}
-                    <div className="flex flex-wrap items-center gap-x-2 text-xs mt-1.5">
-                      {price && (
-                        <span className="text-copper font-semibold">
-                          {price}
+            {/* TAB SELECTOR: Quick Share / Create Share Card / QR Code */}
+            <div className="flex items-center gap-1.5 mt-4 p-1 rounded-xl bg-[#EFE9DF] border border-[#E8DED2]/80">
+              <button
+                type="button"
+                onClick={() => setActiveTab("share")}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold tracking-wider transition-all ${
+                  activeTab === "share"
+                    ? "bg-white text-[#1C1C1C] shadow-xs"
+                    : "text-[#5F5F5F] hover:text-[#1C1C1C]"
+                }`}
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                Quick Share
+              </button>
+
+              <button
+                type="button"
+                onClick={handleOpenShareCard}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold tracking-wider transition-all ${
+                  activeTab === "card"
+                    ? "bg-white text-[#B87333] shadow-xs"
+                    : "text-[#5F5F5F] hover:text-[#1C1C1C]"
+                }`}
+              >
+                <ImageIcon className="w-3.5 h-3.5" />
+                Share Card
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("qr")}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-semibold tracking-wider transition-all ${
+                  activeTab === "qr"
+                    ? "bg-white text-[#1C1C1C] shadow-xs"
+                    : "text-[#5F5F5F] hover:text-[#1C1C1C]"
+                }`}
+              >
+                <QrCode className="w-3.5 h-3.5" />
+                QR Code
+              </button>
+            </div>
+          </div>
+
+          {/* ===================== SCROLLABLE MODAL BODY ===================== */}
+          <div className="flex-1 overflow-y-auto overscroll-contain px-5 sm:px-7 py-5 sm:py-6 space-y-5 text-[#1C1C1C]">
+            {/* ===================== TAB 1: QUICK SHARE ===================== */}
+            {activeTab === "share" && (
+              <>
+                {/* 1. BALANCED PREVIEW CARD WITH DYNAMIC HIGHLIGHTS */}
+                <div className="bg-white border border-[#E8DED2] rounded-xl p-3.5 sm:p-4 shadow-xs">
+                  <div className="flex gap-3 sm:gap-4 items-start">
+                    <div className="relative w-24 sm:w-28 aspect-[4/3] rounded-lg overflow-hidden bg-[#FAF8F5] border border-[#E8DED2] shrink-0">
+                      <SafeImage
+                        src={resolvedImage}
+                        alt={displayTitle}
+                        type={contentType}
+                        seed={displayTitle}
+                        fallbackSrc={fallbackImg}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                        <span className="inline-block px-2 py-0.5 rounded text-[9.5px] font-semibold tracking-wider uppercase bg-[#F5F1EC] text-[#5F5F5F] border border-[#E8DED2]">
+                          {displayCategory}
                         </span>
+                        {blogDate && (
+                          <span className="text-[10px] text-[#737373] tracking-wider uppercase">
+                            • {blogDate}
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="font-serif-display text-base sm:text-lg text-[#1C1C1C] leading-snug line-clamp-1 font-semibold">
+                        {displayTitle}
+                      </h3>
+
+                      {displayLocation && (
+                        <div className="flex items-center gap-1 text-xs text-[#5F5F5F] mt-0.5 truncate">
+                          <MapPin className="w-3 h-3 text-[#B87333] shrink-0" />
+                          <span className="truncate">{displayLocation}</span>
+                        </div>
                       )}
-                      {propertyType && (
-                        <>
-                          {price && <span className="text-[#A0988E]">·</span>}
-                          <span className="text-[#5F5F5F] font-medium">{propertyType}</span>
-                        </>
+
+                      {displayPrice && (
+                        <div className="text-sm font-semibold text-[#B87333] mt-1 font-serif-display">
+                          {displayPrice}
+                        </div>
+                      )}
+
+                      {contentType === "blog" && description && (
+                        <p className="text-xs text-[#5F5F5F] font-light line-clamp-2 mt-1">
+                          {description}
+                        </p>
                       )}
                     </div>
-                  </>
-                ) : (
-                  <>
-                    {category && (
-                      <div className="inline-flex items-center gap-1.5 text-[9px] tracking-[0.2em] uppercase font-semibold text-copper mb-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-copper" />
-                        <span>{category}</span>
-                      </div>
-                    )}
-                    <h4 className="text-sm sm:text-base font-semibold text-[#1C1C1C] line-clamp-1 leading-snug">
-                      {title}
-                    </h4>
-                    {description && (
-                      <p className="text-xs text-[#5F5F5F] line-clamp-2 mt-1 leading-relaxed">
-                        {description}
-                      </p>
-                    )}
-                    {(author || date) && (
-                      <div className="flex items-center gap-2 text-[11px] text-[#737373] mt-1.5">
-                        {author && <span>By {author}</span>}
-                        {author && date && <span>·</span>}
-                        {date && <span>{date}</span>}
-                      </div>
-                    )}
-                  </>
-                )}
-                <span className="text-[10px] font-mono text-[#A0988E] truncate block mt-1.5">
-                  {shareUrl.replace(/^https?:\/\//, "")}
-                </span>
-              </div>
-            </div>
+                  </div>
 
-            {/* Social Grid - Exactly uniform buttons with official platform brand colors */}
-            <div className="mb-5">
-              <div className="text-[10px] tracking-[0.25em] uppercase font-semibold text-[#737373] mb-2.5">
-                Select Platform
-              </div>
-              <div className="grid grid-cols-5 gap-2 sm:gap-2.5">
-                {platforms.map((p) => {
-                  const Icon = p.icon;
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={p.action}
-                      aria-label={`Share via ${p.name}`}
-                      className="flex flex-col items-center justify-center gap-1.5 p-2 sm:p-2.5 h-[76px] sm:h-[84px] rounded-xl bg-white hover:bg-[#FAF8F5] border border-[#E8DED2] hover:border-copper/40 shadow-xs hover:shadow-md transition-all duration-200 group cursor-pointer focus:outline-none focus:ring-2 focus:ring-copper/30"
+                  {/* DYNAMIC PROPERTY HIGHLIGHTS (Bedrooms, Bathrooms, Area - only if non-empty!) */}
+                  {dynamicHighlights.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-[#E8DED2]/70 flex flex-wrap gap-1.5 sm:gap-2">
+                      {dynamicHighlights.map((hl, i) => (
+                        <div
+                          key={i}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10.5px] font-medium bg-[#FAF8F5] text-[#2A2A2A] border border-[#E8DED2]"
+                        >
+                          <hl.icon className="w-3 h-3 text-[#B87333] shrink-0" />
+                          <span>{hl.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="mt-2.5 pt-2.5 border-t border-[#E8DED2]/60 flex items-center justify-between text-[11px] text-[#737373]">
+                    <span className="truncate max-w-[240px] sm:max-w-[320px] font-mono text-[10px]">
+                      {canonicalUrl}
+                    </span>
+                    <a
+                      href={canonicalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[#B87333] hover:text-[#9E5821] font-medium transition-colors shrink-0 ml-2"
                     >
-                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center transition-transform duration-200 group-hover:scale-110">
-                        <Icon className="w-6 h-6 sm:w-7 sm:h-7" />
+                      <span>View</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+
+                {/* 2. PERSONALISE SHARE MESSAGE SECTION */}
+                <div className="bg-white border border-[#E8DED2] rounded-xl p-3.5 sm:p-4 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => setShowNoteInput((v) => !v)}
+                      className="inline-flex items-center gap-2 text-xs font-semibold text-[#1C1C1C] hover:text-[#B87333] transition-colors"
+                    >
+                      <PenLine className="w-3.5 h-3.5 text-[#B87333]" />
+                      <span>{showNoteInput ? "Hide personal note" : "Add a personal note before sharing (optional)"}</span>
+                    </button>
+                    {personalNote && !showNoteInput && (
+                      <span className="text-[10px] text-[#B87333] font-medium">1 note attached</span>
+                    )}
+                  </div>
+
+                  {showNoteInput && (
+                    <div className="mt-3 space-y-2.5">
+                      <div className="relative">
+                        <textarea
+                          value={personalNote}
+                          onChange={(e) => setPersonalNote(e.target.value)}
+                          placeholder={
+                            contentType === "blog"
+                              ? "Found this article interesting. Thought you might like it!"
+                              : "Found this property interesting. Thought you might like it!"
+                          }
+                          rows={2}
+                          maxLength={180}
+                          className="w-full px-3 py-2 text-xs rounded-lg border border-[#E8DED2] bg-[#FAF8F5] text-[#1C1C1C] placeholder:text-[#888] focus:outline-none focus:border-[#B87333] resize-none"
+                        />
+                        {personalNote && (
+                          <button
+                            type="button"
+                            onClick={() => setPersonalNote("")}
+                            className="absolute top-2 right-2 text-[#888] hover:text-[#1C1C1C] p-0.5"
+                            title="Clear note"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
                       </div>
-                      <span className="text-[11px] sm:text-xs font-semibold text-[#1C1C1C] tracking-tight truncate w-full text-center">
-                        {p.name}
+
+                      {/* Quick Suggestions Pills */}
+                      <div>
+                        <div className="text-[10px] uppercase tracking-wider text-[#737373] mb-1.5 font-medium">
+                          Quick Suggestions:
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(contentType === "blog" ? BLOG_MESSAGE_SUGGESTIONS : PROPERTY_MESSAGE_SUGGESTIONS).map(
+                            (sug, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => setPersonalNote(sug)}
+                                className={`text-[10.5px] px-2.5 py-1 rounded-full border transition-all ${
+                                  personalNote === sug
+                                    ? "bg-[#B87333] text-white border-[#B87333]"
+                                    : "bg-[#FAF8F5] text-[#5F5F5F] border-[#E8DED2] hover:border-[#B87333] hover:text-[#1C1C1C]"
+                                }`}
+                              >
+                                {sug}
+                              </button>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 3. STANDARDISED SOCIAL SHARING BUTTONS (5 PLATFORMS) */}
+                <div>
+                  <div className="text-[11px] tracking-[0.2em] uppercase font-semibold text-[#5F5F5F] mb-2.5">
+                    Share via Social Platforms
+                  </div>
+
+                  <div className="grid grid-cols-5 gap-2 sm:gap-2.5">
+                    {/* WhatsApp */}
+                    <button
+                      type="button"
+                      onClick={() => handleSocialShare("whatsapp")}
+                      data-testid="share-whatsapp-btn"
+                      className="group flex flex-col items-center justify-center gap-1.5 py-3 px-1 rounded-xl border border-[#E8DED2] bg-white hover:border-[#25D366]/40 hover:bg-[#25D366]/5 active:scale-95 transition-all min-h-[76px] shadow-xs"
+                      title="Share to WhatsApp"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-[#25D366]/10 text-[#25D366] flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <WhatsAppIcon className="w-4 h-4" />
+                      </div>
+                      <span className="text-[11px] font-medium text-[#1C1C1C] truncate w-full text-center">
+                        WhatsApp
                       </span>
                     </button>
-                  );
-                })}
-              </div>
-            </div>
 
-            {/* Native Mobile Share Button (if supported) */}
-            {canNativeShare && (
-              <div className="mb-5">
-                <button
-                  type="button"
-                  onClick={handleNativeShare}
-                  className="w-full flex items-center justify-center gap-2 h-11 sm:h-12 rounded-xl bg-white hover:bg-copper/10 text-[#1C1C1C] hover:text-copper border border-[#E8DED2] hover:border-copper/40 transition-all font-semibold text-xs tracking-wider uppercase cursor-pointer shadow-xs active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-copper/30"
-                >
-                  <Share2 className="w-4 h-4 text-copper" />
-                  <span>Share via Device Menu</span>
-                </button>
+                    {/* Facebook */}
+                    <button
+                      type="button"
+                      onClick={() => handleSocialShare("facebook")}
+                      data-testid="share-facebook-btn"
+                      className="group flex flex-col items-center justify-center gap-1.5 py-3 px-1 rounded-xl border border-[#E8DED2] bg-white hover:border-[#1877F2]/40 hover:bg-[#1877F2]/5 active:scale-95 transition-all min-h-[76px] shadow-xs"
+                      title="Share to Facebook"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-[#1877F2]/10 text-[#1877F2] flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <FacebookIcon className="w-4 h-4" />
+                      </div>
+                      <span className="text-[11px] font-medium text-[#1C1C1C] truncate w-full text-center">
+                        Facebook
+                      </span>
+                    </button>
+
+                    {/* LinkedIn */}
+                    <button
+                      type="button"
+                      onClick={() => handleSocialShare("linkedin")}
+                      data-testid="share-linkedin-btn"
+                      className="group flex flex-col items-center justify-center gap-1.5 py-3 px-1 rounded-xl border border-[#E8DED2] bg-white hover:border-[#0A66C2]/40 hover:bg-[#0A66C2]/5 active:scale-95 transition-all min-h-[76px] shadow-xs"
+                      title="Share to LinkedIn"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-[#0A66C2]/10 text-[#0A66C2] flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <LinkedInIcon className="w-4 h-4" />
+                      </div>
+                      <span className="text-[11px] font-medium text-[#1C1C1C] truncate w-full text-center">
+                        LinkedIn
+                      </span>
+                    </button>
+
+                    {/* X (Twitter) */}
+                    <button
+                      type="button"
+                      onClick={() => handleSocialShare("x")}
+                      data-testid="share-x-btn"
+                      className="group flex flex-col items-center justify-center gap-1.5 py-3 px-1 rounded-xl border border-[#E8DED2] bg-white hover:border-black/30 hover:bg-black/5 active:scale-95 transition-all min-h-[76px] shadow-xs"
+                      title="Share to X"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-black/10 text-black flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <XIcon className="w-3.5 h-3.5" />
+                      </div>
+                      <span className="text-[11px] font-medium text-[#1C1C1C] truncate w-full text-center">
+                        X
+                      </span>
+                    </button>
+
+                    {/* Telegram */}
+                    <button
+                      type="button"
+                      onClick={() => handleSocialShare("telegram")}
+                      data-testid="share-telegram-btn"
+                      className="group flex flex-col items-center justify-center gap-1.5 py-3 px-1 rounded-xl border border-[#E8DED2] bg-white hover:border-[#229ED9]/40 hover:bg-[#229ED9]/5 active:scale-95 transition-all min-h-[76px] shadow-xs"
+                      title="Share to Telegram"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-[#229ED9]/10 text-[#229ED9] flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <TelegramIcon className="w-4 h-4" />
+                      </div>
+                      <span className="text-[11px] font-medium text-[#1C1C1C] truncate w-full text-center">
+                        Telegram
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 4. CREATIVE SHORTCUT ACTIONS: SHARE CARD & QR CODE */}
+                <div className="grid grid-cols-2 gap-2.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleOpenShareCard}
+                    data-testid="trigger-share-card-btn"
+                    className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-[#B87333]/30 bg-[#B87333]/5 hover:bg-[#B87333]/15 text-[#B87333] transition-all text-xs font-semibold shadow-xs"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>Create Share Card</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("qr")}
+                    data-testid="trigger-qr-btn"
+                    className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-[#E8DED2] bg-white hover:bg-[#F5F1EC] text-[#1C1C1C] transition-all text-xs font-semibold shadow-xs"
+                  >
+                    <QrCode className="w-4 h-4 text-[#B87333]" />
+                    <span>Generate QR Code</span>
+                  </button>
+                </div>
+
+                {/* 5. SHARE VIA DEVICE (Full-width button) */}
+                {typeof navigator !== "undefined" && Boolean(navigator.share) && (
+                  <button
+                    type="button"
+                    onClick={handleNativeShare}
+                    data-testid="share-device-btn"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-[#E8DED2] bg-white hover:border-[#B87333] hover:bg-[#F5F1EC] text-[#1C1C1C] text-xs font-semibold tracking-wider uppercase transition-all shadow-xs"
+                  >
+                    <Smartphone className="w-4 h-4 text-[#B87333]" />
+                    <span>Share via Device Menu</span>
+                  </button>
+                )}
+
+                {/* 6. CLEAN COPY LINK SECTION */}
+                <div className="bg-white border border-[#E8DED2] rounded-xl p-2.5 sm:p-3 flex items-center gap-2 shadow-xs">
+                  <div className="flex-1 min-w-0 px-2 py-1 bg-[#FAF8F5] rounded-lg border border-[#E8DED2]/80">
+                    <div className="text-[9px] uppercase tracking-wider text-[#737373] font-medium">
+                      Canonical Link
+                    </div>
+                    <div className="text-xs text-[#1C1C1C] font-mono truncate" title={canonicalUrl}>
+                      {canonicalUrl}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    data-testid="share-copy-link-btn"
+                    className={`inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg text-xs font-semibold tracking-wider transition-all shrink-0 shadow-xs ${
+                      copied
+                        ? "bg-emerald-600 text-white border border-emerald-600"
+                        : "bg-[#1C1C1C] text-white hover:bg-[#B87333] border border-[#1C1C1C] hover:border-[#B87333]"
+                    }`}
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy Link</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* ===================== TAB 2: CREATE SHARE CARD ===================== */}
+            {activeTab === "card" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("share")}
+                    className="inline-flex items-center gap-1.5 text-xs text-[#5F5F5F] hover:text-[#1C1C1C] font-medium"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    Back to Quick Share
+                  </button>
+                  <span className="text-[11px] font-semibold text-[#B87333] uppercase tracking-wider">
+                    WhatsApp & Social Creative
+                  </span>
+                </div>
+
+                {/* Preview Container */}
+                <div className="relative rounded-xl overflow-hidden border border-[#E8DED2] bg-[#140205] shadow-lg max-w-[340px] sm:max-w-[380px] mx-auto">
+                  {generatingCard ? (
+                    <div className="aspect-[3/4] flex flex-col items-center justify-center gap-3 p-6 text-center text-white/70">
+                      <div className="w-8 h-8 border-2 border-[#B87333] border-t-transparent rounded-full animate-spin" />
+                      <span className="text-xs uppercase tracking-widest text-[#E8DED2]">
+                        Rendering Marketing Creative…
+                      </span>
+                    </div>
+                  ) : cardDataUrl ? (
+                    <img
+                      src={cardDataUrl}
+                      alt="Astittva Share Card Preview"
+                      className="w-full h-auto object-contain block"
+                    />
+                  ) : (
+                    <div className="aspect-[3/4] flex flex-col items-center justify-center p-6 text-center text-white/60">
+                      <p className="text-xs">Preparing preview…</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Card Action Controls */}
+                <div className="space-y-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleDownloadCard}
+                    data-testid="download-share-card-btn"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#B87333] hover:bg-[#A35D27] text-white text-xs font-semibold tracking-wider uppercase transition-all shadow-md active:scale-95"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download Share Card (PNG)</span>
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSocialShare("whatsapp")}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-[#25D366]/40 bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 text-xs font-semibold transition-all"
+                    >
+                      <WhatsAppIcon className="w-4 h-4" />
+                      <span>Share on WhatsApp</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCopy}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl border border-[#E8DED2] bg-white hover:bg-[#F5F1EC] text-[#1C1C1C] text-xs font-semibold transition-all"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy Link</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Link Copy Bar */}
-            <div>
-              <div className="text-[10px] tracking-[0.25em] uppercase font-semibold text-[#737373] mb-2">
-                Page Link
+            {/* ===================== TAB 3: QR CODE SHARING ===================== */}
+            {activeTab === "qr" && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("share")}
+                    className="inline-flex items-center gap-1.5 text-xs text-[#5F5F5F] hover:text-[#1C1C1C] font-medium"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    Back to Quick Share
+                  </button>
+                  <span className="text-[11px] font-semibold text-[#B87333] uppercase tracking-wider">
+                    Instant Camera Scan
+                  </span>
+                </div>
+
+                {/* Branded QR Card Display */}
+                <div className="bg-white border border-[#E8DED2] rounded-2xl p-6 sm:p-7 text-center shadow-md max-w-[360px] mx-auto">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold tracking-widest uppercase bg-[#B87333]/10 text-[#B87333] border border-[#B87333]/20 mb-3">
+                    Astittva Verified QR
+                  </div>
+
+                  <h4 className="font-serif-display text-lg text-[#1C1C1C] font-semibold line-clamp-1 mb-1">
+                    {displayTitle}
+                  </h4>
+                  <p className="text-xs text-[#5F5F5F] mb-4">
+                    Scan with any smartphone camera to open verified details
+                  </p>
+
+                  {/* QR Svg Box */}
+                  <div className="w-[210px] h-[210px] mx-auto p-3 rounded-xl bg-white border-2 border-[#E8DED2] shadow-sm flex items-center justify-center">
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: generateQrSvgString(canonicalUrl, {
+                          size: 186,
+                          margin: 1,
+                          color: "#1C1C1C",
+                          bgColor: "#FFFFFF",
+                        }),
+                      }}
+                    />
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-[#E8DED2] text-xs font-mono text-[#5F5F5F] truncate">
+                    {canonicalUrl}
+                  </div>
+                </div>
+
+                {/* QR Actions */}
+                <div className="space-y-2 max-w-[360px] mx-auto pt-1">
+                  <button
+                    type="button"
+                    onClick={handleDownloadQr}
+                    disabled={downloadingQr}
+                    data-testid="download-qr-btn"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#1C1C1C] hover:bg-[#B87333] text-white text-xs font-semibold tracking-wider uppercase transition-all shadow-md active:scale-95 disabled:opacity-50"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>{downloadingQr ? "Generating QR PNG…" : "Download QR Code (PNG)"}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-[#E8DED2] bg-white hover:bg-[#F5F1EC] text-[#1C1C1C] text-xs font-semibold transition-all shadow-xs"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy Property URL</span>
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-2 bg-white border border-[#E8DED2] focus-within:border-copper rounded-xl p-1.5 pl-3.5 shadow-xs transition-colors h-12">
-                <input
-                  type="text"
-                  readOnly
-                  value={shareUrl}
-                  aria-label="Direct page link"
-                  className="bg-transparent text-xs text-[#1C1C1C] font-mono flex-1 focus:outline-none truncate selection:bg-copper/20 selection:text-copper"
-                  onFocus={(e) => e.target.select()}
-                />
-                <button
-                  type="button"
-                  onClick={handleCopyLink}
-                  aria-label="Copy link to clipboard"
-                  className={`inline-flex items-center justify-center gap-1.5 px-4 h-9 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all flex-shrink-0 cursor-pointer ${
-                    copied
-                      ? "bg-emerald-600 text-white shadow-xs"
-                      : "bg-copper hover:bg-copper-hover text-white shadow-xs active:scale-95"
-                  }`}
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Copy</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
+            )}
+          </div>
+        </motion.div>
+      </div>
     </AnimatePresence>
   );
+
+  return createPortal(modalContent, document.body);
 }

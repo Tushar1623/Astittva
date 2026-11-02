@@ -233,6 +233,7 @@ export default function PropertyDetailPage() {
             <ArrowLeft className="w-4 h-4" /> Back to Properties
           </Link>
           <ShareButton
+            item={property}
             title={property.project_name}
             location={property.location ? `${property.location}, ${property.city || "Kolkata"}` : (property.city || "Kolkata")}
             price={property.price_label || (property.starting_price ? `₹${property.starting_price.toLocaleString("en-IN")}` : "Price on Request")}
@@ -425,6 +426,7 @@ export default function PropertyDetailPage() {
                 </a>
                 <div className="pt-2">
                   <ShareButton
+                    item={property}
                     title={property.project_name}
                     location={property.location ? `${property.location}, ${property.city || "Kolkata"}` : (property.city || "Kolkata")}
                     price={property.price_label || (property.starting_price ? `₹${property.starting_price.toLocaleString("en-IN")}` : "Price on Request")}

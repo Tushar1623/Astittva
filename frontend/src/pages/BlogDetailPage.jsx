@@ -179,6 +179,7 @@ export default function BlogDetailPage() {
                 <ArrowLeft className="w-3 h-3" strokeWidth={1.4} /> The Journal
               </Link>
               <ShareButton
+                item={blog}
                 title={blog.title}
                 description={blog.short_description || ""}
                 url={`https://astittva.in/blogs/${blog.slug}`}
@@ -281,6 +282,7 @@ export default function BlogDetailPage() {
             </Link>
             <div className="flex flex-wrap items-center gap-3">
               <ShareButton
+                item={blog}
                 title={blog.title}
                 description={blog.short_description || ""}
                 url={`https://astittva.in/blogs/${blog.slug}`}

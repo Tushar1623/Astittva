@@ -6,11 +6,12 @@ import ShareModal from "./ShareModal";
  * Reusable Standardised ShareButton Component
  *
  * Props:
+ *  - item          (object, optional full property/blog record)
  *  - title         (string)
  *  - description   (string)
  *  - url           (string)
  *  - image         (string)
- *  - type          ("property" | "blog" | "generic")
+ *  - type / contentType ("property" | "blog" | "generic")
  *  - location      (string, for property)
  *  - price         (string, for property)
  *  - propertyType  (string, for property)
@@ -22,11 +23,13 @@ import ShareModal from "./ShareModal";
  *  - label         (string) Defaults to "Share"
  */
 export default function ShareButton({
+  item,
   title,
   description,
   url,
   image,
   type = "property",
+  contentType,
   location = "",
   price = "",
   propertyType = "",
@@ -39,20 +42,35 @@ export default function ShareButton({
   ...props
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const resolvedContentType = contentType || type || "property";
+
+  const resolvedItem = item || {
+    title,
+    project_name: title,
+    description,
+    short_description: description,
+    location,
+    locality: location,
+    price_label: price,
+    property_type: propertyType || category,
+    category,
+    author,
+    publish_date: date,
+  };
 
   const getVariantStyles = () => {
     switch (variant) {
       case "solid":
-        return "bg-copper hover:bg-copper-hover text-white border border-copper shadow-sm";
+        return "bg-[#B87333] hover:bg-[#A35D27] text-white border border-[#B87333] shadow-xs active:scale-95";
       case "light":
-        return "bg-white hover:bg-[#FAF8F5] text-[#1C1C1C] hover:text-copper border border-[#E8DED2] hover:border-copper/40 shadow-xs";
+        return "bg-white hover:bg-[#FAF8F5] text-[#1C1C1C] hover:text-[#B87333] border border-[#E8DED2] hover:border-[#B87333]/40 shadow-xs active:scale-95";
       case "compact":
-        return "bg-white hover:bg-[#FAF8F5] text-[#1C1C1C] hover:text-copper border border-[#E8DED2] text-[10px] py-1 px-2.5 rounded-md";
+        return "bg-white hover:bg-[#FAF8F5] text-[#1C1C1C] hover:text-[#B87333] border border-[#E8DED2] text-[10px] py-1 px-2.5 rounded-md active:scale-95";
       case "iconOnly":
-        return "w-8 h-8 rounded-full bg-white hover:bg-copper text-[#1C1C1C] hover:text-white border border-[#E8DED2] hover:border-copper flex items-center justify-center !p-0 transition-colors shadow-xs";
+        return "w-8 h-8 rounded-full bg-white hover:bg-[#B87333] text-[#1C1C1C] hover:text-white border border-[#E8DED2] hover:border-[#B87333] flex items-center justify-center !p-0 transition-all shadow-xs active:scale-95";
       case "outline":
       default:
-        return "bg-white hover:bg-copper/10 text-copper hover:text-copper-hover border border-copper/40 hover:border-copper shadow-xs";
+        return "bg-white hover:bg-[#B87333]/10 text-[#B87333] hover:text-[#A35D27] border border-[#B87333]/40 hover:border-[#B87333] shadow-xs active:scale-95";
     }
   };
 
@@ -65,8 +83,8 @@ export default function ShareButton({
           e.stopPropagation();
           setIsOpen(true);
         }}
-        aria-label={`Share ${title || "this item"}`}
-        className={`inline-flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-semibold tracking-wider uppercase transition-all duration-200 cursor-pointer ${getVariantStyles()} ${className}`}
+        aria-label={`Share ${title || resolvedItem?.project_name || resolvedItem?.title || "this item"}`}
+        className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wider transition-all duration-200 cursor-pointer ${getVariantStyles()} ${className}`}
         {...props}
       >
         <Share2 className="w-3.5 h-3.5 shrink-0" />
@@ -76,17 +94,16 @@ export default function ShareButton({
       <ShareModal
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        title={title}
-        description={description}
+        item={resolvedItem}
+        contentType={resolvedContentType}
+        title={title || resolvedItem?.project_name || resolvedItem?.title}
+        description={description || resolvedItem?.description || resolvedItem?.short_description}
         url={url}
-        image={image}
-        type={type}
-        location={location}
-        price={price}
-        propertyType={propertyType}
-        category={category}
-        author={author}
-        date={date}
+        image={image || resolvedItem?.featured_image}
+        location={location || resolvedItem?.location || resolvedItem?.locality || resolvedItem?.city}
+        price={price || resolvedItem?.price_label}
+        propertyType={propertyType || resolvedItem?.property_type}
+        category={category || resolvedItem?.category}
       />
     </>
   );

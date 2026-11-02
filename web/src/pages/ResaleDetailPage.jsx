@@ -198,6 +198,7 @@ export default function ResaleDetailPage() {
             </span>
           </div>
           <ShareButton
+            item={property}
             title={property.title}
             location={property.locality || property.location || "Kolkata"}
             price={formatPriceINR(property.price)}

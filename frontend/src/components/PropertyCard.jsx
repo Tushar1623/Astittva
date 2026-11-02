@@ -112,6 +112,7 @@ export default function PropertyCard({
           </div>
           <div className="flex items-center gap-2.5">
             <ShareButton
+              item={p}
               title={p.project_name}
               location={p.location ? `${p.location}, ${p.city || "Kolkata"}` : (p.city || "Kolkata")}
               price={price}
