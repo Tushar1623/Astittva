@@ -3728,11 +3728,141 @@ if (activeBuildPath) {
   console.log(`[Static] Serving React frontend build from: ${activeBuildPath}`);
   app.use(express.static(activeBuildPath, { redirect: false, index: false }));
 
+  // Social crawler user-agent detection (Facebook, LinkedIn, Twitter, WhatsApp, Telegram, etc.)
+  const SOCIAL_BOT_REGEX = /facebookexternalhit|LinkedInBot|Twitterbot|WhatsApp|TelegramBot|Pinterest|Slackbot|vkShare|W3C_Validator|Discordbot/i;
+
+  async function getDynamicSocialMeta(reqPath) {
+    try {
+      const db = getDb();
+      if (!db) return null;
+
+      // 1. Properties: /properties/:id
+      const propMatch = reqPath.match(/^\/properties\/([a-zA-Z0-9_-]+)\/?$/i);
+      if (propMatch) {
+        const id = propMatch[1];
+        let prop = null;
+        try {
+          if (ObjectId.isValid(id)) {
+            prop = await db.collection("properties").findOne({ _id: new ObjectId(id) });
+          }
+        } catch {}
+        if (!prop) {
+          prop = await db.collection("properties").findOne({ id });
+        }
+        if (prop) {
+          const loc = prop.location || prop.city || "Kolkata";
+          const title = `${prop.project_name} in ${loc} | Astittva Marketing`;
+          const priceTxt = prop.price_label || (prop.starting_price ? `₹${Number(prop.starting_price).toLocaleString("en-IN")}` : "");
+          const description = `Explore ${prop.project_name}${prop.location ? ` in ${prop.location}` : ""}, Kolkata by ${prop.builder || "Astittva Marketing"}. ${priceTxt ? `Starting ${priceTxt}. ` : ""}Verified details, floor plans, and site visits.`;
+          
+          let img = "https://astittva.in/og-image.png";
+          const rawImg = Array.isArray(prop.images) && prop.images[0] ? prop.images[0] : "";
+          if (rawImg) {
+            const driveMatch = String(rawImg).match(/\/d\/([a-zA-Z0-9_-]{20,})/) || String(rawImg).match(/\/file\/d\/([a-zA-Z0-9_-]{20,})/);
+            if (driveMatch) {
+              img = `https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200`;
+            } else if (rawImg.startsWith("http://") || rawImg.startsWith("https://")) {
+              img = rawImg;
+            } else if (rawImg.startsWith("/")) {
+              img = `https://astittva.in${rawImg}`;
+            }
+          }
+
+          return {
+            title,
+            description,
+            image: img,
+            url: `https://astittva.in/properties/${id}`,
+            type: "website",
+          };
+        }
+      }
+
+      // 2. Blogs: /blogs/:slug
+      const blogMatch = reqPath.match(/^\/blogs\/([a-zA-Z0-9_-]+)\/?$/i);
+      if (blogMatch) {
+        const slug = blogMatch[1];
+        const blog = await db.collection("blogs").findOne({ slug });
+        if (blog) {
+          const title = `${blog.title} | Astittva Marketing`;
+          const description = blog.short_description || blog.seo_description || "Read this real estate editorial on Astittva Marketing.";
+          
+          let img = "https://astittva.in/og-image.png";
+          const rawImg = blog.featured_image || "";
+          if (rawImg) {
+            const driveMatch = String(rawImg).match(/\/d\/([a-zA-Z0-9_-]{20,})/) || String(rawImg).match(/\/file\/d\/([a-zA-Z0-9_-]{20,})/);
+            if (driveMatch) {
+              img = `https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200`;
+            } else if (rawImg.startsWith("http://") || rawImg.startsWith("https://")) {
+              img = rawImg;
+            } else if (rawImg.startsWith("/")) {
+              img = `https://astittva.in${rawImg}`;
+            }
+          }
+
+          return {
+            title,
+            description,
+            image: img,
+            url: `https://astittva.in/blogs/${slug}`,
+            type: "article",
+          };
+        }
+      }
+
+      // 3. Resale: /resale/:id
+      const resaleMatch = reqPath.match(/^\/resale\/([a-zA-Z0-9_-]+)\/?$/i);
+      if (resaleMatch) {
+        const id = resaleMatch[1];
+        let resale = null;
+        try {
+          if (ObjectId.isValid(id)) {
+            resale = await db.collection("resale_properties").findOne({ _id: new ObjectId(id) });
+          }
+        } catch {}
+        if (!resale) {
+          resale = await db.collection("resale_properties").findOne({ id });
+        }
+        if (resale) {
+          const loc = resale.locality || resale.location || "Kolkata";
+          const title = `${resale.title} in ${loc} | Astittva Marketing`;
+          const description = resale.description ? resale.description.slice(0, 150) : "Verified resale flat in Kolkata.";
+          let img = "https://astittva.in/og-image.png";
+          const rawImg = (Array.isArray(resale.images) && resale.images[0]) || resale.featuredImage || "";
+          if (rawImg && (rawImg.startsWith("http://") || rawImg.startsWith("https://"))) {
+            img = rawImg;
+          }
+
+          return {
+            title,
+            description,
+            image: img,
+            url: `https://astittva.in/resale/${id}`,
+            type: "website",
+          };
+        }
+      }
+    } catch (err) {
+      console.warn("[SocialMeta] Error extracting crawler meta:", err.message);
+    }
+    return null;
+  }
+
+  function escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
   // Route allowlist for legitimate application routes
   const VALID_APP_ROUTE_REGEX = /^\/(properties|resale|blogs|news|market-intelligence|calculators|about|contact|careers?|admin)($|\/.*)/i;
 
   // SPA Route Handler: return index.html (200 OK) for valid routes, or 404 for unknown routes
-  app.get("*", (req, res, next) => {
+  app.get("*", async (req, res, next) => {
     if (req.path.startsWith("/api") || req.path.startsWith("/healthz")) {
       return next();
     }
@@ -3741,6 +3871,37 @@ if (activeBuildPath) {
     const isValidRoute = isRoot || VALID_APP_ROUTE_REGEX.test(req.path);
 
     if (isValidRoute) {
+      const userAgent = req.headers["user-agent"] || "";
+      const isSocialCrawler = SOCIAL_BOT_REGEX.test(userAgent);
+
+      // Handle social crawlers by injecting dynamic Open Graph & Twitter meta tags
+      if (isSocialCrawler) {
+        const meta = await getDynamicSocialMeta(req.path);
+        if (meta) {
+          const indexPath = path.join(activeBuildPath, "index.html");
+          if (fs.existsSync(indexPath)) {
+            let html = fs.readFileSync(indexPath, "utf8");
+            const safeTitle = escapeHtml(meta.title);
+            const safeDesc = escapeHtml(meta.description);
+            const safeImg = escapeHtml(meta.image);
+            const safeUrl = escapeHtml(meta.url);
+            const safeType = escapeHtml(meta.type || "website");
+
+            html = html.replace(/<title>.*?<\/title>/i, `<title>${safeTitle}</title>`);
+            html = html.replace(/<meta\s+property="og:title"\s+content=".*?"\s*\/?>/i, `<meta property="og:title" content="${safeTitle}" />`);
+            html = html.replace(/<meta\s+property="og:description"\s+content=".*?"\s*\/?>/i, `<meta property="og:description" content="${safeDesc}" />`);
+            html = html.replace(/<meta\s+property="og:image"\s+content=".*?"\s*\/?>/i, `<meta property="og:image" content="${safeImg}" />`);
+            html = html.replace(/<meta\s+property="og:url"\s+content=".*?"\s*\/?>/i, `<meta property="og:url" content="${safeUrl}" />`);
+            html = html.replace(/<meta\s+property="og:type"\s+content=".*?"\s*\/?>/i, `<meta property="og:type" content="${safeType}" />`);
+            html = html.replace(/<meta\s+name="twitter:title"\s+content=".*?"\s*\/?>/i, `<meta name="twitter:title" content="${safeTitle}" />`);
+            html = html.replace(/<meta\s+name="twitter:description"\s+content=".*?"\s*\/?>/i, `<meta name="twitter:description" content="${safeDesc}" />`);
+            html = html.replace(/<meta\s+name="twitter:image"\s+content=".*?"\s*\/?>/i, `<meta name="twitter:image" content="${safeImg}" />`);
+
+            return res.type("html").send(html);
+          }
+        }
+      }
+
       const cleanPath = req.path.replace(/^\/+|\/+$/g, "");
       const nestedPath = path.join(activeBuildPath, cleanPath, "index.html");
       const flatPath = path.join(activeBuildPath, `${cleanPath}.html`);

@@ -17,9 +17,12 @@ import {
   Compass,
 } from "lucide-react";
 import Seo from "@/components/Seo";
+import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
 import { toast } from "sonner";
 import { PHONE_DISPLAY, EMAIL } from "@/lib/site";
+import ShareButton from "@/components/ShareButton";
+import SafeImage from "@/components/SafeImage";
 
 function formatPriceINR(val) {
   if (!val || isNaN(val)) return "Price on Request";
@@ -124,6 +127,7 @@ export default function ResaleDetailPage() {
   if (!property) {
     return (
       <div className="min-h-screen bg-[#FAF8F5] pt-[140px] px-4 text-center">
+        <Seo title="Property Not Found | Astittva Marketing" noIndex={true} />
         <h1 className="font-serif-display text-3xl text-[#1C1C1C] mb-3">
           Property Not Found
         </h1>
@@ -142,12 +146,55 @@ export default function ResaleDetailPage() {
 
   const gallery = Array.isArray(property.images) && property.images.length > 0 ? property.images : [property.featuredImage].filter(Boolean);
 
+  const resaleBreadcrumbs = [
+    { name: "Home", path: "/" },
+    { name: "Resale", path: "/resale" },
+    { name: property.title, path: `/resale/${property.id}` },
+  ];
+
+  const resaleSchema = {
+    "@context": "https://schema.org",
+    "@type": "SingleFamilyResidence",
+    name: property.title,
+    description: property.description || property.title,
+    url: `https://astittva.in/resale/${property.id}`,
+    image: gallery.length > 0 ? gallery : undefined,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: property.address || property.location || "",
+      addressLocality: property.locality || property.location || "Kolkata",
+      addressRegion: "West Bengal",
+      postalCode: property.pincode || "700156",
+      addressCountry: "IN",
+    },
+    numberOfRooms: property.bedrooms || undefined,
+    numberOfBathroomsTotal: property.bathrooms || undefined,
+    floorSize: property.area
+      ? { "@type": "QuantitativeValue", value: property.area, unitText: property.areaUnit || "SQFT" }
+      : undefined,
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "INR",
+      price: property.price || undefined,
+      url: `https://astittva.in/resale/${property.id}`,
+      availability: "https://schema.org/InStock",
+      seller: {
+        "@type": "RealEstateAgent",
+        "@id": "https://astittva.in/#organization",
+        name: "Astittva Marketing",
+      },
+    },
+  };
+
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-[90px] sm:pt-[105px] lg:pt-[115px]">
       <Seo
-        title={`${property.title} | Luxury Resale at Astittva`}
-        description={`${property.bedrooms ? property.bedrooms + " BHK " : ""}${property.propertyType} in ${property.locality || property.location || "Kolkata"}. Price: ${formatPriceINR(property.price)}.`}
+        title={`${property.title} in ${property.locality || property.location || "Kolkata"} | Astittva Marketing`}
+        description={`Explore ${property.title}, a verified ${property.bedrooms ? property.bedrooms + " BHK " : ""}${property.propertyType || "resale property"} in ${property.locality || property.location || "Kolkata"}, listed at ${formatPriceINR(property.price)} with title verification by Astittva Marketing.`}
         path={`/resale/${property.id}`}
+        type="product"
+        image={gallery[0]}
+        schema={[resaleSchema, buildBreadcrumbSchema(resaleBreadcrumbs)]}
       />
 
       {/* Top Breadcrumb & Share Navigation */}
@@ -162,14 +209,18 @@ export default function ResaleDetailPage() {
               {property.title}
             </span>
           </div>
-          <button
-            type="button"
-            onClick={handleShare}
-            className="inline-flex items-center gap-1.5 text-xs text-[#555] hover:text-[#B87333] transition-colors font-medium ml-2 shrink-0"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Share</span>
-          </button>
+          <ShareButton
+            title={property.title}
+            location={property.locality || property.location || "Kolkata"}
+            price={formatPriceINR(property.price)}
+            propertyType={property.bedrooms ? `${property.bedrooms} BHK Resale Flat` : (property.propertyType || "Resale Property")}
+            description={property.description}
+            url={`https://astittva.in/resale/${property.id}`}
+            image={gallery[0]}
+            type="property"
+            variant="light"
+            label="Share"
+          />
         </div>
       </div>
 
@@ -212,17 +263,15 @@ export default function ResaleDetailPage() {
             {/* Gallery Component */}
             <div className="bg-white rounded-xl border border-[#E8DED2] p-3 shadow-sm overflow-hidden">
               <div className="relative aspect-[16/10] bg-[#1a1a1a] rounded-lg overflow-hidden flex items-center justify-center">
-                {selectedImg ? (
-                  <img
-                    src={isGoogleDriveImage(selectedImg) ? driveImageUrl(selectedImg, 1200) : selectedImg}
-                    alt={property.title}
-                    className="w-full h-full object-cover transition-all duration-300"
-                  />
-                ) : (
-                  <div className="text-white/40 text-xs tracking-widest uppercase">
-                    No Photo Preview
-                  </div>
-                )}
+                <SafeImage
+                  priority={true}
+                  src={selectedImg}
+                  alt={property.title}
+                  type="resale"
+                  seed={property.id}
+                  width={1200}
+                  className="w-full h-full object-cover transition-all duration-300"
+                />
               </div>
 
               {/* Thumbnails list */}
@@ -237,9 +286,12 @@ export default function ResaleDetailPage() {
                         selectedImg === img ? "border-[#B87333] shadow-md scale-[1.02]" : "border-transparent opacity-70 hover:opacity-100"
                       }`}
                     >
-                      <img
-                        src={isGoogleDriveImage(img) ? driveImageUrl(img, 180) : img}
+                      <SafeImage
+                        src={img}
                         alt=""
+                        type="resale"
+                        seed={`${property.id}-${idx}`}
+                        width={180}
                         className="w-full h-full object-cover"
                       />
                     </button>

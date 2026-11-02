@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowUpRight, Calendar, BookOpen } from "lucide-react";
 import api, { isGoogleDriveImage, driveImageUrl, driveProxyUrl, getGoogleDriveFileId } from "@/lib/api";
+import { resolveBlogImage, pickBlogFallback } from "@/lib/blogImages";
 import Seo from "@/components/Seo";
 import { buildBreadcrumbSchema } from "@/lib/seoConfig";
+import SafeImage from "@/components/SafeImage";
 
 function formatDate(iso) {
   if (!iso) return "";
@@ -18,8 +20,6 @@ function formatDate(iso) {
     return iso;
   }
 }
-
-import { resolveBlogImage, pickBlogFallback } from "@/lib/blogImages";
 
 function BlogCard({ blog, idx }) {
   const img = resolveBlogImage(blog, 900);
@@ -38,23 +38,17 @@ function BlogCard({ blog, idx }) {
         className="block"
       >
         <div className="relative aspect-[16/10] overflow-hidden bg-[#F1E9DF]">
-          <img
-            loading="lazy"
-            src={img}
+          <SafeImage
+            src={blog.featured_image || img}
             alt={blog.title}
-            onError={(e) => {
-              const currentSrc = e.currentTarget.src || "";
-              const driveId = getGoogleDriveFileId(blog?.featured_image);
-              if (driveId && !currentSrc.includes("/images/thumbnail")) {
-                e.currentTarget.src = driveProxyUrl(driveId, 900);
-                return;
-              }
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = pickBlogFallback(blog);
-            }}
+            type="blog"
+            seed={blog}
+            fallbackSrc={pickBlogFallback(blog)}
+            width={900}
+            priority={idx < 3}
             className="w-full h-full object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#1C1C1C]/40 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#1C1C1C]/40 via-transparent to-transparent pointer-events-none" />
         </div>
       </Link>
 

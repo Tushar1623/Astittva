@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2, Eye, EyeOff, ExternalLink, BookOpen } from "lucid
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { resolveBlogImage, pickBlogFallback } from "@/lib/blogImages";
+import SafeImage from "@/components/SafeImage";
 import AdminHeader from "@/components/admin/AdminHeader";
 import StatusBadge from "@/components/admin/StatusBadge";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
@@ -191,21 +192,14 @@ export default function AdminBlogsPage() {
                     {/* Title & Author */}
                     <td className="p-4">
                       <div className="flex items-center gap-3.5">
-                        <img
-                          loading="lazy"
-                          src={resolveBlogImage(b, 200)}
+                        <SafeImage
+                          src={b.featured_image || resolveBlogImage(b, 200)}
                           alt={b.title}
+                          type="blog"
+                          seed={b}
+                          fallbackSrc={pickBlogFallback(b)}
+                          width={200}
                           className="w-12 h-12 object-cover border border-copper/20 rounded-[4px] shrink-0 bg-charcoal-2"
-                          onError={(e) => {
-                            const currentSrc = e.currentTarget.src || "";
-                            const driveId = getGoogleDriveFileId(b?.featured_image);
-                            if (driveId && !currentSrc.includes("/images/thumbnail")) {
-                              e.currentTarget.src = driveProxyUrl(driveId, 200);
-                              return;
-                            }
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = pickBlogFallback(b);
-                          }}
                         />
                         <div className="min-w-0">
                           <Link

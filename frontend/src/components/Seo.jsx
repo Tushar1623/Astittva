@@ -115,6 +115,8 @@ export default function Seo({
       {cleanDescription && <meta property="og:description" content={cleanDescription} />}
       <meta property="og:url" content={cleanCanonical} />
       <meta property="og:image" content={ogImage} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
       <meta property="og:image:alt" content={fullTitle} />
       <meta property="og:locale" content="en_IN" />
 
@@ -134,6 +136,7 @@ export default function Seo({
       <meta name="twitter:title" content={fullTitle} />
       {cleanDescription && <meta name="twitter:description" content={cleanDescription} />}
       <meta name="twitter:image" content={ogImage} />
+      <meta name="twitter:image:alt" content={fullTitle} />
 
       {/* JSON-LD Structured Data */}
       {schemasToRender.length > 0 &&

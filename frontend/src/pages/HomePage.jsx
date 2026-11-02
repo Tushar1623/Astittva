@@ -7,6 +7,7 @@ import { pickPropertyFallback } from "@/components/PropertyCard";
 import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY } from "@/lib/site";
 import CinematicHero from "@/components/CinematicHero";
+import SafeImage from "@/components/SafeImage";
 import Seo from "@/components/Seo";
 import { getOrganizationSchema, getWebSiteSchema } from "@/lib/seoConfig";
 
@@ -359,25 +360,26 @@ export default function HomePage() {
                     <div className="aspect-[4/3] overflow-hidden bg-[#FAF8F5]">
                       {(() => {
                         const fallback = pickPropertyFallback(p.id);
-                        const driveImg = (p.images || []).find(isGoogleDriveImage);
-                        const anyHttpImg = (p.images || []).find((img) => typeof img === "string" && (img.startsWith("http") || img.startsWith("/uploads/")) && !img.includes("astitva-realestate"));
-                        const imgSrc = driveImg
-                          ? driveImageUrl(driveImg, 1000)
-                          : (anyHttpImg ? fileUrl(anyHttpImg, 1000) : (p.images?.[0] ? fileUrl(p.images[0], 1000) : fallback) || fallback);
+                        const candidateImages = [
+                          ...(p.featured_image ? [p.featured_image] : []),
+                          ...(Array.isArray(p.images) ? p.images : []),
+                        ];
+                        const driveImg = candidateImages.find(isGoogleDriveImage);
+                        const anyHttpImg = candidateImages.find(
+                          (img) =>
+                            typeof img === "string" &&
+                            (img.startsWith("http") || img.startsWith("/uploads/")) &&
+                            !img.includes("astitva-realestate")
+                        );
+                        const primaryCandidate = driveImg || anyHttpImg || candidateImages[0] || fallback;
                         return (
-                          <img
-                            loading="lazy"
-                            src={imgSrc}
+                          <SafeImage
+                            src={primaryCandidate}
                             alt={p.project_name}
-                            onError={(e) => {
-                              const currentSrc = e.currentTarget.src || "";
-                              if (driveImg && currentSrc.includes("googleusercontent.com")) {
-                                e.currentTarget.src = driveDirectFallbackUrl(driveImg, 1000);
-                                return;
-                              }
-                              e.currentTarget.onerror = null;
-                              e.currentTarget.src = fallback;
-                            }}
+                            type="property"
+                            seed={p.id}
+                            fallbackSrc={fallback}
+                            width={1000}
                             className="w-full h-full object-cover transition-transform duration-[1.8s] ease-out group-hover:scale-105"
                           />
                         );

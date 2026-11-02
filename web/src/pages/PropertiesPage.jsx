@@ -5,6 +5,7 @@ import { ArrowRight, MapPin, Filter, X, SlidersHorizontal } from "lucide-react";
 import api, { isGoogleDriveImage, driveImageUrl, driveDirectFallbackUrl, fileUrl } from "@/lib/api";
 import Seo from "@/components/Seo";
 import { buildBreadcrumbSchema } from "@/lib/seoConfig";
+import SafeImage from "@/components/SafeImage";
 
 // ---------- Filter option catalogues (per Astittva brand brief) ----------
 const LOCATIONS = [
@@ -330,26 +331,28 @@ export default function PropertiesPage() {
                   <div className="aspect-[4/3] overflow-hidden relative">
                     {(() => {
                       const fallback = pickFallback(p.id);
-                      const driveImg = (p.images || []).find(isGoogleDriveImage);
-                      const anyHttpImg = (p.images || []).find((img) => typeof img === "string" && (img.startsWith("http") || img.startsWith("/uploads/")) && !img.includes("astitva-realestate"));
-                      const imgSrc = driveImg
-                        ? driveImageUrl(driveImg, 1000)
-                        : (anyHttpImg ? fileUrl(anyHttpImg, 1000) : (p.images?.[0] ? fileUrl(p.images[0], 1000) : fallback) || fallback);
+                      const candidateImages = [
+                        ...(p.featured_image ? [p.featured_image] : []),
+                        ...(Array.isArray(p.images) ? p.images : []),
+                      ];
+                      const driveImg = candidateImages.find(isGoogleDriveImage);
+                      const anyHttpImg = candidateImages.find(
+                        (img) =>
+                          typeof img === "string" &&
+                          (img.startsWith("http") || img.startsWith("/uploads/")) &&
+                          !img.includes("astitva-realestate")
+                      );
+                      const primaryCandidate = driveImg || anyHttpImg || candidateImages[0] || fallback;
                       return (
-                        <img
-                          loading="lazy"
-                          src={imgSrc}
+                        <SafeImage
+                          src={primaryCandidate}
                           alt={`${p.project_name} - ${p.bedrooms || p.property_type || "Residential property"} in ${p.location || p.city || "Kolkata"}`}
+                          type="property"
+                          seed={p.id}
+                          fallbackSrc={fallback}
+                          width={1000}
+                          priority={i < 3}
                           className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110"
-                          onError={(e) => {
-                            const currentSrc = e.currentTarget.src || "";
-                            if (driveImg && currentSrc.includes("googleusercontent.com")) {
-                              e.currentTarget.src = driveDirectFallbackUrl(driveImg, 1000);
-                              return;
-                            }
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = pickFallback(p.id);
-                          }}
                         />
                       );
                     })()}

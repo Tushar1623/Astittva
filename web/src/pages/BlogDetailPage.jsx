@@ -7,6 +7,8 @@ import Seo from "@/components/Seo";
 import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import { sanitizeBlogHtml } from "@/lib/sanitize";
 import { resolveBlogImage, pickBlogFallback } from "@/lib/blogImages";
+import ShareButton from "@/components/ShareButton";
+import SafeImage from "@/components/SafeImage";
 
 function formatDate(iso) {
   if (!iso) return "";
@@ -56,6 +58,7 @@ export default function BlogDetailPage() {
         data-testid="blog-detail-not-found"
         className="pt-40 max-w-3xl mx-auto px-6 text-center"
       >
+        <Seo title="Story Not Found | Astittva Marketing" noIndex={true} />
         <h2 className="font-serif-display text-3xl text-ivory mb-4">
           Story not found
         </h2>
@@ -144,13 +147,24 @@ export default function BlogDetailPage() {
               <span className="text-copper font-medium truncate max-w-[280px] sm:max-w-md">{blog.title}</span>
             </nav>
 
-            <Link
-              to="/blogs"
-              data-testid="back-to-blogs"
-              className="inline-flex items-center gap-2 text-[10px] tracking-[0.35em] uppercase text-[#737373] hover:text-copper transition mb-8"
-            >
-              <ArrowLeft className="w-3 h-3" strokeWidth={1.4} /> The Journal
-            </Link>
+            <div className="flex items-center justify-between gap-4 mb-8">
+              <Link
+                to="/blogs"
+                data-testid="back-to-blogs"
+                className="inline-flex items-center gap-2 text-[10px] tracking-[0.35em] uppercase text-[#737373] hover:text-copper transition"
+              >
+                <ArrowLeft className="w-3 h-3" strokeWidth={1.4} /> The Journal
+              </Link>
+              <ShareButton
+                title={blog.title}
+                description={blog.short_description || ""}
+                url={`https://astittva.in/blogs/${blog.slug}`}
+                image={img}
+                type="blog"
+                variant="light"
+                label="Share"
+              />
+            </div>
 
             <div className="flex flex-wrap items-center gap-3 text-[10px] tracking-[0.3em] uppercase text-[#737373] mb-5">
               <span className="flex items-center gap-1.5 text-copper">
@@ -192,19 +206,14 @@ export default function BlogDetailPage() {
               className="relative overflow-hidden aspect-[16/9] bg-[#F1E9DF]"
               data-testid="blog-hero-image"
             >
-              <img
-                src={img}
+              <SafeImage
+                priority={true}
+                src={blog.featured_image || img}
                 alt={blog.title}
-                onError={(e) => {
-                  const currentSrc = e.currentTarget.src || "";
-                  const driveId = getGoogleDriveFileId(blog?.featured_image);
-                  if (driveId && !currentSrc.includes("/images/thumbnail")) {
-                    e.currentTarget.src = driveProxyUrl(driveId, 1200);
-                    return;
-                  }
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = pickBlogFallback(blog);
-                }}
+                type="blog"
+                seed={blog}
+                fallbackSrc={pickBlogFallback(blog)}
+                width={1200}
                 className="w-full h-full object-cover"
               />
             </motion.div>
@@ -244,12 +253,23 @@ export default function BlogDetailPage() {
             >
               <ArrowLeft className="w-3 h-3" strokeWidth={1.4} /> Back to the Journal
             </Link>
-            <Link
-              to="/contact"
-              className="inline-flex items-center gap-2 text-[10px] tracking-[0.3em] uppercase text-copper hover:text-copper-hover transition"
-            >
-              Speak to an Advisor <ArrowUpRight className="w-3 h-3" />
-            </Link>
+            <div className="flex flex-wrap items-center gap-3">
+              <ShareButton
+                title={blog.title}
+                description={blog.short_description || ""}
+                url={`https://astittva.in/blogs/${blog.slug}`}
+                image={img}
+                type="blog"
+                variant="light"
+                label="Share Article"
+              />
+              <Link
+                to="/contact"
+                className="inline-flex items-center gap-2 text-[10px] tracking-[0.3em] uppercase text-copper hover:text-copper-hover transition"
+              >
+                Speak to an Advisor <ArrowUpRight className="w-3 h-3" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>

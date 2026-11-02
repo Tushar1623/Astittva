@@ -21,6 +21,7 @@ import {
 import Seo from "@/components/Seo";
 import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl } from "@/lib/api";
+import SafeImage from "@/components/SafeImage";
 import { toast } from "sonner";
 import { PHONE_DISPLAY, EMAIL } from "@/lib/site";
 
@@ -388,21 +389,14 @@ export default function ResalePage() {
                   >
                     {/* Image Box */}
                     <div className="relative aspect-[16/10] bg-[#1a1a1a] overflow-hidden">
-                      {img ? (
-                        <img
-                          src={isDrive ? driveImageUrl(img, 600) : img}
-                          alt={p.title}
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = "/images/luxe/luxury_villa.webp";
-                          }}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white/30 text-xs tracking-widest uppercase">
-                          No Photo
-                        </div>
-                      )}
+                      <SafeImage
+                        src={img}
+                        alt={p.title}
+                        type="resale"
+                        seed={p.id}
+                        width={600}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
                       <div className="absolute top-3 left-3 flex gap-2">
                         <span className="px-2.5 py-1 rounded bg-[#B87333] text-white text-[10px] font-semibold tracking-wider uppercase shadow-md flex items-center gap-1">
                           <Star className="w-3 h-3 fill-current" /> Featured
@@ -525,22 +519,14 @@ export default function ResalePage() {
                   >
                     {/* Image box */}
                     <div className="relative aspect-[16/10] bg-[#1a1a1a] overflow-hidden">
-                      {img ? (
-                        <img
-                          loading="lazy"
-                          src={isDrive ? driveImageUrl(img, 600) : img}
-                          alt={`${p.title} - ${p.bedrooms ? p.bedrooms + " BHK " : ""}${p.propertyType || "Resale Property"} in ${p.locality || p.location || "Kolkata"}`}
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = "/images/luxe/luxury_villa.webp";
-                          }}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-white/30 text-xs tracking-widest uppercase">
-                          No Photo
-                        </div>
-                      )}
+                      <SafeImage
+                        src={img}
+                        alt={`${p.title} - ${p.bedrooms ? p.bedrooms + " BHK " : ""}${p.propertyType || "Resale Property"} in ${p.locality || p.location || "Kolkata"}`}
+                        type="resale"
+                        seed={p.id}
+                        width={600}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
                       <div className="absolute top-3 left-3 flex gap-2">
                         <span className="px-2.5 py-1 rounded bg-[#35050A]/90 backdrop-blur-sm text-[#F1E7E0] text-[10px] font-semibold tracking-wider uppercase">
                           Resale

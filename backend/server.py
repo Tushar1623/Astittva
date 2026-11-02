@@ -714,17 +714,24 @@ def effective_price(doc: dict) -> Optional[float]:
 
 
 def serialize_property(doc: dict) -> dict:
-    raw_imgs = doc.get("images", []) if isinstance(doc.get("images"), list) else []
+    raw_featured = [doc.get("featured_image")] if doc.get("featured_image") else []
+    raw_images = doc.get("images", []) if isinstance(doc.get("images"), list) else []
+    raw_imgs = raw_featured + raw_images
     valid = []
     legacy = []
     for img in raw_imgs:
         if isinstance(img, str) and img.strip():
             clean = img.strip()
             if "drive.google.com" in clean or "googleusercontent.com" in clean or clean.startswith("http://") or clean.startswith("https://") or clean.startswith("/uploads/"):
-                valid.append(clean)
+                if clean not in valid:
+                    valid.append(clean)
             elif not clean.startswith("astitva-realestate"):
-                legacy.append(clean)
+                if clean not in legacy:
+                    legacy.append(clean)
     ordered_images = valid + legacy
+    featured_candidate = doc.get("featured_image", "").strip() if isinstance(doc.get("featured_image"), str) else ""
+    if featured_candidate.startswith("astitva-realestate"):
+        featured_candidate = ""
     return {
         "id": str(doc["_id"]),
         "project_name": doc.get("project_name", ""),
@@ -736,7 +743,7 @@ def serialize_property(doc: dict) -> dict:
         "property_type": doc.get("property_type", ""),
         "property_category": doc.get("property_category", ""),
         "description": doc.get("description", ""),
-        "featured_image": doc.get("featured_image") or (valid[0] if valid else ""),
+        "featured_image": featured_candidate or (valid[0] if valid else ""),
         "images": ordered_images,
         "rera_number": doc.get("rera_number", ""),
         "possession_date": doc.get("possession_date", ""),

@@ -8,6 +8,7 @@ import api, {
   fileUrl,
 } from "@/lib/api";
 import { pickPropertyFallback } from "@/components/PropertyCard";
+import SafeImage from "@/components/SafeImage";
 import { Plus, Pencil, Trash2, Eye, EyeOff, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
@@ -202,36 +203,27 @@ export default function AdminPropertiesPage() {
                       <div className="flex items-center gap-3.5">
                         {(() => {
                           const fallback = pickPropertyFallback(p.id);
-                          const driveImg = (p.images || []).find(isGoogleDriveImage);
-                          const anyHttpImg = (p.images || []).find(
+                          const candidateImages = [
+                            ...(p.featured_image ? [p.featured_image] : []),
+                            ...(Array.isArray(p.images) ? p.images : []),
+                          ];
+                          const driveImg = candidateImages.find(isGoogleDriveImage);
+                          const anyHttpImg = candidateImages.find(
                             (img) =>
                               typeof img === "string" &&
                               (img.startsWith("http") || img.startsWith("/uploads/")) &&
                               !img.includes("astitva-realestate")
                           );
-                          const imgSrc = driveImg
-                            ? driveImageUrl(driveImg, 150)
-                            : anyHttpImg
-                            ? fileUrl(anyHttpImg, 150)
-                            : p.images?.[0]
-                            ? fileUrl(p.images[0], 150)
-                            : fallback || fallback;
+                          const primaryCandidate = driveImg || anyHttpImg || candidateImages[0] || fallback;
                           return (
-                            <img
-                              loading="lazy"
-                              referrerPolicy="no-referrer"
-                              src={imgSrc}
+                            <SafeImage
+                              src={primaryCandidate}
                               alt=""
+                              type="property"
+                              seed={p.id}
+                              fallbackSrc={fallback}
+                              width={150}
                               className="w-12 h-12 object-cover border border-copper/20 rounded-[4px] shrink-0 bg-charcoal-2"
-                              onError={(e) => {
-                                const currentSrc = e.currentTarget.src || "";
-                                if (driveImg && currentSrc.includes("googleusercontent.com")) {
-                                  e.currentTarget.src = driveDirectFallbackUrl(driveImg, 150);
-                                  return;
-                                }
-                                e.currentTarget.onerror = null;
-                                e.currentTarget.src = fallback;
-                              }}
                             />
                           );
                         })()}

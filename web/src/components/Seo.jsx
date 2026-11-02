@@ -28,15 +28,19 @@ export default function Seo({
   noIndex = false,
   jsonLd,
   schema,
-  keywords,
   publishedTime,
   modifiedTime,
   author,
 }) {
-  // Ensure path is clean and canonical URL is properly formed
-  const cleanPath = path.startsWith("http")
+  // Ensure path is clean and canonical URL is properly formed (strip query params and hashes for canonical)
+  const rawPath = path.startsWith("http")
     ? path
     : `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  const pathWithoutQuery = rawPath.split("?")[0].split("#")[0];
+  const cleanCanonical =
+    pathWithoutQuery === `${SITE_URL}` || pathWithoutQuery === `${SITE_URL}/`
+      ? `${SITE_URL}/`
+      : pathWithoutQuery.replace(/\/+$/, "");
 
   // Clean title: replace HTML entities if accidentally passed
   const cleanTitle = (title || SITE_NAME)
@@ -46,9 +50,29 @@ export default function Seo({
     .trim();
 
   // Smart title suffix: avoid duplicate brand suffix
-  const fullTitle = cleanTitle.toLowerCase().includes("astittva")
+  let fullTitle = cleanTitle.toLowerCase().includes("astittva")
     ? cleanTitle
     : `${cleanTitle} | ${SITE_NAME}`;
+
+  // Strict Max 60 characters for SEO Title (PRD Requirement)
+  if (fullTitle.length > 60) {
+    const brandSuffix = ` | ${SITE_NAME}`;
+    if (fullTitle.endsWith(brandSuffix)) {
+      const prefix = fullTitle.slice(0, -brandSuffix.length);
+      const maxPrefixLen = 60 - brandSuffix.length; // 60 - 21 = 39
+      fullTitle = `${prefix.slice(0, maxPrefixLen - 3).trim()}...${brandSuffix}`;
+    } else {
+      fullTitle = `${fullTitle.slice(0, 57).trim()}...`;
+    }
+  }
+
+  // Strict Max 155 characters for SEO Meta Description (PRD Requirement)
+  let cleanDescription = description ? description.replace(/\s+/g, " ").trim() : "";
+  if (cleanDescription.length > 155) {
+    const truncated = cleanDescription.slice(0, 152);
+    const lastSpace = truncated.lastIndexOf(" ");
+    cleanDescription = lastSpace > 110 ? `${truncated.slice(0, lastSpace)}...` : `${truncated}...`;
+  }
 
   // Ensure absolute image URL for Open Graph / Twitter
   let ogImage = image || DEFAULT_OG_IMAGE;
@@ -71,9 +95,8 @@ export default function Seo({
     <Helmet prioritizeSeoTags>
       {/* Standard SEO */}
       <title>{fullTitle}</title>
-      {description && <meta name="description" content={description} />}
-      {keywords && <meta name="keywords" content={keywords} />}
-      <link rel="canonical" href={cleanPath} />
+      {cleanDescription && <meta name="description" content={cleanDescription} />}
+      <link rel="canonical" href={cleanCanonical} />
 
       {/* Robots Directive */}
       <meta
@@ -89,9 +112,11 @@ export default function Seo({
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:type" content={type} />
       <meta property="og:title" content={fullTitle} />
-      {description && <meta property="og:description" content={description} />}
-      <meta property="og:url" content={cleanPath} />
+      {cleanDescription && <meta property="og:description" content={cleanDescription} />}
+      <meta property="og:url" content={cleanCanonical} />
       <meta property="og:image" content={ogImage} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
       <meta property="og:image:alt" content={fullTitle} />
       <meta property="og:locale" content="en_IN" />
 
@@ -109,8 +134,9 @@ export default function Seo({
       {/* Twitter Cards */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
-      {description && <meta name="twitter:description" content={description} />}
+      {cleanDescription && <meta name="twitter:description" content={cleanDescription} />}
       <meta name="twitter:image" content={ogImage} />
+      <meta name="twitter:image:alt" content={fullTitle} />
 
       {/* JSON-LD Structured Data */}
       {schemasToRender.length > 0 &&

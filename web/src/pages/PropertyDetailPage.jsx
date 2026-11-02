@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY } from "@/lib/site";
 import Seo from "@/components/Seo";
 import { buildBreadcrumbSchema } from "@/lib/seoConfig";
+import ShareButton from "@/components/ShareButton";
+import SafeImage from "@/components/SafeImage";
 
 // Per-property dynamic SEO: title/description/canonical/OG/Twitter + RealEstateListing JSON-LD.
 function PropertySeo({ property, id }) {
@@ -18,10 +20,17 @@ function PropertySeo({ property, id }) {
     `Explore ${property.project_name}${property.location ? ` in ${property.location}` : ""}, Kolkata by ${property.builder || "Astittva Marketing"}. ${priceTxt ? `Starting ${priceTxt}. ` : ""}Verified details, floor plans, and site visits.`;
 
   const primaryFallback = pickPropertyFallback(property.id || id);
-  const driveImg = (property.images || []).find(isGoogleDriveImage);
+  const rawList = [
+    ...(property.featured_image ? [property.featured_image] : []),
+    ...(Array.isArray(property.images) ? property.images : []),
+  ];
+  const driveImg = rawList.find(isGoogleDriveImage);
   const firstResolved = driveImg
     ? driveImageUrl(driveImg, 1200)
-    : (property.images || []).map((img) => (typeof img === "string" ? fileUrl(img, 1200) : "")).find(Boolean);
+    : rawList
+        .filter((img) => typeof img === "string" && !img.startsWith("astitva-realestate"))
+        .map((img) => fileUrl(img, 1200))
+        .find(Boolean);
   const image = firstResolved || primaryFallback;
 
   const breadcrumbs = [
@@ -147,6 +156,7 @@ export default function PropertyDetailPage() {
   if (!property) {
     return (
       <div className="pt-40 max-w-3xl mx-auto px-6 text-center">
+        <Seo title="Property Not Found | Astittva Marketing" noIndex={true} />
         <h2 className="font-display text-3xl text-ivory mb-4">Property not found</h2>
         <Link to="/properties" className="btn-outline mt-4">Back to Properties</Link>
       </div>
@@ -154,15 +164,24 @@ export default function PropertyDetailPage() {
   }
 
   const primaryFallback = pickPropertyFallback(property.id || id);
-  const rawList = Array.isArray(property.images) ? property.images : [];
-  const driveImg = rawList.find(isGoogleDriveImage);
-  const resolvedImages = rawList
-    .map((img) => (typeof img === "string" ? fileUrl(img, 1200) : ""))
+  const rawList = [
+    ...(property.featured_image ? [property.featured_image] : []),
+    ...(Array.isArray(property.images) ? property.images : []),
+  ];
+  const uniqueRawList = Array.from(
+    new Set(
+      rawList.filter(
+        (img) => typeof img === "string" && img.trim().length > 0 && !img.startsWith("astitva-realestate")
+      )
+    )
+  );
+
+  const resolvedImages = uniqueRawList
+    .map((img) => (isGoogleDriveImage(img) ? driveImageUrl(img, 1200) : fileUrl(img, 1200)))
     .filter(Boolean);
-  const finalImages = driveImg
-    ? [driveImageUrl(driveImg, 1200), ...resolvedImages.filter((u) => u !== driveImageUrl(driveImg, 1200))]
-    : resolvedImages;
-  const images = finalImages.length > 0 ? finalImages : [primaryFallback];
+
+  const images = resolvedImages.length > 0 ? resolvedImages : [primaryFallback];
+  const primaryImage = images[0] || primaryFallback;
 
   return (
     <div data-testid="property-detail-page" className="pt-28 pb-24">
@@ -185,29 +204,37 @@ export default function PropertyDetailPage() {
           <span className="text-copper font-medium">{property.project_name}</span>
         </nav>
 
-        <Link to="/properties" className="inline-flex items-center gap-2 text-copper text-xs tracking-[0.3em] uppercase mb-8 hover:text-rose-gold">
-          <ArrowLeft className="w-4 h-4" /> Back to Properties
-        </Link>
+        <div className="flex items-center justify-between gap-4 mb-8">
+          <Link to="/properties" className="inline-flex items-center gap-2 text-copper text-xs tracking-[0.3em] uppercase hover:text-rose-gold">
+            <ArrowLeft className="w-4 h-4" /> Back to Properties
+          </Link>
+          <ShareButton
+            title={property.project_name}
+            location={property.location ? `${property.location}, ${property.city || "Kolkata"}` : (property.city || "Kolkata")}
+            price={property.price_label || (property.starting_price ? `₹${property.starting_price.toLocaleString("en-IN")}` : "Price on Request")}
+            propertyType={property.bedrooms ? `${property.bedrooms} ${property.property_type || "Apartment"}` : (property.property_type || "Luxury Property")}
+            description={property.description}
+            url={`https://astittva.in/properties/${id}`}
+            image={primaryImage}
+            type="property"
+            variant="outline"
+            label="Share"
+          />
+        </div>
 
         {/* Gallery */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-12">
           <div className={`${images.length > 1 ? "lg:col-span-9" : "lg:col-span-12"} aspect-[16/10] overflow-hidden bg-charcoal-2/40 border border-copper/15`}>
             {images.length > 0 && images[activeImg] ? (
-              <img
-                loading="lazy"
-                referrerPolicy="no-referrer"
+              <SafeImage
+                priority={true}
                 src={images[activeImg]}
                 alt={`${property.project_name} - ${property.bedrooms || property.property_type || "Luxury apartment"} in ${property.location || property.city || "Kolkata"}`}
+                type="property"
+                seed={property.id || id}
+                fallbackSrc={primaryFallback}
+                width={1200}
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  const currentSrc = e.currentTarget.src || "";
-                  if (driveImg && currentSrc.includes("googleusercontent.com")) {
-                    e.currentTarget.src = driveDirectFallbackUrl(driveImg, 1200);
-                    return;
-                  }
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = primaryFallback;
-                }}
               />
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center text-ivory/40 p-8 text-center bg-charcoal/50">
@@ -224,21 +251,14 @@ export default function PropertyDetailPage() {
                   onClick={() => setActiveImg(i)}
                   className={`relative aspect-[4/3] lg:aspect-auto lg:flex-1 lg:min-h-0 overflow-hidden border ${activeImg === i ? "border-copper" : "border-copper/15"} transition bg-charcoal/30`}
                 >
-                  <img
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
+                  <SafeImage
                     src={img}
                     alt={`${property.project_name} gallery preview ${i + 1}`}
+                    type="property"
+                    seed={`${property.id || id}-${i}`}
+                    fallbackSrc={primaryFallback}
+                    width={400}
                     className="absolute inset-0 w-full h-full object-cover"
-                    onError={(e) => {
-                      const currentSrc = e.currentTarget.src || "";
-                      if (driveImg && currentSrc.includes("googleusercontent.com")) {
-                        e.currentTarget.src = driveDirectFallbackUrl(driveImg, 400);
-                        return;
-                      }
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = primaryFallback;
-                    }}
                   />
                 </button>
               ))}
@@ -378,6 +398,21 @@ export default function PropertyDetailPage() {
                 <a href={`tel:${PHONE_DISPLAY.replace(/\s/g, "")}`} className="text-copper text-sm tracking-wider flex items-center justify-center gap-2 hover:text-rose-gold pt-1">
                   <Phone className="w-4 h-4" /> {PHONE_DISPLAY}
                 </a>
+                <div className="pt-2">
+                  <ShareButton
+                    title={property.project_name}
+                    location={property.location ? `${property.location}, ${property.city || "Kolkata"}` : (property.city || "Kolkata")}
+                    price={property.price_label || (property.starting_price ? `₹${property.starting_price.toLocaleString("en-IN")}` : "Price on Request")}
+                    propertyType={property.bedrooms ? `${property.bedrooms} ${property.property_type || "Apartment"}` : (property.property_type || "Luxury Property")}
+                    description={property.description}
+                    url={`https://astittva.in/properties/${id}`}
+                    image={primaryImage}
+                    type="property"
+                    variant="compact"
+                    className="w-full py-2.5 bg-copper/10 hover:bg-copper/20 border-copper/30"
+                    label="Share This Property"
+                  />
+                </div>
               </div>
             </div>
           </aside>
