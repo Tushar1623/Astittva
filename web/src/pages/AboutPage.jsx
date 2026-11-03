@@ -9,6 +9,7 @@ import api, { formatApiErrorDetail } from "@/lib/api";
 import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY, EMAIL } from "@/lib/site";
 import Seo from "@/components/Seo";
+import { buildBreadcrumbSchema, getOrganizationSchema } from "@/lib/seoConfig";
 
 const TEXTURE = "https://static.prod-images.emergentagent.com/jobs/50ac1e2c-4ee3-4d48-ad5e-fd37063ae3c0/images/1f5da7f44ad5aab6c1f6ab3c12df3ec89723084c1042e95749a6b4658dcffcc6.png";
 
@@ -76,37 +77,66 @@ export default function AboutPage({ scrollToContact = false }) {
     }
   };
 
+  const isContactRoute = location.pathname === "/contact" || scrollToContact;
+
+  const pageTitle = isContactRoute
+    ? "Contact Astittva Marketing | Property Advisory Kolkata"
+    : "About Astittva Marketing | Property Consultants in Kolkata";
+
+  const pageDescription = isContactRoute
+    ? "Contact Astittva Marketing for real estate advisory in Kolkata, New Town and Rajarhat. Schedule a consultation with our experienced property consultants."
+    : "Learn about Astittva Marketing, trusted real estate advisory in Kolkata. Expert guidance for residential purchases and investments across New Town and Rajarhat.";
+
+  const pagePath = isContactRoute ? "/contact" : "/about";
+
+  const breadcrumbs = isContactRoute
+    ? [{ name: "Home", path: "/" }, { name: "Contact", path: "/contact" }]
+    : [{ name: "Home", path: "/" }, { name: "About", path: "/about" }];
+
   return (
     <div data-testid="about-page" className="pt-28 pb-16 sm:pt-32 sm:pb-24">
       <Seo
-        title="About &amp; Contact · Astittva Marketing · Luxury Real Estate Advisory"
-        description="Astittva Marketing is a premier luxury real estate advisory representing Kolkata's most prestigious developments. Learn about our vision, values, and schedule a private consultation."
-        path="/about"
-        keywords="About Astittva Marketing, contact Astittva, luxury real estate advisory Kolkata, real estate consultation"
+        title={pageTitle}
+        description={pageDescription}
+        path={pagePath}
+        schema={[getOrganizationSchema(), buildBreadcrumbSchema(breadcrumbs)]}
       />
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         {/* Header Intro */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-          <div className="overline mb-4">About Astittva</div>
-          <h1 className="font-display font-light text-3xl sm:text-5xl lg:text-6xl text-ivory tracking-tight max-w-2xl leading-[1.1]">
-            <span className="block">
-              Find Your{" "}
-              <span
-                className="italic"
-                style={{
-                  color: "#B97832",
-                  fontWeight: 600,
-                  fontSize: "1.05em",
-                  fontFamily: "'Cormorant Garamond', serif",
-                }}
-              >
-                Astittva.
-              </span>
-            </span>
-            <span className="block">Build Your Legacy.</span>
+          <div className="overline mb-4">{isContactRoute ? "Contact Astittva" : "About Astittva"}</div>
+          <h1 className="font-display font-light text-3xl sm:text-5xl lg:text-6xl text-ivory tracking-tight max-w-3xl leading-[1.1]">
+            {isContactRoute ? (
+              <>
+                <span className="block">Contact Astittva Marketing</span>
+                <span className="block text-2xl sm:text-3xl text-ivory/80 font-normal mt-2">
+                  Connect with Kolkata&apos;s Luxury Real Estate Consultants
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="block">
+                  About Astittva Marketing — Find Your{" "}
+                  <span
+                    className="italic"
+                    style={{
+                      color: "#B97832",
+                      fontWeight: 600,
+                      fontSize: "1.05em",
+                      fontFamily: "'Cormorant Garamond', serif",
+                    }}
+                  >
+                    Astittva.
+                  </span>
+                </span>
+                <span className="block">Build Your Legacy.</span>
+              </>
+            )}
           </h1>
           <p className="mt-6 text-ivory/70 font-light text-lg sm:text-xl max-w-3xl leading-relaxed">
-            Curated real estate opportunities across the most promising destinations.
+            {isContactRoute
+              ? "Schedule a private consultation with our Kolkata property advisory team. Whether inquiring about luxury residences in New Town, Rajarhat, or EM Bypass, we are here to guide your real estate journey."
+              : "Astittva Marketing is Kolkata's premier luxury real estate advisory firm. We curate verified residential and investment opportunities across New Town, Rajarhat, EM Bypass, and South Kolkata with uncompromising diligence."}
           </p>
           <div className="copper-divider mt-10" />
         </motion.div>
@@ -267,6 +297,16 @@ export default function AboutPage({ scrollToContact = false }) {
                   </div>
                   <p className="text-[13px] sm:text-[13.5px] text-[#625653] font-normal leading-[1.5]">
                     Mon – Sat &nbsp;·&nbsp; 10:00 AM – 7:00 PM IST
+                  </p>
+                </div>
+
+                {/* Regulatory / WBRERA Registration */}
+                <div className="border-l-2 border-[#C89A55] pl-4 sm:pl-4.5 py-0.5">
+                  <div className="text-[10px] font-semibold tracking-[0.15em] text-[#B4773F] uppercase mb-1">
+                    Regulatory Compliance
+                  </div>
+                  <p className="text-[13px] sm:text-[13.5px] text-[#625653] font-medium leading-[1.5]">
+                    WBRERA Registration No: [FILL IN]
                   </p>
                 </div>
 

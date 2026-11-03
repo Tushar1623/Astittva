@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import Seo from "@/components/Seo";
+import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import { ArrowRight, Sparkles, ShieldCheck } from "lucide-react";
 import { CALCULATORS, CALCULATOR_CATEGORIES } from "@/data/calculatorsData";
 import CalculatorIcon from "@/components/calculators/CalculatorIcon";
@@ -8,13 +9,12 @@ import CalculatorIcon from "@/components/calculators/CalculatorIcon";
 export default function CalculatorsLandingPage() {
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-24 sm:pt-28 pb-20">
-      <Helmet>
-        <title>Property Calculators — Astittva Real Estate Advisory</title>
-        <meta
-          name="description"
-          content="Make smarter property decisions with simple, practical calculators for home buyers, real estate investors, and developers in Kolkata."
-        />
-      </Helmet>
+      <Seo
+        title="Property Calculators | EMI & ROI Tools | Astittva Marketing"
+        description="Free property calculators for Kolkata buyers: Home Loan EMI, Affordability, Rental Yield, ROI, West Bengal Stamp Duty and Area Converter by Astittva."
+        path="/calculators"
+        schema={buildBreadcrumbSchema([{ name: "Home", path: "/" }, { name: "Calculators", path: "/calculators" }])}
+      />
 
       {/* Hero Section */}
       <section className="relative px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pt-6 sm:pt-10 pb-12 sm:pb-16 text-center">
@@ -24,11 +24,11 @@ export default function CalculatorsLandingPage() {
         </div>
 
         <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[#1C1C1C] max-w-3xl mx-auto leading-tight">
-          Property Calculators
+          Real Estate &amp; Property Calculators
         </h1>
 
-        <p className="mt-4 sm:mt-5 text-base sm:text-lg md:text-xl text-[#5F5F5F] max-w-2xl mx-auto font-sans leading-relaxed">
-          Make smarter property decisions with simple, practical calculators.
+        <p className="mt-4 sm:mt-5 text-base sm:text-lg md:text-xl text-[#5F5F5F] max-w-3xl mx-auto font-sans leading-relaxed">
+          Make smarter investment decisions with Astittva Marketing&apos;s financial property calculators. Estimate home loan EMIs, West Bengal stamp duty, rental yields, affordability, and capital gains tax tailored for Kolkata real estate buyers.
         </p>
 
         {/* Quick stat highlights */}

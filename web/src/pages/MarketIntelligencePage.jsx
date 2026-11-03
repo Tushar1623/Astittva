@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import api from "@/lib/api";
 import Seo from "@/components/Seo";
+import { buildBreadcrumbSchema } from "@/lib/seoConfig";
 import { EVERGREEN_NEWS } from "@/data/evergreenNews";
 
 const TEXTURE = "https://static.prod-images.emergentagent.com/jobs/50ac1e2c-4ee3-4d48-ad5e-fd37063ae3c0/images/1f5da7f44ad5aab6c1f6ab3c12df3ec89723084c1042e95749a6b4658dcffcc6.png";
@@ -101,6 +102,14 @@ function Tag({ children, variant = "default" }) {
 
 function NewsCard({ a, idx }) {
   const imp = impactStyles[a.impact] || impactStyles.Low;
+  const cleanTitle = stripHtml(a.title || "");
+  const cleanSummary = stripHtml(a.summary || "");
+  // If summary is just the title repeated (or title + source), don't show the redundant snippet
+  const isDuplicateSummary =
+    !cleanSummary ||
+    cleanSummary.toLowerCase() === cleanTitle.toLowerCase() ||
+    cleanTitle.toLowerCase().startsWith(cleanSummary.toLowerCase().replace(/ - [^-]+$/, ""));
+
   return (
     <motion.article
       initial={{ opacity: 0, y: 18 }}
@@ -124,11 +133,11 @@ function NewsCard({ a, idx }) {
 
       <a href={a.link} target="_blank" rel="noopener noreferrer" className="block">
         <h3 className="font-serif-display text-lg sm:text-xl text-ivory leading-[1.3] group-hover:text-copper transition-colors line-clamp-3 mb-3">
-          {stripHtml(a.title)}
+          {cleanTitle}
         </h3>
-        {a.summary && (
+        {!isDuplicateSummary && (
           <p className="text-[#5F5F5F] text-sm font-light leading-[1.65] line-clamp-2">
-            {stripHtml(a.summary).slice(0, 170)}{stripHtml(a.summary).length > 170 ? "…" : ""}
+            {cleanSummary.slice(0, 170)}{cleanSummary.length > 170 ? "…" : ""}
           </p>
         )}
       </a>
@@ -142,15 +151,17 @@ function NewsCard({ a, idx }) {
         </div>
       )}
 
-      <div className="mt-6 pt-5 border-t border-[#E8DED2] flex items-center justify-between text-[10px] tracking-[0.25em] uppercase">
-        <span className="text-[#737373] truncate max-w-[55%]">{a.source || "News"}</span>
-        <span className="text-[#737373]">{timeAgo(a.published)}</span>
-      </div>
+      <div className="mt-auto pt-6">
+        <div className="border-t border-[#E8DED2] pt-4 flex items-center justify-between text-[10px] tracking-[0.25em] uppercase">
+          <span className="text-[#737373] truncate max-w-[55%]">{a.source || "News"}</span>
+          <span className="text-[#737373]">{timeAgo(a.published)}</span>
+        </div>
 
-      <a href={a.link} target="_blank" rel="noopener noreferrer"
-         className="mt-5 inline-flex items-center gap-2 text-[10px] tracking-[0.3em] uppercase text-copper hover:text-copper-hover transition w-fit">
-        Read More <ArrowUpRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-      </a>
+        <a href={a.link} target="_blank" rel="noopener noreferrer"
+           className="mt-4 inline-flex items-center gap-2 text-[10px] tracking-[0.3em] uppercase text-copper hover:text-copper-hover transition w-fit">
+          Read Story <ArrowUpRight className="w-3 h-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        </a>
+      </div>
     </motion.article>
   );
 }
@@ -191,12 +202,29 @@ function SkeletonCard({ idx }) {
   );
 }
 
-function NewsGrid({ articles, loading, max = 12 }) {
+function NewsGrid({ articles, loading, visibleCount = 12, onLoadMore }) {
   // If we have articles (live or evergreen), render them immediately — never block on `loading`.
   if (articles?.length) {
+    const displayed = articles.slice(0, visibleCount);
+    const hasMore = articles.length > visibleCount;
+
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-7" data-testid="mi-news-grid">
-        {articles.slice(0, max).map((a, i) => <NewsCard key={`${a.link}-${i}`} a={a} idx={i} />)}
+      <div className="space-y-10" data-testid="mi-news-container">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-7" data-testid="mi-news-grid">
+          {displayed.map((a, i) => <NewsCard key={`${a.link}-${i}`} a={a} idx={i} />)}
+        </div>
+        {hasMore && (
+          <div className="flex justify-center pt-4">
+            <button
+              type="button"
+              onClick={onLoadMore}
+              className="px-8 py-3.5 text-[11px] font-semibold tracking-[0.25em] uppercase border border-copper/50 text-copper bg-burgundy/20 hover:bg-burgundy/40 hover:border-copper transition-all duration-300 rounded-[4px]"
+              data-testid="mi-load-more"
+            >
+              Load More Stories ({articles.length - visibleCount} remaining)
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -218,10 +246,10 @@ function NewsGrid({ articles, loading, max = 12 }) {
 function SEO() {
   return (
     <Seo
-      title="Market Intelligence · Kolkata Real Estate News & Investment Insights"
-      description="Live Kolkata real estate news, India property market trends, infrastructure updates, luxury property news and global investment insights — curated by Astittva Marketing."
-      path="/market-intelligence"
-      keywords="Kolkata real estate news, India property market trends, real estate investment news India, luxury property news, New Town infrastructure updates, Rajarhat property updates"
+      title="Real Estate Market Intelligence | Astittva Marketing"
+      description="Stay informed with Kolkata real estate market intelligence, infrastructure milestones, and property trends across New Town, Rajarhat, and Salt Lake."
+      path="/news"
+      schema={buildBreadcrumbSchema([{ name: "Home", path: "/" }, { name: "Market Intelligence", path: "/news" }])}
     />
   );
 }
@@ -245,10 +273,30 @@ function articleHasCategory(a, cat) {
 }
 
 function articleMatchesGeo(a, v) {
+  if (v === "Kolkata") {
+    return (
+      a.city === "Kolkata" ||
+      a.city === "New Town" ||
+      a.city === "Rajarhat" ||
+      /kolkata|calcutta|new\s*town|rajarhat/i.test(`${a.title || ""} ${a.city || ""}`)
+    );
+  }
+  if (v === "West Bengal") {
+    return (
+      a.state === "West Bengal" ||
+      a.city === "Kolkata" ||
+      a.city === "New Town" ||
+      a.city === "Rajarhat" ||
+      /bengal|kolkata/i.test(`${a.title || ""} ${a.state || ""}`)
+    );
+  }
   return a.city === v || a.state === v || a.country === v;
 }
 
 function articleMatchesCountry(a, v) {
+  if (v === "India") {
+    return a.country === "India" || a.state === "West Bengal" || a.city === "Kolkata";
+  }
   if (v === "Global") return a.country && a.country !== "India" && a.country !== "—";
   return a.country === v;
 }
@@ -263,6 +311,12 @@ export default function MarketIntelligencePage() {
   // so the UI is never blank.
   const [loading, setLoading] = useState({ all: true, trending: true });
   const [activeFilter, setActiveFilter] = useState("all");
+  const [visibleCount, setVisibleCount] = useState(12);
+
+  // Reset pagination on filter change
+  useEffect(() => {
+    setVisibleCount(12);
+  }, [activeFilter]);
 
   useEffect(() => {
     // Hard cap: ensure loading state clears in <=12s even if axios timeout misfires.
@@ -452,7 +506,12 @@ export default function MarketIntelligencePage() {
                   </span>
                 </div>
               )}
-              <NewsGrid articles={view.articles} loading={loading.all} />
+              <NewsGrid
+                articles={view.articles}
+                loading={loading.all}
+                visibleCount={visibleCount}
+                onLoadMore={() => setVisibleCount((prev) => prev + 12)}
+              />
             </motion.div>
           </AnimatePresence>
         </div>

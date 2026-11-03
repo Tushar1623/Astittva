@@ -24,11 +24,11 @@ export default function CalculatorsLandingPage() {
         </div>
 
         <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-[#1C1C1C] max-w-3xl mx-auto leading-tight">
-          Property Calculators
+          Real Estate &amp; Property Calculators
         </h1>
 
-        <p className="mt-4 sm:mt-5 text-base sm:text-lg md:text-xl text-[#5F5F5F] max-w-2xl mx-auto font-sans leading-relaxed">
-          Make smarter property decisions with simple, practical calculators.
+        <p className="mt-4 sm:mt-5 text-base sm:text-lg md:text-xl text-[#5F5F5F] max-w-3xl mx-auto font-sans leading-relaxed">
+          Make smarter investment decisions with Astittva Marketing&apos;s financial property calculators. Estimate home loan EMIs, West Bengal stamp duty, rental yields, affordability, and capital gains tax tailored for Kolkata real estate buyers.
         </p>
 
         {/* Quick stat highlights */}

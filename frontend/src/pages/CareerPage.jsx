@@ -209,8 +209,8 @@ export default function CareerPage() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="font-serif-display text-3xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-white leading-[1.15] mb-6"
           >
-            Shape the Future of <br className="hidden sm:inline" />
-            <span className="italic font-light text-[#E8DCD5]">Luxury Real Estate Advisory</span>
+            Careers at Astittva Marketing <br className="hidden sm:inline" />
+            <span className="italic font-light text-[#E8DCD5]">Luxury Real Estate Advisory Practice</span>
           </motion.h1>
 
           {/* Subtext */}
@@ -220,8 +220,8 @@ export default function CareerPage() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="max-w-2xl mx-auto text-[14px] sm:text-[16px] lg:text-[17px] font-sans text-[#E8DCD5]/85 leading-relaxed font-light mb-8"
           >
-            We are building Eastern India&apos;s most respected real estate marketing, architectural branding,
-            and private client advisory firm. Our formal career application portal is launching shortly.
+            Explore careers at Astittva Marketing, Kolkata&apos;s premier luxury real estate advisory firm. We are building Eastern India&apos;s most respected real estate marketing, architectural branding,
+            and private client advisory practice. Browse our active vacancies or submit your profile for ongoing career opportunities.
           </motion.p>
 
           {/* Direct CTA buttons */}
