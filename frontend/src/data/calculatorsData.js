@@ -1027,5 +1027,14 @@ export const CALCULATORS = [
 ];
 
 export function getCalculatorBySlug(slug) {
-  return CALCULATORS.find((c) => c.slug === slug || c.id === slug);
+  if (!slug) return undefined;
+  const normalized = String(slug).toLowerCase().trim();
+  // Alias mappings for historical sitemap & SEO URL compatibility
+  if (normalized === "stamp-duty-registration" || normalized === "stamp-duty" || normalized === "registration") {
+    return CALCULATORS.find((c) => c.id === "registration-cost");
+  }
+  if (normalized === "capital-gains-tax" || normalized === "capital-gains") {
+    return CALCULATORS.find((c) => c.id === "property-roi");
+  }
+  return CALCULATORS.find((c) => c.slug === normalized || c.id === normalized);
 }

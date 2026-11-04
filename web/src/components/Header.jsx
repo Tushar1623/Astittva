@@ -5,6 +5,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CALCULATORS, CALCULATOR_CATEGORIES } from "@/data/calculatorsData";
 import CalculatorIcon from "@/components/calculators/CalculatorIcon";
 
+// Strict navigation order:
+// HOME -> PROPERTIES -> NEWS -> BLOGS -> RESALE -> CALCULATORS -> CAREER -> ABOUT & CONTACT
 const primaryNav = [
   { to: "/", label: "Home" },
   { to: "/properties", label: "Properties" },
@@ -25,23 +27,27 @@ export default function Header() {
   const dropdownTimerRef = useRef(null);
   const { pathname } = useLocation();
 
+  // Scroll detection for subtle elevation
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Close menus on route change
   useEffect(() => {
     setMobileOpen(false);
     setCalcDropdownOpen(false);
   }, [pathname]);
 
+  // Lock body scroll when mobile menu is open
   useEffect(() => {
     if (mobileOpen) document.body.classList.add("menu-open");
     else document.body.classList.remove("menu-open");
     return () => document.body.classList.remove("menu-open");
   }, [mobileOpen]);
 
+  // Graceful hover timeout for mega-menu
   const handleMouseEnter = () => {
     if (dropdownTimerRef.current) clearTimeout(dropdownTimerRef.current);
     setCalcDropdownOpen(true);
@@ -60,7 +66,9 @@ export default function Header() {
       data-testid="site-header"
       className="fixed top-0 left-0 right-0 z-[1000] pointer-events-none"
     >
+      {/* Floating Dark Maroon Bar Wrapper */}
       <div className="pointer-events-auto px-2 sm:px-4 lg:px-5 xl:px-8 pt-2.5 sm:pt-3">
+        {/* Containing Navbar Capsule (position: relative for dropdown anchoring) */}
         <div
           className="relative max-w-[1440px] mx-auto rounded-[8px] lg:rounded-[10px] border border-white/10 transition-all duration-300"
           style={{
@@ -70,25 +78,32 @@ export default function Header() {
               : "0 8px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.10)",
           }}
         >
+          {/* Main Navigation Bar Content */}
           <div className="relative px-3 sm:px-4 lg:px-5 xl:px-6 h-[64px] sm:h-[68px] lg:h-[72px] flex items-center justify-between gap-2 lg:gap-3">
-            {/* LEFT: Logo */}
+
+            {/* LEFT: Square Logo Badge + Wordmark Lockup */}
             <div className="flex items-center shrink-0">
               <Link
                 to="/"
                 data-testid="logo-link"
                 className="flex items-center gap-2 sm:gap-2.5 group"
               >
+                {/* Square Emblem Badge */}
                 <div className="w-[38px] h-[38px] sm:w-[42px] sm:h-[42px] lg:w-[44px] lg:h-[44px] rounded-[6px] overflow-hidden shrink-0 border border-white/15 shadow-sm bg-[#3D060E] flex items-center justify-center transition-transform duration-300 group-hover:scale-[1.02]">
                   <img
                     src="/apple-touch-icon.png"
-                    alt="Astittva Emblem"
+                    alt="Astittva Marketing - Luxury Real Estate Advisory Kolkata"
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.currentTarget.src = "/favicon-512x512.png";
                     }}
                   />
                 </div>
+
+                {/* Vertical separator */}
                 <div className="h-6 sm:h-7 lg:h-7.5 w-[1px] bg-white/20 shrink-0 mx-0.5 sm:mx-1" />
+
+                {/* Editorial Brand Wordmark */}
                 <div className="flex flex-col justify-center leading-none">
                   <span
                     className="font-cinzel text-[18px] sm:text-[20px] lg:text-[21px] xl:text-[22px] tracking-[0.16em] sm:tracking-[0.18em] text-white font-bold whitespace-nowrap"
@@ -104,20 +119,20 @@ export default function Header() {
             </div>
 
             {/* CENTER: Navigation Links */}
-            <nav className="hidden lg:flex items-center justify-center flex-1 px-1 xl:px-2 min-w-0">
+            <nav className="hidden lg:flex items-center justify-center flex-1 px-1 xl:px-2 min-w-0" aria-label="Primary Navigation">
               <div className="flex items-center gap-1 xl:gap-2 2xl:gap-3.5">
                 {primaryNav.map((n) => {
+                  // Special Dropdown Item for CALCULATORS (with crawlable link)
                   if (n.isDropdown) {
                     return (
                       <div
                         key={n.to}
-                        className="relative"
+                        className="relative flex items-center"
                         onMouseEnter={handleMouseEnter}
                         onMouseLeave={handleMouseLeave}
                       >
-                        <button
-                          type="button"
-                          onClick={() => setCalcDropdownOpen((prev) => !prev)}
+                        <NavLink
+                          to={n.to}
                           data-testid="nav-calculators"
                           className="inline-flex items-center transition-colors duration-200 outline-none"
                           aria-expanded={calcDropdownOpen}
@@ -136,13 +151,32 @@ export default function Header() {
                                   isCalculatorsActive ? "text-white" : ""
                                 }`}
                               >
-                                {n.label}
-                                <ChevronDown
-                                  className={`w-3 h-3 transition-transform duration-200 opacity-75 ${
-                                    calcDropdownOpen ? "rotate-180 text-[#D4A359]" : ""
-                                  }`}
-                                  strokeWidth={2.2}
-                                />
+                                <span>{n.label}</span>
+                                <span
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setCalcDropdownOpen((prev) => !prev);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setCalcDropdownOpen((prev) => !prev);
+                                    }
+                                  }}
+                                  aria-label="Toggle calculators dropdown"
+                                  className="p-0.5 hover:text-[#D4A359] cursor-pointer inline-flex items-center"
+                                >
+                                  <ChevronDown
+                                    className={`w-3 h-3 transition-transform duration-200 opacity-75 ${
+                                      calcDropdownOpen ? "rotate-180 text-[#D4A359]" : ""
+                                    }`}
+                                    strokeWidth={2.2}
+                                  />
+                                </span>
                               </span>
                               {isCalculatorsActive && (
                                 <span
@@ -152,11 +186,12 @@ export default function Header() {
                               )}
                             </span>
                           </span>
-                        </button>
+                        </NavLink>
                       </div>
                     );
                   }
 
+                  // Standard Nav Items
                   return (
                     <NavLink
                       key={n.to}
@@ -198,7 +233,7 @@ export default function Header() {
               </div>
             </nav>
 
-            {/* RIGHT: CTA */}
+            {/* RIGHT: Warm Amber Book Consultation CTA */}
             <div className="hidden lg:flex items-center justify-end shrink-0">
               <Link
                 to="/contact"
@@ -217,10 +252,10 @@ export default function Header() {
               </Link>
             </div>
 
-            {/* Mobile Toggle */}
+            {/* Mobile Menu Toggle Button */}
             <button
               data-testid="mobile-menu-toggle"
-              className="lg:hidden text-white hover:text-[#C89A55] relative w-10 h-10 rounded-[6px] flex items-center justify-center transition-colors duration-200 hover:bg-white/[0.06] border border-transparent hover:border-white/10"
+              className="lg:hidden text-white hover:text-[#C89A55] relative w-11 h-11 min-w-[44px] min-h-[44px] rounded-[6px] flex items-center justify-center transition-colors duration-200 hover:bg-white/[0.06] border border-transparent hover:border-white/10"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label={mobileOpen ? "Close menu" : "Open menu"}
             >
@@ -243,7 +278,10 @@ export default function Header() {
             </button>
           </div>
 
-          {/* DESKTOP 3-COLUMN MEGA-MENU DROPDOWN */}
+          {/* ============================================================== */}
+          {/* DESKTOP 3-COLUMN MEGA-MENU DROPDOWN                           */}
+          {/* Anchored to the Navbar Capsule right edge - never overflows!   */}
+          {/* ============================================================== */}
           <AnimatePresence>
             {calcDropdownOpen && (
               <motion.div
@@ -262,6 +300,7 @@ export default function Header() {
                   WebkitBackdropFilter: "blur(24px)",
                 }}
               >
+                {/* 3-Column Equal Grid */}
                 <div
                   className="grid grid-cols-3"
                   style={{
@@ -276,6 +315,7 @@ export default function Header() {
 
                     return (
                       <div key={cat.id} className="min-w-0 flex flex-col">
+                        {/* Column Header */}
                         <div className="pb-2 mb-3 border-b border-white/10 flex items-center justify-between">
                           <span className="text-[10.5px] font-bold tracking-[0.16em] uppercase text-[#D4A359]">
                             {cat.name}
@@ -285,6 +325,7 @@ export default function Header() {
                           </span>
                         </div>
 
+                        {/* List of Calculator Items with Strict 38px + 1fr Grid */}
                         <div className="space-y-2">
                           {catCalcs.map((item) => {
                             const isItemActive = pathname === item.path;
@@ -300,6 +341,7 @@ export default function Header() {
                                     : "border-transparent hover:bg-white/[0.08] hover:border-white/10"
                                 }`}
                               >
+                                {/* Centered Icon */}
                                 <div className="w-[30px] h-[30px] rounded-[5px] bg-white/[0.08] text-[#D4A359] group-hover:text-white group-hover:bg-[#B87333] flex items-center justify-center shrink-0 transition-colors">
                                   <CalculatorIcon
                                     name={item.iconName}
@@ -307,6 +349,7 @@ export default function Header() {
                                   />
                                 </div>
 
+                                {/* Text Column (truncated, no overflow) */}
                                 <div className="min-w-0 pr-1 overflow-hidden flex flex-col justify-center">
                                   <div className="font-sans text-[12px] font-semibold text-white group-hover:text-[#F3CA8A] transition-colors leading-tight truncate">
                                     {item.shortName}
@@ -324,6 +367,7 @@ export default function Header() {
                   })}
                 </div>
 
+                {/* Dropdown Compact Footer Bar */}
                 <div className="mt-3.5 pt-3 border-t border-white/10 flex items-center justify-between text-[11.5px]">
                   <div className="flex items-center gap-2 text-[#D4C3BA] text-[11.5px] truncate">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#D4A359] shrink-0" />
@@ -386,6 +430,7 @@ export default function Header() {
                           />
                         </button>
 
+                        {/* Mobile Expandable Calculator Sub-List */}
                         <AnimatePresence>
                           {mobileCalcExpanded && (
                             <motion.div
@@ -441,6 +486,7 @@ export default function Header() {
                     );
                   }
 
+                  // Normal mobile navigation items
                   return (
                     <NavLink
                       key={n.to}
@@ -474,6 +520,7 @@ export default function Header() {
                   );
                 })}
 
+                {/* Mobile CTA */}
                 <div className="mt-3 pt-3 border-t border-white/10">
                   <Link
                     to="/contact"

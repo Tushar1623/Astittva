@@ -67,7 +67,7 @@ export default function ShareButton({
       case "compact":
         return "bg-white hover:bg-[#FAF8F5] text-[#1C1C1C] hover:text-[#B87333] border border-[#E8DED2] text-[10px] py-1 px-2.5 rounded-md active:scale-95";
       case "iconOnly":
-        return "w-8 h-8 rounded-full bg-white hover:bg-[#B87333] text-[#1C1C1C] hover:text-white border border-[#E8DED2] hover:border-[#B87333] flex items-center justify-center !p-0 transition-all shadow-xs active:scale-95";
+        return "w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-white hover:bg-[#B87333] text-[#1C1C1C] hover:text-white border border-[#E8DED2] hover:border-[#B87333] flex items-center justify-center !p-0 transition-all shadow-xs active:scale-95";
       case "outline":
       default:
         return "bg-white hover:bg-[#B87333]/10 text-[#B87333] hover:text-[#A35D27] border border-[#B87333]/40 hover:border-[#B87333] shadow-xs active:scale-95";
@@ -84,7 +84,7 @@ export default function ShareButton({
           setIsOpen(true);
         }}
         aria-label={`Share ${title || resolvedItem?.project_name || resolvedItem?.title || "this item"}`}
-        className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wider transition-all duration-200 cursor-pointer ${getVariantStyles()} ${className}`}
+        className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 min-h-[40px] sm:min-h-[44px] rounded-lg text-xs font-semibold tracking-wider transition-all duration-200 cursor-pointer ${getVariantStyles()} ${className}`}
         {...props}
       >
         <Share2 className="w-3.5 h-3.5 shrink-0" />

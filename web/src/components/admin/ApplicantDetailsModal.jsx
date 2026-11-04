@@ -193,7 +193,7 @@ export default function ApplicantDetailsModal({
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="w-8 h-8 rounded-full border border-copper/20 hover:border-copper flex items-center justify-center text-[#1C1C1C]/60 hover:text-copper bg-white hover:bg-[#FAF8F5] transition-colors shrink-0 cursor-pointer"
+            className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-copper/20 hover:border-copper flex items-center justify-center text-[#1C1C1C]/60 hover:text-copper bg-white hover:bg-[#FAF8F5] transition-colors shrink-0 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>

@@ -3953,7 +3953,7 @@ if (activeBuildPath) {
   }
 
   // Route allowlist for legitimate application routes
-  const VALID_APP_ROUTE_REGEX = /^\/(properties|resale|blogs|news|market-intelligence|calculators|about|contact|careers?|admin)($|\/.*)/i;
+  const VALID_APP_ROUTE_REGEX = /^\/(properties|resale|blogs|news|market-intelligence|calculators|about|contact|careers?|admin|locations)($|\/.*)/i;
 
   // SPA Route Handler: return index.html (200 OK) for valid routes, or 404 for unknown routes
   app.get("*", async (req, res, next) => {

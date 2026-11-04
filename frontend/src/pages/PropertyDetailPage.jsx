@@ -403,10 +403,10 @@ export default function PropertyDetailPage() {
               <h3 className="font-display text-2xl text-ivory mb-2 font-light">Request details</h3>
               <p className="text-ivory/60 text-sm mb-6 font-light">A senior advisor will share the brochure, pricing & site visit slots.</p>
               <form onSubmit={submit} className="space-y-4" data-testid="property-enquiry-form">
-                <input required placeholder="Name" data-testid="enquiry-name" className="input-luxury" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} />
-                <input required type="tel" placeholder="Phone" data-testid="enquiry-phone" className="input-luxury" value={form.phone} onChange={(e) => setForm({...form, phone: e.target.value})} />
-                <input required type="email" placeholder="Email" data-testid="enquiry-email" className="input-luxury" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} />
-                <textarea rows={3} placeholder="Message (optional)" data-testid="enquiry-message" className="input-luxury" value={form.message} onChange={(e) => setForm({...form, message: e.target.value})} />
+                <input required id="detail-name" name="name" aria-label="Your full name" placeholder="Name" data-testid="enquiry-name" className="input-luxury" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} />
+                <input required type="tel" id="detail-phone" name="phone" aria-label="Your phone number" placeholder="Phone" data-testid="enquiry-phone" className="input-luxury" value={form.phone} onChange={(e) => setForm({...form, phone: e.target.value})} />
+                <input required type="email" id="detail-email" name="email" aria-label="Your email address" placeholder="Email" data-testid="enquiry-email" className="input-luxury" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} />
+                <textarea rows={3} id="detail-message" name="message" aria-label="Message or questions" placeholder="Message (optional)" data-testid="enquiry-message" className="input-luxury" value={form.message} onChange={(e) => setForm({...form, message: e.target.value})} />
                 <button type="submit" disabled={submitting} data-testid="enquiry-submit" className="btn-primary w-full disabled:opacity-50">
                   {submitting ? "Sending..." : "Send Enquiry"}
                 </button>
@@ -442,6 +442,39 @@ export default function PropertyDetailPage() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Financial Planning & Corridor Cross-Linking Widget */}
+            <div className="luxury-card p-6 mt-6 space-y-4">
+              <div className="text-[10px] tracking-[0.25em] uppercase text-copper font-semibold">
+                Buyer Resources &amp; Advisory
+              </div>
+              <h4 className="font-serif-display text-lg text-ivory">Financial Planning Tools</h4>
+              <p className="text-xs text-ivory/70 leading-relaxed">
+                Plan your acquisition of {property.project_name} with verified calculators and regional market intelligence:
+              </p>
+              <ul className="space-y-2 text-xs">
+                <li>
+                  <Link to="/calculators/home-loan-emi" className="text-copper hover:underline flex items-center gap-1.5 font-medium">
+                    → Calculate Home Loan EMI
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/calculators/registration-cost" className="text-copper hover:underline flex items-center gap-1.5 font-medium">
+                    → West Bengal Stamp Duty &amp; Registration
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/resale" className="text-copper hover:underline flex items-center gap-1.5 font-medium">
+                    → Curated Resale Homes in Kolkata
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/blogs" className="text-copper hover:underline flex items-center gap-1.5 font-medium">
+                    → Kolkata Real Estate Market Guides
+                  </Link>
+                </li>
+              </ul>
             </div>
           </aside>
         </div>

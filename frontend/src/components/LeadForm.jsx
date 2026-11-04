@@ -236,6 +236,9 @@ export default function LeadForm({
       >
         <input
           required
+          id="prop-enquiry-name"
+          name="name"
+          aria-label="Your full name"
           placeholder="Name"
           data-testid="enquiry-name"
           className="input-consultation"
@@ -245,6 +248,9 @@ export default function LeadForm({
         <input
           required
           type="tel"
+          id="prop-enquiry-phone"
+          name="phone"
+          aria-label="Phone number"
           placeholder="Phone"
           data-testid="enquiry-phone"
           className="input-consultation"
@@ -254,6 +260,9 @@ export default function LeadForm({
         <input
           required
           type="email"
+          id="prop-enquiry-email"
+          name="email"
+          aria-label="Email address"
           placeholder="Email"
           data-testid="enquiry-email"
           className="input-consultation"
@@ -262,6 +271,9 @@ export default function LeadForm({
         />
         <textarea
           rows={3}
+          id="prop-enquiry-message"
+          name="message"
+          aria-label="Enquiry message"
           placeholder="Message (optional)"
           data-testid="enquiry-message"
           className="input-consultation"
@@ -333,9 +345,12 @@ export default function LeadForm({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 sm:gap-x-6 gap-y-5 sm:gap-y-6">
               <div>
-                <label className="label-consultation">Full Name</label>
+                <label htmlFor="contact-form-name" className="label-consultation">Full Name</label>
                 <input
                   required
+                  id="contact-form-name"
+                  name="name"
+                  aria-label="Your full name"
                   data-testid="contact-name"
                   className="input-consultation"
                   placeholder="Enter your full name"
@@ -346,10 +361,13 @@ export default function LeadForm({
                 />
               </div>
               <div>
-                <label className="label-consultation">Phone Number</label>
+                <label htmlFor="contact-form-phone" className="label-consultation">Phone Number</label>
                 <input
                   required
                   type="tel"
+                  id="contact-form-phone"
+                  name="phone"
+                  aria-label="Phone number"
                   data-testid="contact-phone"
                   className="input-consultation"
                   placeholder="+91 XXXXX XXXXX"
@@ -360,10 +378,13 @@ export default function LeadForm({
                 />
               </div>
               <div className="sm:col-span-2">
-                <label className="label-consultation">Email Address</label>
+                <label htmlFor="contact-form-email" className="label-consultation">Email Address</label>
                 <input
                   required
                   type="email"
+                  id="contact-form-email"
+                  name="email"
+                  aria-label="Email address"
                   data-testid="contact-email"
                   className="input-consultation"
                   placeholder="name@example.com"
@@ -387,9 +408,12 @@ export default function LeadForm({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 sm:gap-x-6 gap-y-5 sm:gap-y-6">
               <div>
-                <label className="label-consultation">Preferred Locality</label>
+                <label htmlFor="contact-form-locality" className="label-consultation">Preferred Locality</label>
                 <div className="relative">
                   <select
+                    id="contact-form-locality"
+                    name="preferred_locality"
+                    aria-label="Preferred Locality"
                     data-testid="contact-locality"
                     className="input-consultation"
                     value={contactForm.preferred_locality}
@@ -411,9 +435,12 @@ export default function LeadForm({
                 </div>
               </div>
               <div>
-                <label className="label-consultation">Investment Purpose</label>
+                <label htmlFor="contact-form-purpose" className="label-consultation">Investment Purpose</label>
                 <div className="relative">
                   <select
+                    id="contact-form-purpose"
+                    name="investment_purpose"
+                    aria-label="Investment Purpose"
                     data-testid="contact-purpose"
                     className="input-consultation"
                     value={contactForm.investment_purpose}
@@ -435,9 +462,12 @@ export default function LeadForm({
                 </div>
               </div>
               <div>
-                <label className="label-consultation">Property Type</label>
+                <label htmlFor="contact-form-property-type" className="label-consultation">Property Type</label>
                 <div className="relative">
                   <select
+                    id="contact-form-property-type"
+                    name="property_type"
+                    aria-label="Property Type"
                     data-testid="contact-property-type"
                     className="input-consultation"
                     value={contactForm.property_type}
@@ -459,9 +489,12 @@ export default function LeadForm({
                 </div>
               </div>
               <div>
-                <label className="label-consultation">Budget</label>
+                <label htmlFor="contact-form-budget" className="label-consultation">Budget</label>
                 <div className="relative">
                   <select
+                    id="contact-form-budget"
+                    name="budget"
+                    aria-label="Budget"
                     data-testid="contact-budget"
                     className="input-consultation"
                     value={contactForm.budget}
@@ -480,9 +513,12 @@ export default function LeadForm({
                 </div>
               </div>
               <div className="sm:col-span-2">
-                <label className="label-consultation">Timeline to Purchase</label>
+                <label htmlFor="contact-form-timeline" className="label-consultation">Timeline to Purchase</label>
                 <div className="relative">
                   <select
+                    id="contact-form-timeline"
+                    name="timeline"
+                    aria-label="Timeline to Purchase"
                     data-testid="contact-timeline"
                     className="input-consultation"
                     value={contactForm.timeline}
@@ -514,6 +550,9 @@ export default function LeadForm({
             </label>
             <textarea
               rows={4}
+              id="contact-form-message"
+              name="message"
+              aria-label="Specific requirements or message"
               data-testid="contact-message"
               className="input-consultation"
               value={contactForm.message}
@@ -580,9 +619,12 @@ export default function LeadForm({
       >
         <div className="grid grid-cols-12 gap-x-4 sm:gap-x-5 gap-y-5 sm:gap-y-6">
           <div className="col-span-4 sm:col-span-2">
-            <label className="label-consultation">Prefix</label>
+            <label htmlFor="lead-prefix-select" className="label-consultation">Prefix</label>
             <div className="relative">
               <select
+                id="lead-prefix-select"
+                name="prefix"
+                aria-label="Salutation prefix"
                 data-testid="lead-prefix-select"
                 value={consultForm.prefix}
                 onChange={(e) =>
@@ -599,11 +641,11 @@ export default function LeadForm({
             </div>
           </div>
           <div className="col-span-8 sm:col-span-5">
-            <label className="label-consultation">First Name</label>
+            <label htmlFor="lead-first-name" className="label-consultation">First Name</label>
             <input
               required
               type="text"
-              data-testid="lead-first-name-input"
+              id="lead-first-name" name="first_name" aria-label="First name" data-testid="lead-first-name-input"
               value={consultForm.first_name}
               onChange={(e) =>
                 setConsultForm({ ...consultForm, first_name: e.target.value })
@@ -613,11 +655,11 @@ export default function LeadForm({
             />
           </div>
           <div className="col-span-12 sm:col-span-5">
-            <label className="label-consultation">Last Name</label>
+            <label htmlFor="lead-last-name" className="label-consultation">Last Name</label>
             <input
               required
               type="text"
-              data-testid="lead-last-name-input"
+              id="lead-last-name" name="last_name" aria-label="Last name" data-testid="lead-last-name-input"
               value={consultForm.last_name}
               onChange={(e) =>
                 setConsultForm({ ...consultForm, last_name: e.target.value })
@@ -627,11 +669,11 @@ export default function LeadForm({
             />
           </div>
           <div className="col-span-4 sm:col-span-3">
-            <label className="label-consultation">Code</label>
+            <label htmlFor="lead-phone-code" className="label-consultation">Code</label>
             <input
               required
               type="text"
-              data-testid="lead-phone-code-input"
+              id="lead-phone-code" name="phone_code" aria-label="Country phone code" data-testid="lead-phone-code-input"
               value={consultForm.phone_code}
               onChange={(e) =>
                 setConsultForm({ ...consultForm, phone_code: e.target.value })
@@ -641,11 +683,11 @@ export default function LeadForm({
             />
           </div>
           <div className="col-span-8 sm:col-span-9">
-            <label className="label-consultation">Phone Number</label>
+            <label htmlFor="lead-phone-input" className="label-consultation">Phone Number</label>
             <input
               required
               type="tel"
-              data-testid="lead-phone-input"
+              id="lead-phone-input" name="phone" aria-label="Phone number" data-testid="lead-phone-input"
               value={consultForm.phone}
               onChange={(e) =>
                 setConsultForm({ ...consultForm, phone: e.target.value })
@@ -657,11 +699,11 @@ export default function LeadForm({
         </div>
 
         <div>
-          <label className="label-consultation">Email Address</label>
+          <label htmlFor="lead-email-input" className="label-consultation">Email Address</label>
           <input
             required
             type="email"
-            data-testid="lead-email-input"
+            id="lead-email-input" name="email" aria-label="Email address" data-testid="lead-email-input"
             value={consultForm.email}
             onChange={(e) =>
               setConsultForm({ ...consultForm, email: e.target.value })
@@ -673,10 +715,10 @@ export default function LeadForm({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 sm:gap-x-6 gap-y-5 sm:gap-y-6">
           <div>
-            <label className="label-consultation">Property Interest</label>
+            <label htmlFor="lead-interest-select" className="label-consultation">Property Interest</label>
             <div className="relative">
               <select
-                data-testid="lead-interest-select"
+                id="lead-interest-select" name="interest" aria-label="Property Interest" data-testid="lead-interest-select"
                 value={consultForm.interest}
                 onChange={(e) =>
                   setConsultForm({ ...consultForm, interest: e.target.value })
@@ -694,10 +736,10 @@ export default function LeadForm({
             </div>
           </div>
           <div>
-            <label className="label-consultation">Budget</label>
+            <label htmlFor="lead-budget-select" className="label-consultation">Budget</label>
             <div className="relative">
               <select
-                data-testid="lead-budget-select"
+                id="lead-budget-select" name="budget" aria-label="Budget" data-testid="lead-budget-select"
                 value={consultForm.budget}
                 onChange={(e) =>
                   setConsultForm({ ...consultForm, budget: e.target.value })
@@ -721,6 +763,9 @@ export default function LeadForm({
           </label>
           <textarea
             rows={3}
+            id="lead-message-input"
+            name="message"
+            aria-label="Goals and requirements message"
             data-testid="lead-message-input"
             value={consultForm.message}
             onChange={(e) =>

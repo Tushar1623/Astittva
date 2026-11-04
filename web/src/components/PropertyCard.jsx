@@ -123,14 +123,15 @@ export default function PropertyCard({
               image={primaryCandidate}
               type="property"
               variant="iconOnly"
-              className="w-8 h-8 !p-0"
+              className="w-10 h-10 min-w-[40px] min-h-[40px] sm:w-11 sm:h-11 sm:min-w-[44px] sm:min-h-[44px] !p-0"
               label=""
             />
             <Link
               to={`/properties/${p.id}`}
-              className="inline-flex items-center gap-1.5 text-copper text-xs tracking-[0.2em] uppercase font-medium hover:text-copper-hover transition-transform duration-300 group-hover:translate-x-1"
+              aria-label={`Explore ${p.project_name} in ${p.location ? `${p.location}, ${p.city || "Kolkata"}` : p.city || "Kolkata"}`}
+              className="inline-flex items-center gap-1.5 text-copper text-xs tracking-[0.2em] uppercase font-medium hover:text-copper-hover transition-transform duration-300 group-hover:translate-x-1 py-2 px-1"
             >
-              Explore <ArrowRight className="w-3.5 h-3.5" />
+              Explore Property <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>

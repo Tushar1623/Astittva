@@ -41,9 +41,9 @@ export const CALCULATORS = [
     description:
       "Plan your home purchase by calculating exact monthly loan installments (EMI), overall interest burden, and total repayment schedule across different bank tenures.",
     defaultValues: {
-      loanAmount: 6000000,
-      interestRate: 8.5,
-      tenureYears: 20,
+      loanAmount: 6000000, // 60 Lakhs
+      interestRate: 8.5, // 8.5%
+      tenureYears: 20, // 20 years
     },
     fields: [
       {
@@ -118,9 +118,9 @@ export const CALCULATORS = [
     description:
       "Understand your true home buying capacity. This calculator evaluates your net take-home salary, current EMIs, and cash reserves to determine a comfortable purchase price.",
     defaultValues: {
-      monthlyIncome: 150000,
+      monthlyIncome: 150000, // 1.5 Lakhs
       existingEmis: 15000,
-      downPaymentSavings: 1500000,
+      downPaymentSavings: 1500000, // 15 Lakhs
       tenureYears: 20,
       interestRate: 8.5,
     },
@@ -178,10 +178,12 @@ export const CALCULATORS = [
       const years = Number(inputs.tenureYears) || 20;
       const rate = Number(inputs.interestRate) || 8.5;
 
+      // Maximum FOIR allowable: 50% of monthly income
       const maxFoirEmi = Math.max(0, income * 0.5 - obligations);
       const r = rate / (12 * 100);
       const n = years * 12;
 
+      // Present value of maximum allowable EMI
       const maxLoan =
         r > 0 && n > 0
           ? (maxFoirEmi * (Math.pow(1 + r, n) - 1)) / (r * Math.pow(1 + r, n))
@@ -216,13 +218,13 @@ export const CALCULATORS = [
       "Determine whether you should purchase a home or continue renting. Analyzes mortgage payments, property appreciation, rent escalations, and investment opportunity costs over time.",
     defaultValues: {
       monthlyRent: 28000,
-      annualRentIncrease: 6,
-      propertyPrice: 7500000,
-      downPaymentPercent: 20,
+      annualRentIncrease: 6, // 6%
+      propertyPrice: 7500000, // 75 Lakhs
+      downPaymentPercent: 20, // 20%
       interestRate: 8.5,
       loanTenureYears: 20,
-      appreciationRate: 6.5,
-      timeHorizon: 10,
+      appreciationRate: 6.5, // 6.5% annual capital growth
+      timeHorizon: 10, // 10 years
     },
     fields: [
       {
@@ -280,6 +282,7 @@ export const CALCULATORS = [
       const years = Number(inputs.timeHorizon) || 10;
       const appRate = (Number(inputs.appreciationRate) || 6.5) / 100;
 
+      // 1. Rent calculation over horizon
       let totalRentPaid = 0;
       let currRent = rent;
       for (let y = 1; y <= years; y++) {
@@ -287,12 +290,14 @@ export const CALCULATORS = [
         currRent *= 1 + rentInc;
       }
 
+      // Renting opportunity: invest down payment at 9% nominal mutual fund return
       const dpAmount = price * dpPct;
       const investedDpReturn = dpAmount * Math.pow(1 + 0.09, years);
       const netRentWealth = investedDpReturn - totalRentPaid;
 
+      // 2. Buy calculation
       const loanAmount = price - dpAmount;
-      const totalMonths = 20 * 12;
+      const totalMonths = 20 * 12; // 20 year loan standard
       const emi =
         (loanAmount * rate * Math.pow(1 + rate, totalMonths)) /
         (Math.pow(1 + rate, totalMonths) - 1);
@@ -300,6 +305,7 @@ export const CALCULATORS = [
       const totalEmiPaid = emi * Math.min(monthsInHorizon, totalMonths);
       const futurePropertyValue = price * Math.pow(1 + appRate, years);
 
+      // Remaining loan principal estimate after horizon
       const remainingMonths = Math.max(0, totalMonths - monthsInHorizon);
       const remainingLoan =
         remainingMonths > 0
@@ -308,6 +314,7 @@ export const CALCULATORS = [
           : 0;
 
       const netBuyEquity = futurePropertyValue - remainingLoan;
+      const netBuyWealth = netBuyEquity - (dpAmount + totalEmiPaid);
 
       const isBuyingBetter = netBuyEquity > netRentWealth;
       const difference = Math.abs(netBuyEquity - netRentWealth);
@@ -414,8 +421,8 @@ export const CALCULATORS = [
     description:
       "Calculate statutory government duties including State Stamp Duty, Sub-Registrar Office registration fees, and legal documentation costs for real estate in India / West Bengal.",
     defaultValues: {
-      agreementValue: 7000000,
-      locationType: "urban",
+      agreementValue: 7000000, // 70 Lakhs
+      locationType: "urban", // urban (6%) or rural (5%)
       legalCharges: 25000,
     },
     fields: [
@@ -451,7 +458,7 @@ export const CALCULATORS = [
       const val = Number(inputs.agreementValue) || 0;
       const isUrban = inputs.locationType === "urban";
       const stampRate = isUrban ? 0.06 : 0.05;
-      const registrationRate = 0.01;
+      const registrationRate = 0.01; // 1% standard
       const legal = Number(inputs.legalCharges) || 20000;
 
       const stampDuty = val * stampRate;
@@ -484,10 +491,10 @@ export const CALCULATORS = [
     description:
       "Assess your total return across both ongoing rental income streams and capital appreciation. Calculates total profit, ROI percentage, and compound annual growth (CAGR).",
     defaultValues: {
-      purchasePrice: 9000000,
-      acquisitionCosts: 600000,
+      purchasePrice: 9000000, // 90 Lakhs
+      acquisitionCosts: 600000, // 6 Lakhs registration/furnishing
       monthlyRent: 35000,
-      expectedSalePrice: 15000000,
+      expectedSalePrice: 15000000, // 1.5 Cr
       holdingYears: 7,
     },
     fields: [
@@ -550,6 +557,7 @@ export const CALCULATORS = [
       const netProfit = capitalGains + totalRentCollected;
       const totalRoiPct = totalInvestment > 0 ? (netProfit / totalInvestment) * 100 : 0;
 
+      // CAGR formula: (Final Value / Initial Value)^(1/years) - 1
       const totalCashOut = sale + totalRentCollected;
       const cagr =
         totalInvestment > 0 && years > 0
@@ -580,9 +588,9 @@ export const CALCULATORS = [
     description:
       "Measure recurring cashflow yields on residential and commercial assets. Evaluates both Gross Yield and Net Yield factoring maintenance fees, vacancy downtime, and municipal taxes.",
     defaultValues: {
-      propertyValue: 8000000,
+      propertyValue: 8000000, // 80 Lakhs
       monthlyRent: 30000,
-      annualMaintenance: 36000,
+      annualMaintenance: 36000, // 3k/month
       propertyTax: 12000,
       vacancyWeeks: 3,
     },
@@ -672,8 +680,8 @@ export const CALCULATORS = [
     description:
       "Project compounding capital growth of real estate assets across Kolkata's micro-markets (New Town, Rajarhat, EM Bypass, Alipore) based on historical growth benchmarks.",
     defaultValues: {
-      currentValue: 10000000,
-      annualGrowthRate: 7.5,
+      currentValue: 10000000, // 1 Cr
+      annualGrowthRate: 7.5, // 7.5%
       years: 10,
     },
     fields: [
@@ -714,6 +722,7 @@ export const CALCULATORS = [
       const totalGrowth = futureValue - current;
       const multiplier = current > 0 ? (futureValue / current).toFixed(2) : "0";
 
+      // Progression breakdown
       const milestones = [
         { year: 3, value: Math.round(current * Math.pow(1 + rate, 3)) },
         { year: 5, value: Math.round(current * Math.pow(1 + rate, 5)) },
@@ -776,6 +785,7 @@ export const CALCULATORS = [
       const val = Number(inputs.inputValue) || 0;
       const unit = inputs.fromUnit || "sqft";
 
+      // Base conversion to Sq. Ft.
       const toSqFtMultipliers = {
         sqft: 1,
         sqm: 10.7639104,
@@ -813,9 +823,9 @@ export const CALCULATORS = [
     description:
       "Compute precise rates on both Super Built-up and Carpet areas. Understand the developer's loading factor and verify true square-foot pricing before booking.",
     defaultValues: {
-      totalPrice: 8500000,
-      superBuiltupArea: 1650,
-      carpetArea: 1200,
+      totalPrice: 8500000, // 85 Lakhs
+      superBuiltupArea: 1650, // 1650 sqft
+      carpetArea: 1200, // 1200 sqft
     },
     fields: [
       {
@@ -880,7 +890,7 @@ export const CALCULATORS = [
     defaultValues: {
       plotArea: 1800,
       numberOfFloors: 2,
-      constructionGrade: "premium",
+      constructionGrade: "premium", // standard (1800), premium (2300), luxury (3200)
     },
     fields: [
       {
@@ -927,9 +937,10 @@ export const CALCULATORS = [
       const totalSlabArea = area * floors;
       const totalCost = totalSlabArea * ratePerSqft;
 
-      const civilCost = totalCost * 0.55;
-      const finishingCost = totalCost * 0.30;
-      const mepCost = totalCost * 0.15;
+      // Sub-breakdowns
+      const civilCost = totalCost * 0.55; // 55%
+      const finishingCost = totalCost * 0.30; // 30%
+      const mepCost = totalCost * 0.15; // 15% (Mechanical, Electrical, Plumbing)
 
       return {
         totalCost: Math.round(totalCost),
@@ -955,9 +966,9 @@ export const CALCULATORS = [
     description:
       "Calculate statutory real estate consultancy commissions for residential sales, commercial acquisitions, or long-term lease transactions including applicable 18% GST.",
     defaultValues: {
-      dealType: "sale",
-      dealValue: 8000000,
-      commissionRate: 2,
+      dealType: "sale", // 'sale' or 'rent'
+      dealValue: 8000000, // 80 Lakhs
+      commissionRate: 2, // 2%
       includeGst: true,
     },
     fields: [
@@ -1003,7 +1014,7 @@ export const CALCULATORS = [
         baseCommission = (val * pct) / 100;
       }
 
-      const gst = baseCommission * 0.18;
+      const gst = baseCommission * 0.18; // 18% GST
       const totalPayable = baseCommission + gst;
 
       return {
@@ -1016,5 +1027,14 @@ export const CALCULATORS = [
 ];
 
 export function getCalculatorBySlug(slug) {
-  return CALCULATORS.find((c) => c.slug === slug || c.id === slug);
+  if (!slug) return undefined;
+  const normalized = String(slug).toLowerCase().trim();
+  // Alias mappings for historical sitemap & SEO URL compatibility
+  if (normalized === "stamp-duty-registration" || normalized === "stamp-duty" || normalized === "registration") {
+    return CALCULATORS.find((c) => c.id === "registration-cost");
+  }
+  if (normalized === "capital-gains-tax" || normalized === "capital-gains") {
+    return CALCULATORS.find((c) => c.id === "property-roi");
+  }
+  return CALCULATORS.find((c) => c.slug === normalized || c.id === normalized);
 }

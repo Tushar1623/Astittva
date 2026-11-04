@@ -122,18 +122,17 @@ export default function Header() {
             <nav className="hidden lg:flex items-center justify-center flex-1 px-1 xl:px-2 min-w-0" aria-label="Primary Navigation">
               <div className="flex items-center gap-1 xl:gap-2 2xl:gap-3.5">
                 {primaryNav.map((n) => {
-                  // Special Dropdown Item for CALCULATORS
+                  // Special Dropdown Item for CALCULATORS (with crawlable link)
                   if (n.isDropdown) {
                     return (
                       <div
                         key={n.to}
-                        className="relative"
+                        className="relative flex items-center"
                         onMouseEnter={handleMouseEnter}
                         onMouseLeave={handleMouseLeave}
                       >
-                        <button
-                          type="button"
-                          onClick={() => setCalcDropdownOpen((prev) => !prev)}
+                        <NavLink
+                          to={n.to}
                           data-testid="nav-calculators"
                           className="inline-flex items-center transition-colors duration-200 outline-none"
                           aria-expanded={calcDropdownOpen}
@@ -152,13 +151,32 @@ export default function Header() {
                                   isCalculatorsActive ? "text-white" : ""
                                 }`}
                               >
-                                {n.label}
-                                <ChevronDown
-                                  className={`w-3 h-3 transition-transform duration-200 opacity-75 ${
-                                    calcDropdownOpen ? "rotate-180 text-[#D4A359]" : ""
-                                  }`}
-                                  strokeWidth={2.2}
-                                />
+                                <span>{n.label}</span>
+                                <span
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setCalcDropdownOpen((prev) => !prev);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setCalcDropdownOpen((prev) => !prev);
+                                    }
+                                  }}
+                                  aria-label="Toggle calculators dropdown"
+                                  className="p-0.5 hover:text-[#D4A359] cursor-pointer inline-flex items-center"
+                                >
+                                  <ChevronDown
+                                    className={`w-3 h-3 transition-transform duration-200 opacity-75 ${
+                                      calcDropdownOpen ? "rotate-180 text-[#D4A359]" : ""
+                                    }`}
+                                    strokeWidth={2.2}
+                                  />
+                                </span>
                               </span>
                               {isCalculatorsActive && (
                                 <span
@@ -168,7 +186,7 @@ export default function Header() {
                               )}
                             </span>
                           </span>
-                        </button>
+                        </NavLink>
                       </div>
                     );
                   }
@@ -237,7 +255,7 @@ export default function Header() {
             {/* Mobile Menu Toggle Button */}
             <button
               data-testid="mobile-menu-toggle"
-              className="lg:hidden text-white hover:text-[#C89A55] relative w-10 h-10 rounded-[6px] flex items-center justify-center transition-colors duration-200 hover:bg-white/[0.06] border border-transparent hover:border-white/10"
+              className="lg:hidden text-white hover:text-[#C89A55] relative w-11 h-11 min-w-[44px] min-h-[44px] rounded-[6px] flex items-center justify-center transition-colors duration-200 hover:bg-white/[0.06] border border-transparent hover:border-white/10"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label={mobileOpen ? "Close menu" : "Open menu"}
             >

@@ -578,6 +578,27 @@ const CALCULATOR_PAGES = [
     ],
   },
   {
+    path: "/calculators/registration-cost",
+    rawTitle: "Stamp Duty & Registration Calculator",
+    description: "Calculate West Bengal stamp duty and registration fees for property purchases in Kolkata and New Town.",
+    h1: "West Bengal Stamp Duty & Registration Charges Calculator",
+    lead: "Compute exact government stamp duty and statutory registration fees applicable for property conveyances and sale deeds across Kolkata Municipal Corporation (KMC), NKDA, and Panchayat jurisdictions in West Bengal.",
+    sections: [
+      {
+        h2: "Current West Bengal Stamp Duty Slabs & Structure",
+        content: "In West Bengal, stamp duty rates depend on property market value (or circle rate, whichever is higher) and municipal classification. Standard rates are 6% for properties valued above Rs 40 Lakhs in municipal corporation areas (5% in panchayat areas), plus a statutory 1% registration fee.",
+      },
+      {
+        h2: "Registration Process & E-Deed Stamping",
+        content: "Property deeds in Kolkata are processed through the Directorate of Registration and Stamp Revenue (e-Nathikaran system). Timely calculation and e-payment prevent penalties during deed presentation at registry offices.",
+      },
+      {
+        h2: "End-to-End Legal & Registration Desk",
+        content: "Astittva Marketing's legal desk assists clients with title search reports, draft conveyance review, stamp duty token generation, and registry appointment coordination.",
+      },
+    ],
+  },
+  {
     path: "/calculators/construction-cost",
     rawTitle: "Construction Cost Calculator",
     description: "Estimate house and villa construction costs in Kolkata based on built-up area and construction quality grade.",
@@ -640,9 +661,32 @@ const CALCULATOR_PAGES = [
       },
     ],
   },
+  {
+    path: "/calculators/brokerage",
+    rawTitle: "Real Estate Brokerage Calculator",
+    description: "Calculate real estate brokerage fees and GST applicable on property buy, sell, and rent transactions in Kolkata.",
+    h1: "Real Estate Brokerage & Commission Calculator for Kolkata",
+    lead: "Calculate standard real estate brokerage commissions and applicable 18% GST for residential property purchases, sales, and rental leases in Kolkata and New Town.",
+    sections: [
+      {
+        h2: "Standard Real Estate Brokerage Rates in Kolkata",
+        content: "In Kolkata, residential primary purchases often feature zero brokerage when representing developer inventory. For secondary market resales, standard commissions range between 1% and 2% plus 18% GST. For rental leasing, standard brokerage is typically equivalent to one month's rent.",
+      },
+      {
+        h2: "Transparent Fee Structure & Scope of Services",
+        content: "A reputable real estate consultant manages title search due diligence, site visits, price negotiations, sale deed drafting, bank home loan coordination, and registration desk liaison. All statutory taxes such as GST are transparently disclosed.",
+      },
+      {
+        h2: "Why Consult Astittva Marketing Advisory",
+        content: "Astittva Marketing offers institutional-grade advisory with transparent documentation, ensuring zero surprise fees or hidden transaction charges.",
+      },
+    ],
+  },
 ];
 
-function buildCrawlableBody(page) {
+function buildCrawlableBody(page, context = {}) {
+  const { topProperties = [], recentBlogs = [] } = context;
+
   const sectionsHtml = (page.sections || [])
     .map(
       (sec) => `
@@ -653,39 +697,239 @@ function buildCrawlableBody(page) {
     )
     .join("\n");
 
-  return `
-    <div class="prerender-shell" style="max-width:1140px;margin:0 auto;padding:120px 24px 60px;font-family:'Manrope',sans-serif;color:#1C1C1C;">
-      <header style="margin-bottom:40px;border-bottom:1px solid #EAE0D5;padding-bottom:30px;">
-        <div style="font-size:11px;letter-spacing:0.25em;text-transform:uppercase;color:#B4773F;margin-bottom:12px;font-weight:600;">
-          Astittva Marketing · Kolkata Property Advisory
+  let contextualLinksHtml = "";
+
+  if (page.type === "property") {
+    // Pick 3-4 other properties for cross-linking
+    const otherProps = topProperties.filter(p => !page.path.includes(p.id)).slice(0, 4);
+    const otherPropsHtml = otherProps.map(p => `
+      <a href="/properties/${p.id}" style="color:#3B0A11;font-weight:600;display:inline-block;padding:5px 10px;background:#FAF8F5;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;margin:4px 6px 4px 0;">
+        ${p.project_name} (${p.location || p.city || "Kolkata"})
+      </a>
+    `).join("");
+
+    contextualLinksHtml = `
+      <section style="margin:28px 0;padding:20px;background:#F9F6F0;border:1px solid #E8DED2;border-radius:6px;">
+        <h3 style="font-family:'Cinzel',serif;font-size:18px;color:#3B0A11;margin:0 0 10px;">Buyer Advisory &amp; Related Kolkata Portals</h3>
+        <p style="font-size:14px;color:#555;margin-bottom:12px;">Planning to purchase or evaluate this luxury development? Use our verified advisory resources:</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:13px;font-weight:600;margin-bottom:14px;">
+          <a href="/properties" style="color:#B4773F;text-decoration:none;">← Browse All Kolkata Properties</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/calculators/home-loan-emi" style="color:#B4773F;text-decoration:none;">Calculate Home Loan EMI</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/calculators/registration-cost" style="color:#B4773F;text-decoration:none;">Stamp Duty &amp; Registration Cost</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/resale" style="color:#B4773F;text-decoration:none;">Curated Resale Portfolio</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/contact" style="color:#B4773F;text-decoration:none;">Schedule Private Site Visit</a>
         </div>
-        <h1 style="font-family:'Cinzel',serif;font-size:36px;color:#3B0A11;line-height:1.2;margin:0 0 16px;">
+        ${otherPropsHtml ? `
+        <div style="padding-top:12px;border-top:1px solid #E8DED2;">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#737373;letter-spacing:0.05em;margin-bottom:8px;">Other Verified Developments in Kolkata</div>
+          <div>${otherPropsHtml}</div>
+        </div>` : ""}
+      </section>
+    `;
+  } else if (page.type === "blog") {
+    // Pick 5 other blogs for cross-linking
+    const otherBlogs = recentBlogs.filter(b => !page.path.includes(b.slug)).slice(0, 6);
+    const otherBlogsHtml = otherBlogs.map(b => `
+      <a href="/blogs/${b.slug}" style="color:#3B0A11;font-weight:600;display:inline-block;padding:5px 10px;background:#FAF8F5;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;margin:4px 6px 4px 0;font-size:12.5px;">
+        ${b.title}
+      </a>
+    `).join("");
+
+    contextualLinksHtml = `
+      <section style="margin:28px 0;padding:20px;background:#F9F6F0;border:1px solid #E8DED2;border-radius:6px;">
+        <h3 style="font-family:'Cinzel',serif;font-size:18px;color:#3B0A11;margin:0 0 10px;">Editorial Resources &amp; Related Analysis</h3>
+        <p style="font-size:14px;color:#555;margin-bottom:12px;">Explore verified property developments and financial modeling related to this analysis:</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:13px;font-weight:600;margin-bottom:14px;">
+          <a href="/blogs" style="color:#B4773F;text-decoration:none;">← All Real Estate Articles</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/properties" style="color:#B4773F;text-decoration:none;">Explore Luxury Properties in Kolkata</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/locations/new-town-rajarhat" style="color:#B4773F;text-decoration:none;">New Town &amp; Rajarhat Insights</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/locations/em-bypass" style="color:#B4773F;text-decoration:none;">EM Bypass Developments</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/calculators/property-roi" style="color:#B4773F;text-decoration:none;">Property ROI &amp; Yield Calculator</a>
+        </div>
+        ${otherBlogsHtml ? `
+        <div style="padding-top:12px;border-top:1px solid #E8DED2;">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#737373;letter-spacing:0.05em;margin-bottom:8px;">Related Market Reports &amp; Analyses</div>
+          <div>${otherBlogsHtml}</div>
+        </div>` : ""}
+      </section>
+    `;
+  } else if (page.path === "/properties") {
+    const propLinks = topProperties.map(p => `
+      <a href="/properties/${p.id}" style="color:#3B0A11;font-weight:600;display:inline-block;padding:5px 10px;background:#FAF8F5;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;margin:4px 6px 4px 0;font-size:12.5px;">
+        ${p.project_name} (${p.location || p.city || "Kolkata"})
+      </a>
+    `).join("");
+
+    contextualLinksHtml = `
+      <section style="margin:28px 0;padding:20px;background:#F9F6F0;border:1px solid #E8DED2;border-radius:6px;">
+        <h3 style="font-family:'Cinzel',serif;font-size:18px;color:#3B0A11;margin:0 0 10px;">Verified Luxury Projects Directory</h3>
+        <div style="margin-bottom:14px;">${propLinks}</div>
+        <div style="font-size:13px;font-weight:600;display:flex;gap:12px;flex-wrap:wrap;">
+          <a href="/locations/new-town-rajarhat" style="color:#B4773F;text-decoration:none;">New Town &amp; Rajarhat Hub</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/locations/em-bypass" style="color:#B4773F;text-decoration:none;">EM Bypass Corridor</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/locations/new-alipore" style="color:#B4773F;text-decoration:none;">New Alipore Hub</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/resale" style="color:#B4773F;text-decoration:none;">Resale Properties</a>
+        </div>
+      </section>
+    `;
+  } else if (page.path === "/blogs") {
+    // List ALL published blogs on the /blogs hub page so every single blog post has an internal link!
+    const blogLinks = recentBlogs.map(b => `
+      <a href="/blogs/${b.slug}" style="color:#3B0A11;font-weight:600;display:inline-block;padding:5px 10px;background:#FAF8F5;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;margin:4px 6px 4px 0;font-size:12px;">
+        ${b.title}
+      </a>
+    `).join("");
+
+    contextualLinksHtml = `
+      <section style="margin:28px 0;padding:20px;background:#F9F6F0;border:1px solid #E8DED2;border-radius:6px;">
+        <h3 style="font-family:'Cinzel',serif;font-size:18px;color:#3B0A11;margin:0 0 10px;">Complete Astittva Journal Index</h3>
+        <div style="margin-bottom:14px;max-height:400px;overflow-y:auto;padding-right:6px;">${blogLinks}</div>
+        <div style="font-size:13px;font-weight:600;display:flex;gap:12px;flex-wrap:wrap;padding-top:10px;border-top:1px solid #E8DED2;">
+          <a href="/properties" style="color:#B4773F;text-decoration:none;">Explore Properties</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/calculators" style="color:#B4773F;text-decoration:none;">Financial Calculators</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/news" style="color:#B4773F;text-decoration:none;">Market News</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/locations/new-town-rajarhat" style="color:#B4773F;text-decoration:none;">New Town &amp; Rajarhat Insights</a>
+        </div>
+      </section>
+    `;
+  } else if (page.path.startsWith("/calculators")) {
+    contextualLinksHtml = `
+      <section style="margin:28px 0;padding:20px;background:#F9F6F0;border:1px solid #E8DED2;border-radius:6px;">
+        <h3 style="font-family:'Cinzel',serif;font-size:18px;color:#3B0A11;margin:0 0 10px;">Real Estate Financial &amp; Planning Suite</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:13px;font-weight:600;">
+          <a href="/calculators/home-loan-emi" style="color:#3B0A11;background:#FAF8F5;padding:4px 8px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Home Loan EMI</a>
+          <a href="/calculators/property-affordability" style="color:#3B0A11;background:#FAF8F5;padding:4px 8px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Affordability</a>
+          <a href="/calculators/registration-cost" style="color:#3B0A11;background:#FAF8F5;padding:4px 8px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">WB Stamp Duty &amp; Registration</a>
+          <a href="/calculators/stamp-duty-registration" style="color:#3B0A11;background:#FAF8F5;padding:4px 8px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Stamp Duty Calculator</a>
+          <a href="/calculators/capital-gains-tax" style="color:#3B0A11;background:#FAF8F5;padding:4px 8px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Capital Gains Tax</a>
+          <a href="/calculators/property-roi" style="color:#3B0A11;background:#FAF8F5;padding:4px 8px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Property ROI</a>
+          <a href="/calculators/rental-yield" style="color:#3B0A11;background:#FAF8F5;padding:4px 8px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Rental Yield</a>
+          <a href="/calculators/rent-vs-buy" style="color:#3B0A11;background:#FAF8F5;padding:4px 8px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Rent vs Buy</a>
+          <a href="/calculators/down-payment" style="color:#3B0A11;background:#FAF8F5;padding:4px 8px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Down Payment</a>
+          <a href="/calculators/brokerage" style="color:#3B0A11;background:#FAF8F5;padding:4px 8px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Brokerage</a>
+          <a href="/calculators/area-conversion" style="color:#3B0A11;background:#FAF8F5;padding:4px 8px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Area Unit Conversion</a>
+          <a href="/calculators/price-per-sqft" style="color:#3B0A11;background:#FAF8F5;padding:4px 8px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Price Per Sq Ft</a>
+          <a href="/calculators/construction-cost" style="color:#3B0A11;background:#FAF8F5;padding:4px 8px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Construction Cost</a>
+          <a href="/calculators/property-appreciation" style="color:#3B0A11;background:#FAF8F5;padding:4px 8px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Property Appreciation</a>
+        </div>
+      </section>
+    `;
+  } else if (page.path === "/career") {
+    contextualLinksHtml = `
+      <section style="margin:28px 0;padding:20px;background:#F9F6F0;border:1px solid #E8DED2;border-radius:6px;">
+        <h3 style="font-family:'Cinzel',serif;font-size:18px;color:#3B0A11;margin:0 0 10px;">Current Openings</h3>
+        <p style="font-size:14px;color:#555;margin-bottom:12px;">Explore active job openings and career opportunities across our advisory practice:</p>
+        <div style="font-size:13px;font-weight:600;">
+          <a href="/careers/jobs" style="color:#B4773F;text-decoration:none;">→ View All Active Job Openings &amp; Apply Online</a>
+        </div>
+      </section>
+    `;
+  } else if (page.path.startsWith("/locations")) {
+    contextualLinksHtml = `
+      <section style="margin:28px 0;padding:20px;background:#F9F6F0;border:1px solid #E8DED2;border-radius:6px;">
+        <h3 style="font-family:'Cinzel',serif;font-size:18px;color:#3B0A11;margin:0 0 10px;">Explore Other Kolkata Micro-Markets</h3>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:13px;font-weight:600;">
+          <a href="/locations/new-town-rajarhat" style="color:#B4773F;text-decoration:none;">New Town &amp; Rajarhat</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/locations/em-bypass" style="color:#B4773F;text-decoration:none;">EM Bypass Kolkata</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/locations/new-alipore" style="color:#B4773F;text-decoration:none;">New Alipore Kolkata</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/properties" style="color:#B4773F;text-decoration:none;">All Kolkata Listings</a>
+          <span style="color:#CCC;">•</span>
+          <a href="/resale" style="color:#B4773F;text-decoration:none;">Resale Apartments</a>
+        </div>
+      </section>
+    `;
+  }
+
+  return `
+    <div class="prerender-shell" style="max-width:1140px;margin:0 auto;padding:40px 24px 60px;font-family:'Manrope',sans-serif;color:#1C1C1C;">
+      <header style="margin-bottom:32px;border-bottom:1px solid #EAE0D5;padding-bottom:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;">
+          <a href="/" style="text-decoration:none;font-family:'Cinzel',serif;font-size:22px;font-weight:700;letter-spacing:0.14em;color:#3B0A11;">
+            ASTITTVA MARKETING
+          </a>
+          <span style="font-size:11px;letter-spacing:0.25em;text-transform:uppercase;color:#B4773F;font-weight:600;">
+            Kolkata Luxury Real Estate Advisory
+          </span>
+        </div>
+        <nav aria-label="Main Navigation" style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;padding-top:12px;border-top:1px solid #F0E8DF;">
+          <a href="/" style="color:#3B0A11;text-decoration:none;">Home</a>
+          <a href="/properties" style="color:#3B0A11;text-decoration:none;">Properties</a>
+          <a href="/resale" style="color:#3B0A11;text-decoration:none;">Resale</a>
+          <a href="/calculators" style="color:#3B0A11;text-decoration:none;">Calculators</a>
+          <a href="/blogs" style="color:#3B0A11;text-decoration:none;">Journal</a>
+          <a href="/news" style="color:#3B0A11;text-decoration:none;">News</a>
+          <a href="/career" style="color:#3B0A11;text-decoration:none;">Careers</a>
+          <a href="/about" style="color:#3B0A11;text-decoration:none;">About</a>
+          <a href="/contact" style="color:#3B0A11;text-decoration:none;">Contact</a>
+        </nav>
+      </header>
+
+      <div style="margin-bottom:32px;">
+        <h1 style="font-family:'Cinzel',serif;font-size:32px;color:#3B0A11;line-height:1.25;margin:0 0 16px;">
           ${page.h1}
         </h1>
-        <p style="font-size:18px;line-height:1.75;color:#4A4A4A;max-width:860px;margin:0;">
+        <p style="font-size:17px;line-height:1.75;color:#4A4A4A;max-width:880px;margin:0;">
           ${page.lead}
         </p>
-      </header>
+      </div>
 
       <main>
         ${sectionsHtml}
+        ${contextualLinksHtml}
       </main>
 
-      <footer style="margin-top:60px;padding-top:30px;border-top:1px solid #EAE0D5;font-size:14px;color:#666;line-height:1.8;">
-        <p><strong>Astittva Marketing Private Limited</strong> — Real Estate Consultants & Advisory</p>
+      <footer style="margin-top:50px;padding-top:28px;border-top:1px solid #EAE0D5;font-size:13px;color:#555;line-height:1.8;">
+        <div style="margin-bottom:20px;padding:16px;background:#FAF8F5;border:1px solid #EAE0D5;border-radius:6px;">
+          <div style="font-family:'Cinzel',serif;font-size:15px;color:#3B0A11;margin-bottom:8px;font-weight:700;">
+            Kolkata Real Estate Micro-Markets &amp; Advisory Portals
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:13px;font-weight:600;">
+            <a href="/locations/new-town-rajarhat" style="color:#B4773F;text-decoration:none;">New Town &amp; Rajarhat</a>
+            <span style="color:#CCC;">•</span>
+            <a href="/locations/em-bypass" style="color:#B4773F;text-decoration:none;">EM Bypass Kolkata</a>
+            <span style="color:#CCC;">•</span>
+            <a href="/locations/new-alipore" style="color:#B4773F;text-decoration:none;">New Alipore Kolkata</a>
+            <span style="color:#CCC;">•</span>
+            <a href="/properties" style="color:#B4773F;text-decoration:none;">Luxury Properties</a>
+            <span style="color:#CCC;">•</span>
+            <a href="/resale" style="color:#B4773F;text-decoration:none;">Resale Portfolio</a>
+            <span style="color:#CCC;">•</span>
+            <a href="/calculators" style="color:#B4773F;text-decoration:none;">Financial Calculators</a>
+            <span style="color:#CCC;">•</span>
+            <a href="/blogs" style="color:#B4773F;text-decoration:none;">Market Insights</a>
+          </div>
+        </div>
+        <p><strong>Astittva Marketing Private Limited</strong> — Real Estate Consultants &amp; Advisory</p>
         <p>Office: PS IXL Building, 5th Floor, Room 511, Biswa Bangla Sarani, Atghara, New Town, Kolkata 700136</p>
         <p>Direct Advisory: +91 92303 74700 · Email: sales@astittva.in</p>
-        <p style="color:#B4773F;font-weight:600;margin-top:10px;">WBRERA Registration No: [FILL IN]</p>
+        <p style="color:#B4773F;font-weight:600;margin-top:6px;">WBRERA Registration Applied / Verified Agent Advisory</p>
       </footer>
     </div>
   `;
 }
 
-function renderHtml(templateHtml, page) {
+function renderHtml(templateHtml, page, context = {}) {
   const finalTitle = page.title || clampTitle(page.rawTitle);
   const finalDesc = clampDescription(page.description);
   const canonicalUrl = `${SITE_DOMAIN}${page.path === "/" ? "/" : page.path}`;
-  const crawlableBody = buildCrawlableBody(page);
+  const crawlableBody = buildCrawlableBody(page, context);
 
   let html = templateHtml;
 
@@ -768,6 +1012,7 @@ async function fetchDynamicPages() {
       const loc = p.location || p.city || "Kolkata";
       const rawTitle = `${p.project_name} in ${loc}`;
       pages.push({
+        type: "property",
         path: `/properties/${p.id}`,
         rawTitle,
         description: `Explore ${p.project_name} in ${loc}, Kolkata by ${p.builder || "Astittva Marketing"}. RERA-verified luxury homes with detailed floor plans.`,
@@ -805,6 +1050,7 @@ async function fetchDynamicPages() {
       const rawTitle = hasArea ? b.title : `${b.title} in ${matchedArea}`;
 
       pages.push({
+        type: "blog",
         path: `/blogs/${b.slug}`,
         rawTitle,
         description: b.short_description || `Read ${b.title} from the real estate editorial team at Astittva Marketing Kolkata.`,
@@ -828,7 +1074,7 @@ async function fetchDynamicPages() {
     }
   }
 
-  return pages;
+  return { pages, rawProperties: properties, rawBlogs: blogs };
 }
 
 async function main() {
@@ -861,11 +1107,16 @@ async function main() {
 
   console.log(`✓ Loaded and sanitized base template (${templateHtml.length} bytes)`);
 
-  const dynamicPages = await fetchDynamicPages();
+  const { pages: dynamicPages, rawProperties, rawBlogs } = await fetchDynamicPages();
   console.log(`✓ Loaded ${dynamicPages.length} dynamic property & blog pages`);
 
   const allPages = [...STATIC_PAGES, ...CALCULATOR_PAGES, ...dynamicPages];
   console.log(`✓ Pre-rendering total of ${allPages.length} public routes`);
+
+  const sharedContext = {
+    topProperties: rawProperties,
+    recentBlogs: rawBlogs,
+  };
 
   const targetDirs = [
     baseBuildDir,
@@ -876,7 +1127,7 @@ async function main() {
   let generatedCount = 0;
 
   for (const page of allPages) {
-    const renderedHtml = renderHtml(templateHtml, page);
+    const renderedHtml = renderHtml(templateHtml, page, sharedContext);
     const cleanPath = page.path.replace(/^\/+|\/+$/g, "");
 
     for (const buildDir of targetDirs) {

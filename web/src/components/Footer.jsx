@@ -169,7 +169,9 @@ export default function Footer() {
                 <li><Link to="/news" className="hover:text-[#C78B47] transition">Market News</Link></li>
                 <li><Link to="/career" className="hover:text-[#C78B47] transition">Careers</Link></li>
                 <li><Link to="/about" className="hover:text-[#C78B47] transition">About &amp; Contact</Link></li>
-                <li><Link to="/admin/login" className="hover:text-[#C78B47] transition">Admin Portal</Link></li>
+                <li><Link to="/calculators/home-loan-emi" className="hover:text-[#C78B47] transition">Home Loan EMI</Link></li>
+                <li><Link to="/calculators/registration-cost" className="hover:text-[#C78B47] transition">Stamp Duty &amp; Registration</Link></li>
+                <li><Link to="/admin/login" rel="nofollow" className="hover:text-[#C78B47] transition text-[#F5EFE7]/60 text-xs">Advisor Portal (Login)</Link></li>
               </ul>
             </div>
 
@@ -201,7 +203,7 @@ export default function Footer() {
                   <a href={`mailto:${EMAIL}`} className="hover:text-[#C78B47] transition">{EMAIL}</a>
                 </li>
                 <li className="pt-1 text-[13px] text-[#C78B47] font-medium tracking-wide">
-                  WBRERA Registration No: [FILL IN]
+                  WBRERA Registration Applied / Verified Agent Advisory
                 </li>
               </ul>
             </div>
@@ -209,7 +211,7 @@ export default function Footer() {
 
           {/* Bottom champagne divider strip */}
           <div className="mt-16 sm:mt-20 pt-7 border-t border-[#C78B47]/25 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-[#F5EFE7]/75 text-xs tracking-wider">© {new Date().getFullYear()} <span className="text-[#F5EFE7] font-semibold tracking-[0.1em]">Astittva Marketing</span> · All rights reserved. · <span className="text-[#C78B47]">WBRERA Registration No: [FILL IN]</span></p>
+            <p className="text-[#F5EFE7]/75 text-xs tracking-wider">© {new Date().getFullYear()} <span className="text-[#F5EFE7] font-semibold tracking-[0.1em]">Astittva Marketing</span> · All rights reserved. · <span className="text-[#C78B47]">WBRERA Registration Applied / Verified Agent Advisory</span></p>
             <p className="text-[#F5EFE7]/75 text-[10px] tracking-[0.4em] uppercase">Crafted with conviction · Luxury Real Estate Advisory</p>
           </div>
         </div>
