@@ -39,6 +39,20 @@ ErrorDocument 404 /404.html
   RewriteEngine On
   RewriteBase /
 
+  # ----------------------------------------------------------------------
+  # Canonical Domain Enforcement: HTTPS & Non-WWW (301 Permanent Redirect)
+  # Resolves www duplicate URLs and enforces single preferred canonical host
+  # ----------------------------------------------------------------------
+  # 1. Redirect www.astittva.in (both HTTP and HTTPS) directly to https://astittva.in (single hop)
+  RewriteCond %{HTTP_HOST} ^www\.astittva\.in$ [NC]
+  RewriteRule ^(.*)$ https://astittva.in/$1 [R=301,L]
+
+  # 2. Redirect HTTP to HTTPS for non-www directly to https://astittva.in (single hop)
+  RewriteCond %{HTTPS} !on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteCond %{HTTP_HOST} ^astittva\.in$ [NC]
+  RewriteRule ^(.*)$ https://astittva.in/$1 [R=301,L]
+
   # Directly serve physical sitemap.xml without SPA index.html fallback
   RewriteRule ^sitemap\.xml$ sitemap.xml [L]
 
@@ -61,8 +75,9 @@ ErrorDocument 404 /404.html
   RewriteRule ^ - [L]
 
   # Allowlist of legitimate application routes -> route to index.html with 200 OK
+  # Includes /locations corridor hub landing pages
   RewriteCond %{REQUEST_URI} ^/$ [OR]
-  RewriteCond %{REQUEST_URI} ^/(properties|resale|blogs|news|market-intelligence|calculators|about|contact|careers?|admin)(/.*)?$
+  RewriteCond %{REQUEST_URI} ^/(properties|resale|blogs|news|market-intelligence|calculators|about|contact|careers?|admin|locations)(\/.*)?$
   RewriteRule ^ index.html [L]
 
   # Any unknown path not in the route allowlist returns real HTTP 404 via 404.html

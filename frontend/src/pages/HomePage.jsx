@@ -1,7 +1,30 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, ShieldCheck, Sparkles, Building2, Compass, ChevronRight, MapPin, Globe2, Award, TrendingUp, BadgeCheck, Handshake, Briefcase, MessageCircle, Check, ChevronDown, Loader2 } from "lucide-react";
+import {
+  ArrowRight,
+  ShieldCheck,
+  Sparkles,
+  Building2,
+  Compass,
+  ChevronRight,
+  MapPin,
+  Globe2,
+  Award,
+  TrendingUp,
+  BadgeCheck,
+  Handshake,
+  Briefcase,
+  MessageCircle,
+  Check,
+  ChevronDown,
+  Loader2,
+  ExternalLink,
+  HelpCircle,
+  FileText,
+  Scale,
+  Share2
+} from "lucide-react";
 import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, driveDirectFallbackUrl, fileUrl } from "@/lib/api";
 import { pickPropertyFallback } from "@/components/PropertyCard";
 import { toast } from "sonner";
@@ -55,10 +78,87 @@ const LOCATIONS = [
 const PILLARS = [
   { icon: ShieldCheck, title: "RERA-Verified Projects", body: "Every listing is RERA-verified and personally vetted by our advisory team — no surprises, ever." },
   { icon: Sparkles, title: "Verified Developers", body: "We partner only with developers whose craftsmanship and integrity match our standards of luxury." },
-  { icon: Compass, title: "Expert Investment Advisory", body: "From legal diligence to investment strategy — a single, sophisticated point of contact for your journey." },
+  { icon: Compass, title: "Expert Investment Advisory", body: "From legal diligence to investment strategy — invest with complete confidence to build an enduring family legacy." },
   { icon: Award, title: "Legal Support", body: "Complete title, RERA and registration support from our in-house and partner legal network." },
   { icon: MapPin, title: "Site Visit Assistance", body: "Pre-scheduled, comfortable, advisor-led site visits across New Town, Rajarhat and Kolkata." },
   { icon: Briefcase, title: "End-to-End Guidance", body: "From shortlist to handover — and beyond. We remain accountable to outcomes, not just deals." },
+];
+
+const SERVICES = [
+  {
+    icon: Building2,
+    title: "Luxury Residential Acquisitions",
+    desc: "Curated portfolio of premium apartments, penthouses, and sky villas across Kolkata's premier high-rises. We analyze floor plans, carpet-area efficiency, and developer delivery records.",
+  },
+  {
+    icon: Handshake,
+    title: "Secondary Market Resale Advisory",
+    desc: "Title-checked resale homes offering immediate handover. Our resale desk handles 30-year mother deed searches, encumbrance certificates, and smooth seller-to-buyer transitions.",
+  },
+  {
+    icon: TrendingUp,
+    title: "Real Estate Investment & Rental Yield",
+    desc: "Strategic advisory for institutional buyers and NRI investors seeking capital preservation and high rental yields across New Town IT hubs and arterial transit corridors.",
+  },
+  {
+    icon: Scale,
+    title: "Legal Diligence & WBRERA Compliance",
+    desc: "Strict compliance checks on sanctioned municipal plans, fire clearances, West Bengal circle rates, and mutation processes with KMC and NKDA.",
+  },
+];
+
+const EXTERNAL_RESOURCES = [
+  {
+    title: "West Bengal RERA (WBRERA)",
+    url: "https://rera.wb.gov.in",
+    tag: "Statutory Authority",
+    domain: "rera.wb.gov.in",
+    desc: "Official government portal for verifying registered real estate agents and approved projects in West Bengal.",
+  },
+  {
+    title: "Directorate of Registration & Stamp Revenue",
+    url: "https://wbregistration.gov.in",
+    tag: "Land Registry (e-Nathikaran)",
+    domain: "wbregistration.gov.in",
+    desc: "Official e-Nathikaran system for circle rate assessment, market valuation, and statutory deed registration in West Bengal.",
+  },
+  {
+    title: "New Town Kolkata Dev. Authority (NKDA)",
+    url: "https://nkdamar.org",
+    tag: "Smart City Infrastructure",
+    domain: "nkdamar.org",
+    desc: "Statutory authority overseeing smart city urban planning, building approvals, and civic infrastructure in New Town.",
+  },
+  {
+    title: "Kolkata Metropolitan Dev. Authority (KMDA)",
+    url: "https://kmda.wb.gov.in",
+    tag: "Metropolitan Planning",
+    domain: "kmda.wb.gov.in",
+    desc: "Planning body managing comprehensive urban transit corridors, flyovers, and master developments across Greater Kolkata.",
+  },
+];
+
+const HOMEPAGE_FAQS = [
+  {
+    q: "What makes Astittva Marketing a leading real estate company in Kolkata?",
+    a: "Astittva Marketing operates as an institutional luxury real estate advisory firm rather than a transactional brokerage. We specialize in verified high-rise developments, bespoke residences, and secondary market resales across New Town, Rajarhat, EM Bypass, and South Kolkata, conducting independent 30-year title diligence and WBRERA scrutiny for every client to help discerning buyers invest with confidence and build an enduring family legacy.",
+  },
+  {
+    q: "How does Astittva verify property legal title and WBRERA compliance?",
+    a: "Every development represented by Astittva undergoes comprehensive regulatory diligence. We independently verify project registration numbers on the official West Bengal Real Estate Regulatory Authority (WBRERA) portal, inspect sanctioned architectural blueprints, review 30-year mother deeds at local registry offices, and verify municipal mutation status with KMC or NKDA.",
+  },
+  {
+    q: "What are the prevailing stamp duty and property registration rates in West Bengal?",
+    a: "In West Bengal, standard stamp duty is 6% for properties valued above ₹40 Lakhs located in municipal corporation areas such as KMC (5% in panchayat and non-corporation areas), plus a mandatory 1% registration fee. Stamp duty is calculated on the higher of the registered agreement value or the official circle rate determined by the Directorate of Registration and Stamp Revenue.",
+  },
+  {
+    q: "Which Kolkata micro-markets offer the best capital appreciation and rental yield?",
+    a: "New Town (Action Areas I, II & III) and Rajarhat deliver superior rental yields driven by corporate hiring across Salt Lake Sector V and the Silicon Valley IT SEZ. EM Bypass offers strong capital appreciation anchored by Orange Line metro connectivity and super-specialty medical infrastructure. New Alipore remains South Kolkata's distinguished address for long-term wealth preservation.",
+  },
+  {
+    q: "Does Astittva Marketing handle secondary market resale properties in Kolkata?",
+    a: "Yes. Astittva maintains a dedicated secondary market resale desk that conducts exhaustive title searches, non-encumbrance certificate reviews, market valuations, price negotiations, sale agreement drafting, and municipal tax book updates for both property buyers and sellers.",
+  },
 ];
 
 const KOLKATA_FACTS = [
@@ -84,7 +184,6 @@ const fadeUp = {
   transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
 };
 
-
 export default function HomePage() {
   const [projects, setProjects] = useState(() => {
     try {
@@ -100,11 +199,13 @@ export default function HomePage() {
     const seedFeatured = (seedProperties || []).filter((p) => p.featured || p.is_featured);
     return seedFeatured.length > 0 ? seedFeatured.slice(0, 6) : (seedProperties || []).slice(0, 6);
   });
+
   const initialForm = { prefix: "Mr", first_name: "", last_name: "", phone_code: "+91", email: "", phone: "", interest: "", budget: "", message: "" };
   const [formData, setFormData] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [openFaqIndex, setOpenFaqIndex] = useState(0);
 
   useEffect(() => {
     api.get("/properties", { params: { featured: true, limit: 6 } })
@@ -147,14 +248,28 @@ export default function HomePage() {
     }
   };
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: HOMEPAGE_FAQS.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: f.a,
+      },
+    })),
+  };
+
   return (
     <div data-testid="home-page">
       <Seo
         title="Astittva Marketing | Real Estate Company in Kolkata"
         description="Premier real estate company in Kolkata. Astittva Marketing provides trusted advisory for luxury properties, flats & investments across EM Bypass & New Town."
         path="/"
-        schema={[getOrganizationSchema(), getWebSiteSchema()]}
+        schema={[getOrganizationSchema(), getWebSiteSchema(), faqSchema]}
       />
+
       {/* ===================== HERO ===================== */}
       <section data-testid="hero-section" className="relative min-h-[640px] h-[100svh] sm:min-h-[760px] sm:h-screen w-full overflow-hidden bg-[#FAF8F5]">
         <div className="absolute inset-0">
@@ -176,7 +291,7 @@ export default function HomePage() {
             transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
             className="max-w-3xl relative"
           >
-            {/* Localized contrast halo behind hero copy — guarantees readability on any slide */}
+            {/* Localized contrast halo behind hero copy */}
             <div
               aria-hidden="true"
               className="absolute -inset-x-8 -inset-y-10 sm:-inset-x-12 sm:-inset-y-14 -z-10 pointer-events-none"
@@ -187,32 +302,36 @@ export default function HomePage() {
               }}
             />
 
-            <div className="eyebrow-line mb-6 sm:mb-10" data-testid="hero-overline">
+            <div className="eyebrow-line mb-4 sm:mb-6" data-testid="hero-overline">
               <span
                 className="text-[9px] sm:text-[10px] tracking-[0.4em] sm:tracking-[0.5em] uppercase text-white font-semibold"
                 style={{ textShadow: "0 1px 6px rgba(0,0,0,0.18)" }}
-              >Premier Real Estate Company in Kolkata · Est. 2026</span>
+              >
+                Premier Real Estate Company in Kolkata · Est. 2026
+              </span>
             </div>
 
             <h1
-              className="display-headline text-white text-[2.1rem] leading-[1.04] sm:text-[3.4rem] lg:text-[5rem] tracking-[-0.025em]"
+              className="display-headline text-white text-[2rem] leading-[1.06] sm:text-[3.1rem] lg:text-[4.4rem] tracking-[-0.025em]"
               style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5), 0 4px 20px rgba(0,0,0,0.35)" }}
             >
+              <span className="block text-copper text-sm sm:text-lg lg:text-xl font-sans tracking-[0.2em] uppercase font-semibold mb-2 sm:mb-3">
+                Real Estate Company in Kolkata
+              </span>
               <span className="block">Invest With Confidence.</span>
-              <span className="block mt-1 sm:mt-2">Build your future</span>
               <span className="block mt-1 sm:mt-2">
-                with <span style={{ color: "#FFFFFF" }}>Astittva.</span>
+                Build your legacy with <span className="text-white italic">Astittva.</span>
               </span>
             </h1>
 
             <p
-              className="mt-6 sm:mt-9 text-white text-[15px] sm:text-base lg:text-lg max-w-xl leading-[1.75] font-normal"
+              className="mt-6 sm:mt-8 text-white text-[15px] sm:text-base lg:text-lg max-w-xl leading-[1.75] font-normal"
               style={{ textShadow: "0 1px 6px rgba(0,0,0,0.18)" }}
             >
-              As a premier real estate company in Kolkata, Astittva Marketing curates verified residential and commercial opportunities across EM Bypass, New Town, and South Kolkata — guided by advisors who measure success in decades, not deals.
+              Astittva Marketing is Kolkata&apos;s premier luxury real estate company and property advisory firm. When you choose to invest with confidence in Kolkata&apos;s finest properties, you build an enduring family legacy. Headquartered in New Town, we guide homebuyers, investors, and families to vetted residential, commercial, and secondary market developments across EM Bypass, Rajarhat, New Alipore, and Salt Lake with absolute transparency and institutional rigor.
             </p>
 
-            <div className="mt-7 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-5 items-stretch sm:items-center">
+            <div className="mt-7 sm:mt-9 flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
               <Link to="/properties" data-testid="explore-properties-btn" className="btn-primary w-full sm:w-auto">
                 Explore Properties <ArrowRight className="w-3.5 h-3.5" />
               </Link>
@@ -223,6 +342,16 @@ export default function HomePage() {
               >
                 Book a Consultation <ArrowRight className="w-3 h-3" />
               </a>
+              <ShareButton
+                title="Astittva Marketing | Real Estate Company in Kolkata"
+                description="Premier real estate company in Kolkata. Trusted advisory for luxury properties, flats & investments across EM Bypass, New Town & South Kolkata."
+                url="https://astittva.in"
+                image="https://astittva.in/og-image.png"
+                contentType="generic"
+                variant="light"
+                label="Share Astittva"
+                className="w-full sm:w-auto px-5 py-4 text-[10px] tracking-[0.22em] uppercase font-semibold border-white/70"
+              />
             </div>
           </motion.div>
         </div>
@@ -255,7 +384,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===================== WHY ASTITTVA placeholder will follow ===================== */}
+      {/* ===================== WHY ASTITTVA ===================== */}
       <section data-testid="why-astitva-section" className="relative py-16 sm:py-24 overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-16">
           <motion.div {...fadeUp} className="max-w-3xl mb-12 sm:mb-16">
@@ -266,6 +395,9 @@ export default function HomePage() {
               A new standard for real estate<br />
               <span className="text-[#5F5F5F] italic font-serif-display">advisory in Eastern India.</span>
             </h2>
+            <p className="mt-6 text-[#5F5F5F] leading-[1.8] font-light text-base max-w-2xl">
+              As a dedicated real estate company in Kolkata, Astittva Marketing eliminates the confusion and risks associated with conventional property purchases. We align our recommendations with your capital preservation goals, residential aspirations, and regulatory safety.
+            </p>
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-white/[0.05]">
@@ -287,6 +419,50 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===================== COMPREHENSIVE SERVICES ===================== */}
+      <section data-testid="services-section" className="py-16 sm:py-20 bg-[#FAF8F5] border-t border-[#E8DED2]">
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-16">
+          <motion.div {...fadeUp} className="max-w-3xl mb-12">
+            <div className="eyebrow-line mb-6">
+              <span className="text-[10px] tracking-[0.45em] uppercase text-copper font-semibold">Institutional Advisory Scope</span>
+            </div>
+            <h2 className="section-title text-3xl sm:text-4xl lg:text-5xl leading-tight">
+              Real Estate Services in Kolkata:<br />
+              <span className="italic text-[#5F5F5F] font-serif-display">From Acquisition to Ownership.</span>
+            </h2>
+            <p className="mt-4 text-[#5F5F5F] text-base leading-relaxed font-light">
+              Whether you are acquiring a luxury residential sky residence, liquidating an existing property, or structuring high-yield commercial investments, our practice delivers verifiable data and transparent guidance at every stage.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {SERVICES.map((srv, idx) => (
+              <motion.div
+                key={srv.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: idx * 0.1 }}
+                className="bg-white p-7 rounded-xl border border-[#E8DED2] shadow-xs flex flex-col justify-between hover:border-copper transition-colors"
+              >
+                <div>
+                  <div className="w-12 h-12 rounded-lg bg-[#FAF8F5] border border-[#E8DED2] flex items-center justify-center text-copper mb-5">
+                    <srv.icon className="w-6 h-6" strokeWidth={1.4} />
+                  </div>
+                  <h3 className="font-serif-display text-xl text-[#1C1C1C] mb-3 leading-snug">{srv.title}</h3>
+                  <p className="text-xs text-[#5F5F5F] leading-relaxed font-light">{srv.desc}</p>
+                </div>
+                <div className="mt-6 pt-4 border-t border-[#E8DED2]/60">
+                  <Link to="/properties" className="inline-flex items-center gap-1.5 text-xs text-copper font-medium hover:text-copper-hover">
+                    <span>Learn more</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ===================== FEATURED LOCATIONS ===================== */}
       <section data-testid="locations-section" className="py-16 sm:py-24 bg-[#F5F1EC]">
@@ -318,7 +494,6 @@ export default function HomePage() {
                 <Link to={loc.link || `/properties?city=${encodeURIComponent(loc.name)}`} data-testid={`location-card-${loc.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}>
                   <div className="relative aspect-[4/3] overflow-hidden bg-[#F5F1EC]">
                     <img loading="lazy" src={loc.img} alt={loc.name} className="w-full h-full object-cover transition-transform duration-[1.8s] ease-out group-hover:scale-105" />
-                    {/* Subtle bottom gradient — only behind chip, photograph stays bright */}
                     <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 to-transparent pointer-events-none" />
                     <div className="absolute top-5 left-5 inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-[#E8DED2] px-3 py-1.5">
                       <span className="w-1 h-1 rounded-full bg-[#B87333]" />
@@ -430,13 +605,13 @@ export default function HomePage() {
                         image={p.featured_image || (Array.isArray(p.images) ? p.images[0] : "") || pickPropertyFallback(p.id)}
                         type="property"
                         variant="iconOnly"
-                        className="w-8 h-8 !p-0"
+                        className="w-10 h-10 min-w-[40px] min-h-[40px] sm:w-11 sm:h-11 sm:min-w-[44px] sm:min-h-[44px] !p-0"
                         label=""
                       />
                       <Link
                         to={`/properties/${p.id}`}
                         className="p-1 text-copper transition-transform duration-500 group-hover:translate-x-1"
-                        aria-label={`View ${p.project_name}`}
+                        aria-label={`Explore ${p.project_name} in ${p.location || p.city || "Kolkata"}`}
                       >
                         <ArrowRight className="w-4 h-4" />
                       </Link>
@@ -446,6 +621,50 @@ export default function HomePage() {
               ))}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* ===================== REGULATORY RESOURCES (EXTERNAL LINKS) ===================== */}
+      <section data-testid="regulatory-section" className="py-16 sm:py-20 bg-[#FAF8F5] border-y border-[#E8DED2]">
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-16">
+          <motion.div {...fadeUp} className="max-w-3xl mb-10">
+            <div className="eyebrow-line mb-6">
+              <span className="text-[10px] tracking-[0.45em] uppercase text-copper font-semibold">Government & Regulatory Due Diligence</span>
+            </div>
+            <h2 className="section-title text-3xl sm:text-4xl lg:text-5xl leading-tight">
+              Essential Considerations & Official Portals<br />
+              <span className="italic text-[#5F5F5F] font-serif-display">For Kolkata Property Buyers.</span>
+            </h2>
+            <p className="mt-4 text-[#5F5F5F] text-base leading-relaxed font-light">
+              We empower homebuyers with transparent legal oversight. Before committing capital to any property in West Bengal, verify promoter registrations, inspect prevailing circle rates, and review statutory approvals via these official government resources:
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {EXTERNAL_RESOURCES.map((res, i) => (
+              <motion.a
+                key={res.title}
+                href={res.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.08 }}
+                className="p-6 bg-white border border-[#E8DED2] rounded-xl hover:border-copper transition-all duration-300 group flex flex-col justify-between shadow-xs hover:shadow-md"
+              >
+                <div>
+                  <div className="text-[10px] tracking-[0.25em] uppercase text-copper font-semibold mb-2">{res.tag}</div>
+                  <h3 className="font-serif-display text-lg text-[#1C1C1C] group-hover:text-copper transition-colors leading-snug">{res.title}</h3>
+                  <p className="text-xs text-[#5F5F5F] mt-2.5 leading-relaxed font-light">{res.desc}</p>
+                </div>
+                <div className="mt-5 pt-3 border-t border-[#E8DED2]/70 flex items-center justify-between text-xs text-copper font-medium">
+                  <span>{res.domain}</span>
+                  <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </div>
+              </motion.a>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -493,8 +712,58 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===================== FREQUENTLY ASKED QUESTIONS ===================== */}
+      <section data-testid="faq-section" className="py-16 sm:py-24 bg-white border-t border-[#E8DED2]">
+        <div className="max-w-[1100px] mx-auto px-6 sm:px-8">
+          <motion.div {...fadeUp} className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
+            <div className="eyebrow-line justify-center mb-6" style={{ display: "inline-flex" }}>
+              <span className="text-[10px] tracking-[0.45em] uppercase text-copper font-semibold">Client Advisory Questions</span>
+            </div>
+            <h2 className="section-title text-3xl sm:text-4xl lg:text-5xl leading-tight">
+              Frequently Asked Questions About<br />
+              <span className="italic text-[#5F5F5F] font-serif-display">Real Estate in Kolkata.</span>
+            </h2>
+            <p className="mt-4 text-[#5F5F5F] text-base leading-relaxed font-light">
+              Clear answers to the most common questions regarding property purchases, legal title searches, West Bengal stamp duty, and investment yields.
+            </p>
+          </motion.div>
+
+          <div className="space-y-3.5">
+            {HOMEPAGE_FAQS.map((faq, index) => {
+              const isOpen = openFaqIndex === index;
+              return (
+                <div
+                  key={faq.q}
+                  className="border border-[#E8DED2] rounded-xl overflow-hidden bg-[#FAF8F5] transition-colors"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaqIndex(isOpen ? -1 : index)}
+                    aria-expanded={isOpen}
+                    className="w-full text-left px-6 py-5 flex items-center justify-between gap-4 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-copper"
+                  >
+                    <span className="font-serif-display text-base sm:text-lg text-[#1C1C1C] font-medium leading-snug">
+                      {faq.q}
+                    </span>
+                    <span className={`w-7 h-7 rounded-full border border-[#E8DED2] bg-white flex items-center justify-center shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180 text-copper border-copper" : "text-[#737373]"}`}>
+                      <ChevronDown className="w-4 h-4" />
+                    </span>
+                  </button>
+
+                  {isOpen && (
+                    <div className="px-6 pb-6 pt-1 text-sm text-[#4A4A4A] leading-[1.8] font-light border-t border-[#E8DED2]/60 bg-white">
+                      <p>{faq.a}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* ===================== EXPANSION ROADMAP ===================== */}
-      <section data-testid="roadmap-section" className="py-16 sm:py-24">
+      <section data-testid="roadmap-section" className="py-16 sm:py-24 bg-[#FAF8F5]">
         <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-16">
           <motion.div {...fadeUp} className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
             <div className="eyebrow-line justify-center mb-8" style={{ display: "inline-flex" }}>
@@ -650,9 +919,11 @@ export default function HomePage() {
                   <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-7" data-testid="lead-form">
                     <div className="grid grid-cols-12 gap-x-4 sm:gap-x-5 gap-y-5 sm:gap-y-6">
                       <div className="col-span-4 sm:col-span-2">
-                        <label className="label-consultation">Prefix</label>
+                        <label htmlFor="lead-prefix-home" className="label-consultation">Prefix</label>
                         <div className="relative">
                           <select
+                            id="lead-prefix-home"
+                            name="prefix"
                             data-testid="lead-prefix-select"
                             value={formData.prefix}
                             onChange={(e) => setFormData({ ...formData, prefix: e.target.value })}
@@ -667,9 +938,11 @@ export default function HomePage() {
                         </div>
                       </div>
                       <div className="col-span-8 sm:col-span-5">
-                        <label className="label-consultation">First Name</label>
+                        <label htmlFor="lead-firstname-home" className="label-consultation">First Name</label>
                         <input
                           required
+                          id="lead-firstname-home"
+                          name="first_name"
                           type="text"
                           data-testid="lead-first-name-input"
                           value={formData.first_name}
@@ -679,9 +952,11 @@ export default function HomePage() {
                         />
                       </div>
                       <div className="col-span-12 sm:col-span-5">
-                        <label className="label-consultation">Last Name</label>
+                        <label htmlFor="lead-lastname-home" className="label-consultation">Last Name</label>
                         <input
                           required
+                          id="lead-lastname-home"
+                          name="last_name"
                           type="text"
                           data-testid="lead-last-name-input"
                           value={formData.last_name}
@@ -691,9 +966,11 @@ export default function HomePage() {
                         />
                       </div>
                       <div className="col-span-4 sm:col-span-3">
-                        <label className="label-consultation">Code</label>
+                        <label htmlFor="lead-phonecode-home" className="label-consultation">Code</label>
                         <input
                           required
+                          id="lead-phonecode-home"
+                          name="phone_code"
                           type="text"
                           data-testid="lead-phone-code-input"
                           value={formData.phone_code}
@@ -703,9 +980,11 @@ export default function HomePage() {
                         />
                       </div>
                       <div className="col-span-8 sm:col-span-9">
-                        <label className="label-consultation">Phone Number</label>
+                        <label htmlFor="lead-phone-home" className="label-consultation">Phone Number</label>
                         <input
                           required
+                          id="lead-phone-home"
+                          name="phone"
                           type="tel"
                           data-testid="lead-phone-input"
                           value={formData.phone}
@@ -717,9 +996,11 @@ export default function HomePage() {
                     </div>
 
                     <div>
-                      <label className="label-consultation">Email Address</label>
+                      <label htmlFor="lead-email-home" className="label-consultation">Email Address</label>
                       <input
                         required
+                        id="lead-email-home"
+                        name="email"
                         type="email"
                         data-testid="lead-email-input"
                         value={formData.email}
@@ -731,9 +1012,11 @@ export default function HomePage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 sm:gap-x-6 gap-y-5 sm:gap-y-6">
                       <div>
-                        <label className="label-consultation">Property Interest</label>
+                        <label htmlFor="lead-interest-home" className="label-consultation">Property Interest</label>
                         <div className="relative">
                           <select
+                            id="lead-interest-home"
+                            name="interest"
                             data-testid="lead-interest-select"
                             value={formData.interest}
                             onChange={(e) => setFormData({ ...formData, interest: e.target.value })}
@@ -750,9 +1033,11 @@ export default function HomePage() {
                         </div>
                       </div>
                       <div>
-                        <label className="label-consultation">Budget</label>
+                        <label htmlFor="lead-budget-home" className="label-consultation">Budget</label>
                         <div className="relative">
                           <select
+                            id="lead-budget-home"
+                            name="budget"
                             data-testid="lead-budget-select"
                             value={formData.budget}
                             onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
@@ -769,12 +1054,14 @@ export default function HomePage() {
                     </div>
 
                     <div>
-                      <label className="label-consultation flex items-center justify-between">
+                      <label htmlFor="lead-message-home" className="label-consultation flex items-center justify-between">
                         <span>Message / Specific Requirements</span>
                         <span className="text-[#817572] font-normal tracking-normal text-[10px]">OPTIONAL</span>
                       </label>
                       <textarea
                         rows={3}
+                        id="lead-message-home"
+                        name="message"
                         data-testid="lead-message-input"
                         value={formData.message}
                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}

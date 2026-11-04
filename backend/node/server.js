@@ -86,6 +86,22 @@ app.use(
   })
 );
 
+// Canonical Host & HTTPS Enforcement (301 Permanent Redirect)
+// Enforces single canonical domain: https://astittva.in (redirects www and http in a single hop)
+app.use((req, res, next) => {
+  const rawHost = (req.headers.host || "").toLowerCase();
+  const host = rawHost.split(":")[0];
+  const proto = (req.headers["x-forwarded-proto"] || "").toLowerCase();
+
+  if (host === "www.astittva.in") {
+    return res.redirect(301, `https://astittva.in${req.originalUrl}`);
+  }
+  if (host === "astittva.in" && proto === "http") {
+    return res.redirect(301, `https://astittva.in${req.originalUrl}`);
+  }
+  next();
+});
+
 app.use(compression());
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));

@@ -9,7 +9,10 @@ const files = [
   "src/components/ShareModal.jsx",
   "src/components/admin/ApplicantDetailsModal.jsx",
   "src/data/calculatorsData.js",
+  "src/pages/HomePage.jsx",
   "src/pages/PropertyDetailPage.jsx",
+  "public/.htaccess",
+  "public/index.html",
   "public/sitemap.xml"
 ];
 

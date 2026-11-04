@@ -64,24 +64,48 @@ const STATIC_PAGES = [
     title: "Astittva Marketing | Real Estate Company in Kolkata",
     rawTitle: "Real Estate Company in Kolkata",
     description: "Premier real estate company in Kolkata. Astittva Marketing provides trusted advisory for luxury properties, flats & investments across EM Bypass & New Town.",
-    h1: "Real Estate Company in Kolkata | Find Your Astittva. Build Your Legacy.",
-    lead: "Astittva Marketing is Kolkata's premier luxury real estate company and property advisory firm. Headquartered in New Town, we guide homebuyers, investors, and families to vetted residential, commercial, and secondary market developments across EM Bypass, Rajarhat, New Alipore, and Salt Lake with absolute transparency and institutional rigor.",
+    h1: "Real Estate Company in Kolkata: Invest With Confidence & Build Your Legacy | Astittva Marketing",
+    lead: "Astittva Marketing is Kolkata's premier luxury real estate company and property advisory firm. When you choose to invest with confidence in Kolkata's finest properties, you build an enduring family legacy. Headquartered in New Town, we guide homebuyers, investors, and families to vetted residential, commercial, and secondary market developments across EM Bypass, Rajarhat, New Alipore, and Salt Lake with absolute transparency and institutional rigor.",
     sections: [
       {
-        h2: "Premier Real Estate Corridors in Kolkata",
-        content: "From the high-tech smart city corridors of New Town Action Area I, II & III to the rapidly appreciating residential townships of Rajarhat, the high-velocity skyline along Eastern Metropolitan (EM) Bypass, and prestigious heritage addresses in South Kolkata, Astittva Marketing curates vetted developments from Kolkata's most reputable builders. Every corridor offers distinct investment dynamics, connectivity advantages via the Kolkata Metro network, and world-class healthcare and education infrastructure.",
+        h2: "Premier Real Estate Corridors in Kolkata: New Town, EM Bypass & New Alipore",
+        content: "From the high-tech smart city corridors of New Town Action Areas I, II, and III to the rapidly appreciating residential townships of Rajarhat, the high-velocity skyline along Eastern Metropolitan (EM) Bypass, and prestigious heritage addresses in New Alipore, Astittva Marketing curates vetted developments from Kolkata's foremost developers. Every corridor offers distinct capital appreciation dynamics, superior rental yields driven by the IT corridors of Salt Lake Sector V, and seamless connectivity via the Kolkata Metro network, Netaji Subhash Chandra Bose International Airport, and major arterial expressways.",
       },
       {
-        h2: "Institutional Advisory Pillars & Due Diligence",
-        content: "Every property in our portfolio undergoes thorough WBRERA regulatory diligence, 30-year chain of title verification, and developer pedigree evaluation. We provide transparent pricing without hidden brokerage, detailed carpet-to-super-built-up floor plan analysis, comparative market valuations, and advisor-led on-site inspections. Our clients make well-informed capital commitments backed by verifiable data.",
+        h2: "Institutional Real Estate Advisory: Invest With Confidence",
+        content: "Unlike transactional brokers, our real estate company in Kolkata functions as an institutional private client advisory. Every property presented to our clients undergoes rigorous 30-year chain of title verification, mother deed scrutiny, sanctioned municipal plan inspection, and independent West Bengal Real Estate Regulatory Authority (WBRERA) compliance checks. Discerning investors gain access to transparent carpet-area valuations, comparative price intelligence, and developer delivery track records, ensuring every capital commitment is safeguarded by verifiable legal documentation.",
       },
       {
-        h2: "Curated Luxury Developments & Secondary Market Resale",
-        content: "Whether you are seeking newly launched high-rise sky residences, ready-to-move condominiums, or verified secondary market resale apartments, our dedicated desks manage the entire acquisition lifecycle. From bank financing approvals and legal document drafting to KMC or NKDA mutation and West Bengal stamp duty registration, our senior consultants ensure seamless execution.",
+        h2: "Curated Luxury Developments & High-Rise Living in Kolkata",
+        content: "Whether you are seeking newly launched high-rise sky residences, ultra-luxury penthouses overlooking New Town Eco Park, or tranquil gated communities in South Kolkata, our advisory portfolio represents the pinnacle of urban living. We partner exclusively with Kolkata's most reputable developers including Srijan Realty, Vinayak Group, Mani Group, and PS Group. Each luxury development is evaluated for architectural craftsmanship, cross-ventilation, earthquake resistance, and premium clubhouse amenities designed for distinguished lifestyle standards.",
       },
       {
-        h2: "Why Discerning Buyers Choose Astittva Marketing",
-        content: "Unlike volume-driven real estate portals, Astittva operates as a high-touch private client advisory. We align our recommendations with your long-term capital preservation, lifestyle aspirations, and rental yield objectives. Our deep local footprint across Kolkata ensures privileged developer access, preferred inventory selection, and enduring post-transaction support.",
+        h2: "Secondary Market Resale Property Advisory in Kolkata",
+        content: "For buyers and sellers seeking ready-to-move apartments in Kolkata, Astittva Marketing operates a dedicated secondary market resale advisory desk. Our specialists manage the entire transaction lifecycle: conducting non-encumbrance certificate (EC) searches, evaluating fair market values against West Bengal circle rates, drafting legally binding agreements for sale, and coordinating municipal mutation with the Kolkata Municipal Corporation (KMC) or New Town Kolkata Development Authority (NKDA) for seamless ownership transfer.",
+      },
+      {
+        h2: "West Bengal Statutory Due Diligence & Official Government Oversight",
+        content: "Property acquisitions in West Bengal require thorough regulatory oversight. Astittva ensures complete statutory transparency by verifying promoter credentials against the official WBRERA portal, reviewing mutation status, and calculating accurate stamp duty and registration charges under the Directorate of Registration and Stamp Revenue (e-Nathikaran). We empower homebuyers to inspect official government records, building sanction plans, and occupancy certificates prior to executing final sale deeds.",
+      },
+      {
+        h2: "Build Your Family Legacy With Astittva Real Estate Advisory",
+        content: "Real estate is the foundation of enduring wealth preservation. As your trusted real estate company in Kolkata, Astittva Marketing aligns every property recommendation with your long-term wealth creation, portfolio diversification, and family legacy aspirations. When families build their heritage with our advisors, they invest with complete confidence knowing every legal title is pristine. From initial micro-market consultations and private advisor-led site visits to mortgage banking facilitation and post-handover property management, our senior partners remain committed to your lifelong real estate success.",
+      },
+      {
+        h2: "What Distinguishes Astittva as a Premier Real Estate Company in Kolkata?",
+        content: "Astittva Marketing operates as a specialized luxury advisory practice rather than a transactional real estate brokerage. We provide institutional guidance, 30-year chain of title verification, and direct developer representation across New Town, Rajarhat, EM Bypass, and South Kolkata. Clients receive transparent carpet-to-built-up area ratios, non-biased project comparisons, and dedicated legal conveyance support from initial inspection to final registry.",
+      },
+      {
+        h2: "How Does Astittva Verify Title Clearances and WBRERA Compliance?",
+        content: "Every residential project and resale apartment in our portfolio undergoes thorough regulatory scrutiny. We cross-verify project registration numbers on the official West Bengal Real Estate Regulatory Authority (WBRERA) portal, inspect sanctioned architectural blueprints from KMC or NKDA, review 30-year title deeds at local registry offices, and examine non-encumbrance certificates to guarantee unencumbered freehold ownership.",
+      },
+      {
+        h2: "Prevailing West Bengal Stamp Duty and Registration Rates",
+        content: "Under the West Bengal Directorate of Registration and Stamp Revenue, property stamp duty is assessed at 6% for properties valued above ₹40 Lakhs in municipal corporation areas (5% in non-corporation and panchayat jurisdictions), plus a mandatory 1% registration fee. Stamp duty is calculated based on the higher of the transaction consideration or the official circle rate assessed on the e-Nathikaran system.",
+      },
+      {
+        h2: "High-Growth Corridors and Investment Yields Across Kolkata",
+        content: "New Town (Action Areas I, II, and III) and Rajarhat offer strong rental yields averaging 4.5% to 6.2%, driven by the massive expansion of IT SEZ campuses and financial hubs. The Eastern Metropolitan (EM Bypass) delivers steady 8% to 12% annual capital appreciation supported by the operational Orange Line Metro and premier healthcare clusters, while New Alipore remains South Kolkata's premier enclave for luxury wealth preservation.",
       },
     ],
   },
@@ -853,6 +877,66 @@ function buildCrawlableBody(page, context = {}) {
           <span style="color:#CCC;">•</span>
           <a href="/resale" style="color:#B4773F;text-decoration:none;">Resale Apartments</a>
         </div>
+      </section>
+    `;
+  } else if (page.path === "/") {
+    const featuredProps = topProperties.slice(0, 4).map(p => `
+      <a href="/properties/${p.id}" style="color:#3B0A11;font-weight:600;display:inline-block;padding:5px 10px;background:#FAF8F5;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;margin:4px 6px 4px 0;font-size:12.5px;">
+        ${p.project_name} (${p.location || p.city || "Kolkata"})
+      </a>
+    `).join("");
+
+    const topBlogs = recentBlogs.slice(0, 4).map(b => `
+      <a href="/blogs/${b.slug}" style="color:#3B0A11;font-weight:600;display:inline-block;padding:5px 10px;background:#FAF8F5;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;margin:4px 6px 4px 0;font-size:12.5px;">
+        ${b.title}
+      </a>
+    `).join("");
+
+    contextualLinksHtml = `
+      <section style="margin:28px 0;padding:24px;background:#F9F6F0;border:1px solid #E8DED2;border-radius:6px;">
+        <h3 style="font-family:'Cinzel',serif;font-size:18px;color:#3B0A11;margin:0 0 10px;">Official West Bengal Statutory Resources &amp; Due Diligence</h3>
+        <p style="font-size:14px;color:#555;margin-bottom:12px;">Verify legal registrations, circle rates, and master plans via official government departments:</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:13px;font-weight:600;margin-bottom:16px;">
+          <a href="https://rera.wb.gov.in" target="_blank" rel="noopener noreferrer" style="color:#B4773F;text-decoration:none;">West Bengal RERA (WBRERA) ↗</a>
+          <span style="color:#CCC;">•</span>
+          <a href="https://wbregistration.gov.in" target="_blank" rel="noopener noreferrer" style="color:#B4773F;text-decoration:none;">WB Land Registration &amp; Stamps (e-Nathikaran) ↗</a>
+          <span style="color:#CCC;">•</span>
+          <a href="https://nkdamar.org" target="_blank" rel="noopener noreferrer" style="color:#B4773F;text-decoration:none;">New Town Kolkata Dev. Authority (NKDA) ↗</a>
+          <span style="color:#CCC;">•</span>
+          <a href="https://kmda.wb.gov.in" target="_blank" rel="noopener noreferrer" style="color:#B4773F;text-decoration:none;">Kolkata Metropolitan Dev. Authority (KMDA) ↗</a>
+        </div>
+
+        <div style="padding-top:14px;border-top:1px solid #E8DED2;">
+          <div style="font-family:'Cinzel',serif;font-size:15px;color:#3B0A11;margin-bottom:8px;font-weight:700;">Share Astittva Marketing &amp; Connect On Social Media</div>
+          <p style="font-size:13px;color:#666;margin-bottom:10px;">Share our verified Kolkata real estate portfolio with your network or connect directly with our advisory desks:</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;font-weight:600;margin-bottom:12px;">
+            <a href="https://api.whatsapp.com/send?text=Astittva%20Marketing%20-%20Premier%20Real%20Estate%20Company%20in%20Kolkata%3A%20https%3A%2F%2Fastittva.in" target="_blank" rel="noopener noreferrer" style="color:#3B0A11;background:#FAF8F5;padding:4px 10px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Share via WhatsApp</a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fastittva.in" target="_blank" rel="noopener noreferrer" style="color:#3B0A11;background:#FAF8F5;padding:4px 10px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Share on Facebook</a>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fastittva.in" target="_blank" rel="noopener noreferrer" style="color:#3B0A11;background:#FAF8F5;padding:4px 10px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Share on LinkedIn</a>
+            <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fastittva.in&text=Astittva%20Marketing%20-%20Real%20Estate%20Company%20in%20Kolkata" target="_blank" rel="noopener noreferrer" style="color:#3B0A11;background:#FAF8F5;padding:4px 10px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Share on X (Twitter)</a>
+            <a href="https://t.me/share/url?url=https%3A%2F%2Fastittva.in&text=Astittva%20Marketing%20Kolkata" target="_blank" rel="noopener noreferrer" style="color:#3B0A11;background:#FAF8F5;padding:4px 10px;border:1px solid #EAE0D5;border-radius:4px;text-decoration:none;">Share on Telegram</a>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;font-weight:600;color:#666;">
+            <span>Follow Us:</span>
+            <a href="https://www.instagram.com/astittvamarketing" target="_blank" rel="noopener noreferrer me" style="color:#B4773F;text-decoration:none;">Instagram</a>
+            <span style="color:#CCC;">•</span>
+            <a href="https://www.facebook.com/people/Astittva-Marketing/61589787526878/" target="_blank" rel="noopener noreferrer me" style="color:#B4773F;text-decoration:none;">Facebook</a>
+            <span style="color:#CCC;">•</span>
+            <a href="https://www.linkedin.com/company/astittva-marketing/" target="_blank" rel="noopener noreferrer me" style="color:#B4773F;text-decoration:none;">LinkedIn</a>
+          </div>
+        </div>
+
+        ${featuredProps ? `
+        <div style="padding-top:14px;border-top:1px solid #E8DED2;margin-top:14px;">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#737373;letter-spacing:0.05em;margin-bottom:8px;">Featured Kolkata Luxury Projects</div>
+          <div>${featuredProps}</div>
+        </div>` : ""}
+
+        ${topBlogs ? `
+        <div style="padding-top:14px;border-top:1px solid #E8DED2;margin-top:14px;">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#737373;letter-spacing:0.05em;margin-bottom:8px;">Latest Kolkata Real Estate Market Insights</div>
+          <div>${topBlogs}</div>
+        </div>` : ""}
       </section>
     `;
   }
