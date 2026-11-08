@@ -4,6 +4,8 @@
   "private": true,
   "description": "Astittva Real Estate platform monorepo orchestrator",
   "scripts": {
+    "build": "npm run build --prefix frontend",
+    "start": "node backend/node/server.js",
     "start:frontend": "npm start --prefix frontend",
     "build:frontend": "npm run build --prefix frontend",
     "start:backend:node": "npm start --prefix backend/node",

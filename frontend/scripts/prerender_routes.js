@@ -38,23 +38,46 @@ function clampDescription(desc) {
   return clean;
 }
 
-function fetchJson(url) {
+function fetchJson(url, timeoutMs = 2500) {
   return new Promise((resolve) => {
+    let settled = false;
     const client = url.startsWith("https") ? https : http;
-    client
-      .get(url, { timeout: 10000 }, (res) => {
-        if (res.statusCode !== 200) return resolve(null);
-        let data = "";
-        res.on("data", (chunk) => (data += chunk));
-        res.on("end", () => {
-          try {
-            resolve(JSON.parse(data));
-          } catch {
-            resolve(null);
-          }
-        });
-      })
-      .on("error", () => resolve(null));
+    let hardTimer;
+
+    const finish = (val) => {
+      if (!settled) {
+        settled = true;
+        clearTimeout(hardTimer);
+        resolve(val);
+      }
+    };
+
+    const req = client.get(url, (res) => {
+      if (res.statusCode !== 200) {
+        res.resume();
+        return finish(null);
+      }
+      let data = "";
+      res.on("data", (chunk) => (data += chunk));
+      res.on("end", () => {
+        try {
+          finish(JSON.parse(data));
+        } catch {
+          finish(null);
+        }
+      });
+    });
+
+    req.on("error", () => finish(null));
+    req.setTimeout(timeoutMs, () => {
+      req.destroy();
+      finish(null);
+    });
+
+    hardTimer = setTimeout(() => {
+      req.destroy();
+      finish(null);
+    }, timeoutMs + 500);
   });
 }
 
@@ -1087,12 +1110,28 @@ function renderHtml(templateHtml, page, context = {}) {
 async function fetchDynamicPages() {
   const pages = [];
 
-  // Fetch properties
-  const properties = (await fetchJson("http://localhost:8000/api/properties?limit=100")) ||
-    (await fetchJson("https://astittva-backend.onrender.com/api/properties?limit=100")) || [];
+  // 1. Fetch properties (local first with 1.5s timeout, then Render with 2.5s timeout)
+  let properties = await fetchJson("http://localhost:8000/api/properties?limit=100", 1500);
+  if (!properties || !Array.isArray(properties) || properties.length === 0) {
+    properties = await fetchJson("https://astittva-backend.onrender.com/api/properties?limit=100", 2500);
+  }
+
+  // Graceful fallback to bundled seed properties for instant offline/isolated builds
+  if (!properties || !Array.isArray(properties) || properties.length === 0) {
+    try {
+      const seedPropsPath = path.resolve(__dirname, "../src/data/seedProperties.json");
+      if (fs.existsSync(seedPropsPath)) {
+        properties = JSON.parse(fs.readFileSync(seedPropsPath, "utf8"));
+        console.log(`[Pre-renderer] Using local seedProperties.json (${properties.length} properties)`);
+      }
+    } catch (e) {
+      console.warn("[Pre-renderer] Could not read seedProperties:", e.message);
+    }
+  }
+  properties = properties || [];
 
   for (const p of properties) {
-    if (p.id && p.status === "published") {
+    if (p.id && (p.status === "published" || !p.status)) {
       const loc = p.location || p.city || "Kolkata";
       const rawTitle = `${p.project_name} in ${loc}`;
       pages.push({
@@ -1120,12 +1159,28 @@ async function fetchDynamicPages() {
     }
   }
 
-  // Fetch blogs
-  const blogs = (await fetchJson("http://localhost:8000/api/blogs?limit=100")) ||
-    (await fetchJson("https://astittva-backend.onrender.com/api/blogs?limit=100")) || [];
+  // 2. Fetch blogs (local first with 1.5s timeout, then Render with 2.5s timeout)
+  let blogs = await fetchJson("http://localhost:8000/api/blogs?limit=100", 1500);
+  if (!blogs || !Array.isArray(blogs) || blogs.length === 0) {
+    blogs = await fetchJson("https://astittva-backend.onrender.com/api/blogs?limit=100", 2500);
+  }
+
+  // Graceful fallback to bundled seed blogs for instant offline/isolated builds
+  if (!blogs || !Array.isArray(blogs) || blogs.length === 0) {
+    try {
+      const seedBlogsPath = path.resolve(__dirname, "../src/data/seedBlogs.json");
+      if (fs.existsSync(seedBlogsPath)) {
+        blogs = JSON.parse(fs.readFileSync(seedBlogsPath, "utf8"));
+        console.log(`[Pre-renderer] Using local seedBlogs.json (${blogs.length} blogs)`);
+      }
+    } catch (e) {
+      console.warn("[Pre-renderer] Could not read seedBlogs:", e.message);
+    }
+  }
+  blogs = blogs || [];
 
   for (const b of blogs) {
-    if (b.slug && b.status === "published") {
+    if (b.slug && (b.status === "published" || !b.status)) {
       const matchedArea = ["New Town", "Rajarhat", "Salt Lake", "EM Bypass", "Kolkata"].find((a) =>
         `${b.title} ${b.short_description || ""}`.toLowerCase().includes(a.toLowerCase())
       ) || "Kolkata";
@@ -1205,7 +1260,6 @@ async function main() {
   const targetDirs = [
     baseBuildDir,
     path.resolve(__dirname, "../../web/build"),
-    "C:\\Users\\lenovo\\Downloads\\astittva marketing\\frontend\\build",
   ];
 
   let generatedCount = 0;

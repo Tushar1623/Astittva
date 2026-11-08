@@ -41,26 +41,47 @@ const STATIC_URLS = [
   { path: "/calculators/capital-gains-tax", changefreq: "weekly", priority: "0.8" },
 ];
 
-function fetchUrl(targetUrl) {
-  return new Promise((resolve, reject) => {
+function fetchUrl(targetUrl, timeoutMs = 2500) {
+  return new Promise((resolve) => {
+    let settled = false;
     const client = targetUrl.startsWith("https") ? https : http;
-    client
-      .get(targetUrl, { timeout: 15000 }, (res) => {
-        if (res.statusCode !== 200) {
-          return reject(new Error(`HTTP ${res.statusCode}`));
-        }
-        let data = "";
-        res.on("data", (chunk) => (data += chunk));
-        res.on("end", () => resolve(data));
-      })
-      .on("error", reject);
+    let hardTimer;
+
+    const finish = (val) => {
+      if (!settled) {
+        settled = true;
+        clearTimeout(hardTimer);
+        resolve(val);
+      }
+    };
+
+    const req = client.get(targetUrl, (res) => {
+      if (res.statusCode !== 200) {
+        res.resume();
+        return finish(null);
+      }
+      let data = "";
+      res.on("data", (chunk) => (data += chunk));
+      res.on("end", () => finish(data));
+    });
+
+    req.on("error", () => finish(null));
+    req.setTimeout(timeoutMs, () => {
+      req.destroy();
+      finish(null);
+    });
+
+    hardTimer = setTimeout(() => {
+      req.destroy();
+      finish(null);
+    }, timeoutMs + 500);
   });
 }
 
 async function getSitemapXml() {
-  // Strategy 1: Attempt from local running Node backend
+  // Strategy 1: Attempt from local running Node backend (1.5s max)
   try {
-    const localXml = await fetchUrl("http://localhost:8000/sitemap.xml");
+    const localXml = await fetchUrl("http://localhost:8000/sitemap.xml", 1500);
     if (localXml && localXml.includes("<urlset")) {
       console.log("[Sitemap Generator] Successfully fetched dynamic XML from local backend");
       return localXml;
@@ -69,9 +90,9 @@ async function getSitemapXml() {
     // Continue to next strategy
   }
 
-  // Strategy 2: Attempt from live Render backend
+  // Strategy 2: Attempt from live Render backend (2.5s max)
   try {
-    const remoteXml = await fetchUrl("https://astittva-backend.onrender.com/sitemap.xml");
+    const remoteXml = await fetchUrl("https://astittva-backend.onrender.com/sitemap.xml", 2500);
     if (remoteXml && remoteXml.includes("<urlset")) {
       console.log("[Sitemap Generator] Successfully fetched dynamic XML from Render backend");
       return remoteXml;
@@ -80,10 +101,10 @@ async function getSitemapXml() {
     // Continue to next strategy
   }
 
-  // Strategy 3: Built-in static catalog fallback
-  console.log("[Sitemap Generator] Using static fallback catalogue");
+  // Strategy 3: Built-in catalog fallback (Static + Local Seed Properties & Blogs)
+  console.log("[Sitemap Generator] Using static fallback catalogue with local seed data");
   const today = new Date().toISOString().split("T")[0];
-  const urls = STATIC_URLS.map(
+  const urlEntries = STATIC_URLS.map(
     (entry) => `  <url>
     <loc>${SITE_DOMAIN}${entry.path}</loc>
     <lastmod>${today}</lastmod>
@@ -92,9 +113,49 @@ async function getSitemapXml() {
   </url>`
   );
 
+  // Add seed properties
+  try {
+    const seedPropsPath = path.resolve(__dirname, "../src/data/seedProperties.json");
+    if (fs.existsSync(seedPropsPath)) {
+      const properties = JSON.parse(fs.readFileSync(seedPropsPath, "utf8"));
+      for (const p of properties) {
+        if (p.id) {
+          urlEntries.push(`  <url>
+    <loc>${SITE_DOMAIN}/properties/${p.id}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>`);
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[Sitemap Generator] Could not read seedProperties:", e.message);
+  }
+
+  // Add seed blogs
+  try {
+    const seedBlogsPath = path.resolve(__dirname, "../src/data/seedBlogs.json");
+    if (fs.existsSync(seedBlogsPath)) {
+      const blogs = JSON.parse(fs.readFileSync(seedBlogsPath, "utf8"));
+      for (const b of blogs) {
+        if (b.slug && b.status === "published") {
+          urlEntries.push(`  <url>
+    <loc>${SITE_DOMAIN}/blogs/${b.slug}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>`);
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("[Sitemap Generator] Could not read seedBlogs:", e.message);
+  }
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.join("\n")}
+${urlEntries.join("\n")}
 </urlset>`;
 }
 
