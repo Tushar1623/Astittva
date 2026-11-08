@@ -98,12 +98,12 @@ const SERVICES = [
   {
     icon: TrendingUp,
     title: "Real Estate Investment & Rental Yield",
-    desc: "Strategic advisory for institutional buyers and NRI investors seeking capital preservation and high rental yields across New Town IT hubs and arterial transit corridors.",
+    desc: "Strategic advisory for institutional buyers and NRI investors seeking capital preservation. We target high rental yields across New Town IT hubs and arterial transit corridors.",
   },
   {
     icon: Scale,
     title: "Legal Diligence & WBRERA Compliance",
-    desc: "Strict compliance checks on sanctioned municipal plans, fire clearances, West Bengal circle rates, and mutation processes with KMC and NKDA.",
+    desc: "Strict compliance checks on sanctioned municipal plans, fire clearances, and mutation records. We ensure full transparency with West Bengal circle rates and civic authorities.",
   },
 ];
 
@@ -141,23 +141,23 @@ const EXTERNAL_RESOURCES = [
 const HOMEPAGE_FAQS = [
   {
     q: "What makes Astittva Marketing a leading real estate company in Kolkata?",
-    a: "Astittva Marketing operates as an institutional luxury real estate advisory firm rather than a transactional brokerage. We specialize in verified high-rise developments, bespoke residences, and secondary market resales across New Town, Rajarhat, EM Bypass, and South Kolkata, conducting independent 30-year title diligence and WBRERA scrutiny for every client to help discerning buyers invest with confidence and build an enduring family legacy.",
+    a: "Astittva Marketing operates as an institutional luxury real estate advisory firm rather than a transactional brokerage. We specialize in verified high-rise developments, bespoke residences, and secondary market resales across Kolkata. Our advisory team conducts independent 30-year title diligence and WBRERA scrutiny for every client. This institutional rigor empowers discerning buyers to invest with confidence and build an enduring family legacy.",
   },
   {
     q: "How does Astittva verify property legal title and WBRERA compliance?",
-    a: "Every development represented by Astittva undergoes comprehensive regulatory diligence. We independently verify project registration numbers on the official West Bengal Real Estate Regulatory Authority (WBRERA) portal, inspect sanctioned architectural blueprints, review 30-year mother deeds at local registry offices, and verify municipal mutation status with KMC or NKDA.",
+    a: "Every development represented by Astittva undergoes comprehensive regulatory diligence before being shortlisted. We independently verify project registration numbers on the official West Bengal RERA (WBRERA) portal. Our legal team inspects sanctioned architectural blueprints and confirms municipal mutation status with KMC or NKDA. We also review 30-year mother deeds at local registry offices to verify unencumbered freehold title.",
   },
   {
     q: "What are the prevailing stamp duty and property registration rates in West Bengal?",
-    a: "In West Bengal, standard stamp duty is 6% for properties valued above ₹40 Lakhs located in municipal corporation areas such as KMC (5% in panchayat and non-corporation areas), plus a mandatory 1% registration fee. Stamp duty is calculated on the higher of the registered agreement value or the official circle rate determined by the Directorate of Registration and Stamp Revenue.",
+    a: "In West Bengal, standard stamp duty is 6% for properties valued above ₹40 Lakhs in municipal corporation areas. In panchayat and non-corporation areas, the applicable stamp duty rate is 5%. A mandatory 1% statutory registration fee applies to all property transactions across the state. Stamp duty is calculated on whichever is higher between the registered agreement value and the official e-Nathikaran circle rate.",
   },
   {
     q: "Which Kolkata micro-markets offer the best capital appreciation and rental yield?",
-    a: "New Town (Action Areas I, II & III) and Rajarhat deliver superior rental yields driven by corporate hiring across Salt Lake Sector V and the Silicon Valley IT SEZ. EM Bypass offers strong capital appreciation anchored by Orange Line metro connectivity and super-specialty medical infrastructure. New Alipore remains South Kolkata's distinguished address for long-term wealth preservation.",
+    a: "New Town Action Areas and Rajarhat deliver attractive rental yields averaging 4.5% to 6.2% annually. Strong demand is driven by corporate workforce hiring across Salt Lake Sector V and the Silicon Valley IT corridor. Along EM Bypass, capital appreciation is accelerated by the Orange Line metro and premier healthcare infrastructure. Meanwhile, New Alipore remains South Kolkata's premier enclave for luxury wealth preservation and bespoke residences.",
   },
   {
     q: "Does Astittva Marketing handle secondary market resale properties in Kolkata?",
-    a: "Yes. Astittva maintains a dedicated secondary market resale desk that conducts exhaustive title searches, non-encumbrance certificate reviews, market valuations, price negotiations, sale agreement drafting, and municipal tax book updates for both property buyers and sellers.",
+    a: "Yes, Astittva maintains a specialized secondary market resale desk for buyers and sellers across Kolkata. Our advisors conduct exhaustive 30-year title searches, non-encumbrance certificate reviews, and comparative market valuations. We also handle price negotiations, sale agreement drafting, and municipal mutation updates for a smooth handover.",
   },
 ];
 
@@ -315,20 +315,14 @@ export default function HomePage() {
               className="display-headline text-white text-[2rem] leading-[1.06] sm:text-[3.1rem] lg:text-[4.4rem] tracking-[-0.025em]"
               style={{ textShadow: "0 2px 8px rgba(0,0,0,0.5), 0 4px 20px rgba(0,0,0,0.35)" }}
             >
-              <span className="block text-copper text-sm sm:text-lg lg:text-xl font-sans tracking-[0.2em] uppercase font-semibold mb-2 sm:mb-3">
-                Real Estate Company in Kolkata
-              </span>
-              <span className="block">Invest With Confidence.</span>
-              <span className="block mt-1 sm:mt-2">
-                Build your legacy with <span className="text-white italic">Astittva.</span>
-              </span>
+              Real Estate Company in Kolkata <span className="text-white/60 font-light">|</span> <span className="text-white italic font-serif">Astittva</span>
             </h1>
 
             <p
               className="mt-6 sm:mt-8 text-white text-[15px] sm:text-base lg:text-lg max-w-xl leading-[1.75] font-normal"
               style={{ textShadow: "0 1px 6px rgba(0,0,0,0.18)" }}
             >
-              Astittva Marketing is Kolkata&apos;s premier luxury real estate company and property advisory firm. When you choose to invest with confidence in Kolkata&apos;s finest properties, you build an enduring family legacy. Headquartered in New Town, we guide homebuyers, investors, and families to vetted residential, commercial, and secondary market developments across EM Bypass, Rajarhat, New Alipore, and Salt Lake with absolute transparency and institutional rigor.
+              Astittva Marketing is Kolkata&apos;s premier luxury real estate company and property advisory firm. When you invest with confidence in Kolkata&apos;s finest properties, you build an enduring family legacy for future generations. Headquartered in New Town, our senior property advisors guide homebuyers, investors, and families to thoroughly vetted developments. We curate premier residential, commercial, and secondary market properties across EM Bypass, Rajarhat, New Alipore, and Salt Lake with absolute transparency.
             </p>
 
             <div className="mt-7 sm:mt-9 flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
@@ -636,7 +630,7 @@ export default function HomePage() {
               <span className="italic text-[#5F5F5F] font-serif-display">For Kolkata Property Buyers.</span>
             </h2>
             <p className="mt-4 text-[#5F5F5F] text-base leading-relaxed font-light">
-              We empower homebuyers with transparent legal oversight. Before committing capital to any property in West Bengal, verify promoter registrations, inspect prevailing circle rates, and review statutory approvals via these official government resources:
+              We empower homebuyers with transparent legal oversight and verified documentation. Before committing capital to any property in West Bengal, review statutory approvals via official government portals. Verify promoter registrations on WBRERA and inspect prevailing circle rates on the state e-Nathikaran system.
             </p>
           </motion.div>
 
@@ -684,7 +678,7 @@ export default function HomePage() {
                 The next great Indian real estate story <span className="italic text-[#5F5F5F]">is being written here.</span>
               </h2>
               <p className="mt-10 text-[#5F5F5F] leading-[1.85] font-light text-base">
-                As a leading real estate company in Kolkata, Astittva Marketing guides clients through the city&apos;s quiet renaissance. From high-growth corridors along EM Bypass and New Town to heritage enclaves in New Alipore, Kolkata offers lower entry points than Mumbai or Bangalore, strong rental yields, and transformative metro infrastructure.
+                As a leading real estate company in Kolkata, Astittva guides clients through the city&apos;s quiet residential renaissance. Kolkata offers attractive property entry points compared to other major metro regions like Mumbai or Bangalore. High-growth corridors along EM Bypass and New Town deliver strong rental yields and transformative metro infrastructure. Meanwhile, South Kolkata heritage enclaves preserve long-term capital value for discerning homeowners.
               </p>
             </div>
 
