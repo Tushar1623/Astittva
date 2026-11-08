@@ -834,7 +834,10 @@ app.post("/api/auth/login", async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ detail: "Email and password required" });
     }
-    const cleanEmail = email.toLowerCase().trim();
+    let cleanEmail = email.toLowerCase().trim();
+    if (cleanEmail === "admin@astittva.in" || cleanEmail === "admin@astitva.in") {
+      cleanEmail = "admin@astitva.com";
+    }
     const db = getDb();
     const user = await db.collection("users").findOne({ email: cleanEmail });
 
