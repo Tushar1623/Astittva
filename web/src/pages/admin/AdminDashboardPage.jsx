@@ -74,7 +74,7 @@ export default function AdminDashboardPage() {
 
       {/* Primary KPI Metrics Tiles */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-charcoal p-5 rounded-[6px] border border-copper/20 shadow-sm relative overflow-hidden group hover:border-copper/40 transition-colors">
+        <div className="bg-[#180509] p-6 rounded-xl border border-[#D4A359]/20 shadow-xs relative overflow-hidden group hover:border-[#D4A359]/40 hover:-translate-y-0.5 transition-all">
           <div className="flex items-center justify-between mb-3">
             <Building2 className="w-5 h-5 text-copper" strokeWidth={1.75} />
             <Link
@@ -96,7 +96,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="bg-charcoal p-5 rounded-[6px] border border-copper/20 shadow-sm relative overflow-hidden group hover:border-copper/40 transition-colors">
+        <div className="bg-[#180509] p-6 rounded-xl border border-[#D4A359]/20 shadow-xs relative overflow-hidden group hover:border-[#D4A359]/40 hover:-translate-y-0.5 transition-all">
           <div className="flex items-center justify-between mb-3">
             <Inbox className="w-5 h-5 text-[#C89A55]" strokeWidth={1.75} />
             <Link
@@ -117,7 +117,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="bg-charcoal p-5 rounded-[6px] border border-copper/20 shadow-sm relative overflow-hidden group hover:border-copper/40 transition-colors">
+        <div className="bg-[#180509] p-6 rounded-xl border border-[#D4A359]/20 shadow-xs relative overflow-hidden group hover:border-[#D4A359]/40 hover:-translate-y-0.5 transition-all">
           <div className="flex items-center justify-between mb-3">
             <Briefcase className="w-5 h-5 text-copper" strokeWidth={1.75} />
             <Link
@@ -138,7 +138,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="bg-charcoal p-5 rounded-[6px] border border-copper/20 shadow-sm relative overflow-hidden group hover:border-copper/40 transition-colors">
+        <div className="bg-[#180509] p-6 rounded-xl border border-[#D4A359]/20 shadow-xs relative overflow-hidden group hover:border-[#D4A359]/40 hover:-translate-y-0.5 transition-all">
           <div className="flex items-center justify-between mb-3">
             <Users className="w-5 h-5 text-[#C89A55]" strokeWidth={1.75} />
             <Link
@@ -164,7 +164,7 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Link
           to="/admin/properties/new"
-          className="p-3.5 rounded-[4px] border border-copper/20 bg-charcoal-2/30 hover:bg-charcoal-2/60 hover:border-copper transition-all flex items-center gap-3 group"
+          className="p-4 rounded-xl border border-[#D4A359]/20 bg-[#180509] hover:bg-[#22070D] hover:border-[#D4A359]/50 transition-all flex items-center gap-3.5 group shadow-xs"
         >
           <div className="p-2 rounded bg-copper/10 text-copper group-hover:scale-105 transition-transform">
             <Building2 className="w-4 h-4" />
@@ -179,7 +179,7 @@ export default function AdminDashboardPage() {
 
         <Link
           to="/admin/resale/new"
-          className="p-3.5 rounded-[4px] border border-copper/20 bg-charcoal-2/30 hover:bg-charcoal-2/60 hover:border-copper transition-all flex items-center gap-3 group"
+          className="p-4 rounded-xl border border-[#D4A359]/20 bg-[#180509] hover:bg-[#22070D] hover:border-[#D4A359]/50 transition-all flex items-center gap-3.5 group shadow-xs"
         >
           <div className="p-2 rounded bg-copper/10 text-copper group-hover:scale-105 transition-transform">
             <ShoppingBag className="w-4 h-4" />
@@ -194,7 +194,7 @@ export default function AdminDashboardPage() {
 
         <Link
           to="/admin/blogs/new"
-          className="p-3.5 rounded-[4px] border border-copper/20 bg-charcoal-2/30 hover:bg-charcoal-2/60 hover:border-copper transition-all flex items-center gap-3 group"
+          className="p-4 rounded-xl border border-[#D4A359]/20 bg-[#180509] hover:bg-[#22070D] hover:border-[#D4A359]/50 transition-all flex items-center gap-3.5 group shadow-xs"
         >
           <div className="p-2 rounded bg-copper/10 text-copper group-hover:scale-105 transition-transform">
             <FileText className="w-4 h-4" />
@@ -209,7 +209,7 @@ export default function AdminDashboardPage() {
 
         <Link
           to="/admin/recruitment/jobs/new"
-          className="p-3.5 rounded-[4px] border border-copper/20 bg-charcoal-2/30 hover:bg-charcoal-2/60 hover:border-copper transition-all flex items-center gap-3 group"
+          className="p-4 rounded-xl border border-[#D4A359]/20 bg-[#180509] hover:bg-[#22070D] hover:border-[#D4A359]/50 transition-all flex items-center gap-3.5 group shadow-xs"
         >
           <div className="p-2 rounded bg-copper/10 text-copper group-hover:scale-105 transition-transform">
             <Briefcase className="w-4 h-4" />
@@ -224,7 +224,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* SECTION 1: PROPERTY LEADS BREAKDOWN */}
-      <div className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-7">
+      <div className="bg-[#180509] border border-[#D4A359]/20 rounded-xl p-6 sm:p-7 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-copper/15 mb-6">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-[4px] bg-[#C89A55]/15 border border-[#C89A55]/30 flex items-center justify-center text-[#C89A55]">
@@ -247,7 +247,7 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <div className="bg-charcoal p-4 rounded-[6px] border border-copper/15">
+          <div className="bg-[#22070D] p-4 rounded-lg border border-[#D4A359]/15">
             <div className="text-2xl font-display text-ivory">
               {propStats.total}
             </div>
@@ -295,7 +295,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* SECTION 2: CAREER PIPELINE BREAKDOWN */}
-      <div className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-7">
+      <div className="bg-[#180509] border border-[#D4A359]/20 rounded-xl p-6 sm:p-7 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-copper/15 mb-6">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-[4px] bg-[#B77B3E]/15 border border-[#B77B3E]/30 flex items-center justify-center text-[#B77B3E]">
@@ -318,7 +318,7 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <div className="bg-charcoal p-4 rounded-[6px] border border-copper/15">
+          <div className="bg-[#22070D] p-4 rounded-lg border border-[#D4A359]/15">
             <div className="text-2xl font-display text-ivory">
               {careerStats.total}
             </div>

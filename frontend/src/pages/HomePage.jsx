@@ -26,7 +26,7 @@ import {
   Share2
 } from "lucide-react";
 import api, { formatApiErrorDetail, isGoogleDriveImage, driveImageUrl, driveDirectFallbackUrl, fileUrl } from "@/lib/api";
-import { pickPropertyFallback } from "@/components/PropertyCard";
+import PropertyCard, { pickPropertyFallback } from "@/components/PropertyCard";
 import { toast } from "sonner";
 import { whatsappLink, PHONE_DISPLAY } from "@/lib/site";
 import CinematicHero from "@/components/CinematicHero";
@@ -342,9 +342,9 @@ export default function HomePage() {
                 url="https://astittva.in"
                 image="https://astittva.in/og-image.png"
                 contentType="generic"
-                variant="light"
+                variant="glass"
                 label="Share Astittva"
-                className="w-full sm:w-auto px-5 py-4 text-[10px] tracking-[0.22em] uppercase font-semibold border-white/70"
+                className="w-full sm:w-auto px-6 py-4 text-[10.5px] tracking-[0.24em] uppercase font-semibold rounded-none border border-white/60 hover:bg-white/20 transition-all duration-300"
               />
             </div>
           </motion.div>
@@ -394,7 +394,7 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-white/[0.05]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {PILLARS.map((p, i) => (
               <motion.div
                 key={p.title}
@@ -402,11 +402,13 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
-                className="bg-white p-7 sm:p-10 lg:p-12 group"
+                className="bg-white rounded-xl border border-[#E8DED2] p-8 sm:p-10 lg:p-11 group hover:border-[#D4A359] hover:-translate-y-1 hover:shadow-[0_16px_36px_-10px_rgba(184,115,51,0.14)] shadow-[0_2px_10px_rgba(28,28,28,0.03)] transition-all duration-500 flex flex-col"
               >
-                <p.icon className="w-7 h-7 text-copper mb-10 transition-colors duration-500" strokeWidth={1} />
-                <h3 className="font-serif-display text-2xl text-ivory mb-4">{p.title}</h3>
-                <p className="text-[#5F5F5F] leading-[1.7] font-light text-[15px]">{p.body}</p>
+                <div className="w-14 h-14 rounded-xl bg-[#FAF8F5] border border-[#E8DED2] flex items-center justify-center text-[#B87333] mb-8 group-hover:bg-[#2A080C] group-hover:text-[#D4A359] group-hover:border-[#2A080C] transition-all duration-500 shadow-xs">
+                  <p.icon className="w-7 h-7" strokeWidth={1.3} />
+                </div>
+                <h3 className="font-serif-display text-2xl text-[#1C1C1C] mb-3 group-hover:text-[#B87333] transition-colors duration-300 leading-snug">{p.title}</h3>
+                <p className="text-[#5F5F5F] leading-[1.75] font-light text-[15px]">{p.body}</p>
               </motion.div>
             ))}
           </div>
@@ -518,7 +520,7 @@ export default function HomePage() {
       </section>
 
       {/* ===================== FEATURED PROJECTS ===================== */}
-      <section data-testid="projects-section" className="py-16 sm:py-24">
+      <section data-testid="projects-section" className="py-16 sm:py-24 bg-[#FAF8F5]">
         <div className="max-w-[1400px] mx-auto px-6 sm:px-8 lg:px-16">
           <motion.div {...fadeUp} className="mb-10 sm:mb-14 max-w-3xl">
             <div className="eyebrow-line mb-8">
@@ -531,87 +533,14 @@ export default function HomePage() {
           </motion.div>
 
           {projects.length === 0 ? (
-            <div className="text-center py-24 border border-[#E8DED2]">
+            <div className="text-center py-24 border border-[#E8DED2] bg-white rounded-xl">
               <p className="text-[#737373] italic font-serif-display text-lg mb-8">New projects are being curated.</p>
               <Link to="/contact" className="btn-outline">Speak to an Advisor</Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
               {projects.map((p, i) => (
-                <motion.div
-                  key={p.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.7, delay: i * 0.1 }}
-                  className="group"
-                  data-testid={`project-card-${p.id}`}
-                >
-                  <Link to={`/properties/${p.id}`} className="block">
-                    <div className="aspect-[4/3] overflow-hidden bg-[#FAF8F5]">
-                      {(() => {
-                        const fallback = pickPropertyFallback(p.id);
-                        const candidateImages = [
-                          ...(p.featured_image ? [p.featured_image] : []),
-                          ...(Array.isArray(p.images) ? p.images : []),
-                        ];
-                        const driveImg = candidateImages.find(isGoogleDriveImage);
-                        const anyHttpImg = candidateImages.find(
-                          (img) =>
-                            typeof img === "string" &&
-                            (img.startsWith("http") || img.startsWith("/uploads/")) &&
-                            !img.includes("astitva-realestate")
-                        );
-                        const primaryCandidate = driveImg || anyHttpImg || candidateImages[0] || fallback;
-                        return (
-                          <SafeImage
-                            src={primaryCandidate}
-                            alt={p.project_name}
-                            type="property"
-                            seed={p.id}
-                            fallbackSrc={fallback}
-                            width={1000}
-                            className="w-full h-full object-cover transition-transform duration-[1.8s] ease-out group-hover:scale-105"
-                          />
-                        );
-                      })()}
-                    </div>
-                    <div className="pt-8">
-                      <div className="text-[#737373] text-[10px] tracking-[0.4em] uppercase mb-3 flex items-center gap-2">
-                        <span className="w-4 h-px bg-copper" /> {p.city}
-                      </div>
-                      <h3 className="font-serif-display text-2xl text-ivory mb-3 group-hover:text-copper transition-colors duration-500">{p.project_name}</h3>
-                      <p className="text-[#5F5F5F] text-sm font-light line-clamp-2 leading-[1.7]">{p.description}</p>
-                    </div>
-                  </Link>
-                  <div className="mt-6 flex items-center justify-between pt-6 border-t border-[#E8DED2]">
-                    <span className="text-ivory/80 font-serif-display text-base italic">{p.price_label || "Price on request"}</span>
-                    <div className="flex items-center gap-3">
-                      <ShareButton
-                        item={p}
-                        title={p.project_name}
-                        location={p.location || p.city || "Kolkata"}
-                        price={p.price_label || (p.starting_price ? `₹${p.starting_price.toLocaleString("en-IN")}` : "")}
-                        propertyType={p.property_type || "Luxury Property"}
-                        category={p.category || "Residential"}
-                        description={p.description}
-                        url={`https://astittva.in/properties/${p.id}`}
-                        image={p.featured_image || (Array.isArray(p.images) ? p.images[0] : "") || pickPropertyFallback(p.id)}
-                        type="property"
-                        variant="iconOnly"
-                        className="w-10 h-10 min-w-[40px] min-h-[40px] sm:w-11 sm:h-11 sm:min-w-[44px] sm:min-h-[44px] !p-0"
-                        label=""
-                      />
-                      <Link
-                        to={`/properties/${p.id}`}
-                        className="p-1 text-copper transition-transform duration-500 group-hover:translate-x-1"
-                        aria-label={`Explore ${p.project_name} in ${p.location || p.city || "Kolkata"}`}
-                      >
-                        <ArrowRight className="w-4 h-4" />
-                      </Link>
-                    </div>
-                  </div>
-                </motion.div>
+                <PropertyCard key={p.id} property={p} index={i} variant="featured" />
               ))}
             </div>
           )}
@@ -682,7 +611,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="lg:col-span-7 grid grid-cols-2 gap-px bg-white/[0.06] self-start">
+            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 self-start">
               {KOLKATA_FACTS.map((f, i) => (
                 <motion.div
                   key={f.label}
@@ -690,14 +619,14 @@ export default function HomePage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.7, delay: i * 0.1 }}
-                  className="bg-[#F5F1EC] p-8 sm:p-10 lg:p-14 group hover:bg-white transition-colors duration-500"
+                  className="bg-white rounded-xl border border-[#E8DED2] p-8 sm:p-10 group hover:border-[#D4A359] hover:shadow-[0_12px_32px_-8px_rgba(184,115,51,0.12)] transition-all duration-500 shadow-xs"
                 >
-                  <div className="font-serif-display text-[3.5rem] sm:text-[5rem] lg:text-[6rem] leading-[0.95] tracking-[-0.02em] text-ivory mb-4 sm:mb-6">
+                  <div className="font-serif-display text-[3.25rem] sm:text-[4.5rem] lg:text-[5.25rem] leading-[0.95] tracking-[-0.02em] text-[#1C1C1C] mb-4 group-hover:text-[#B87333] transition-colors duration-300">
                     {f.stat}
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="w-6 h-px bg-copper" />
-                    <div className="text-[#3A3A3A] text-[11px] sm:text-xs tracking-[0.2em] uppercase">{f.label}</div>
+                    <span className="w-6 h-px bg-[#B87333]" />
+                    <div className="text-[#3A3A3A] text-[11px] sm:text-xs tracking-[0.2em] uppercase font-medium">{f.label}</div>
                   </div>
                 </motion.div>
               ))}

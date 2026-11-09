@@ -54,7 +54,7 @@ export default function PropertyCard({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.7, delay: Math.min(index, 8) * 0.08 }}
-      className="group luxury-card overflow-hidden flex flex-col transition-all duration-500 hover:border-copper/40"
+      className="group bg-white rounded-xl border border-[#E8DED2] overflow-hidden flex flex-col transition-all duration-500 hover:border-[#D4A359] hover:-translate-y-1 hover:shadow-[0_16px_36px_-10px_rgba(184,115,51,0.18)] shadow-[0_2px_10px_rgba(28,28,28,0.03)]"
       data-testid={cardTestId}
     >
       <Link to={`/properties/${p.id}`} className="block relative aspect-[4/3] overflow-hidden bg-[#FAF8F5]">
@@ -68,35 +68,36 @@ export default function PropertyCard({
           priority={index < 3}
           className="w-full h-full object-cover transition-transform duration-[1.8s] ease-out group-hover:scale-105"
         />
+        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/40 via-black/10 to-transparent pointer-events-none" />
         {p.property_category && (
-          <div className="absolute top-4 left-4 inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-[#E8DED2] px-3 py-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-copper" />
+          <div className="absolute top-4 left-4 inline-flex items-center gap-2 bg-white/95 backdrop-blur-md border border-[#E8DED2] px-3 py-1 rounded-full shadow-xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#B87333]" />
             <span className="text-[#1C1C1C] text-[9px] tracking-[0.25em] uppercase font-semibold">
               {p.property_category}
             </span>
           </div>
         )}
         {p.availability && (
-          <div className="absolute top-4 right-4 bg-charcoal/85 backdrop-blur-sm border border-copper/30 px-2.5 py-1 text-[9px] tracking-[0.2em] uppercase text-copper font-medium">
+          <div className="absolute top-4 right-4 bg-[#2A080C]/90 backdrop-blur-md border border-[#D4A359]/30 px-3 py-1 rounded-full text-[9px] tracking-[0.2em] uppercase text-[#D4A359] font-medium shadow-xs">
             {p.availability}
           </div>
         )}
       </Link>
 
-      <div className="p-7 sm:p-8 flex flex-col flex-1">
-        <div className="text-[#737373] text-[10px] tracking-[0.35em] uppercase mb-2.5 flex items-center gap-1.5">
-          <MapPin className="w-3 h-3 text-copper" />
+      <div className="p-6 sm:p-7 flex flex-col flex-1">
+        <div className="text-[#737373] text-[10px] tracking-[0.35em] uppercase mb-2 flex items-center gap-1.5">
+          <MapPin className="w-3.5 h-3.5 text-[#B87333]" />
           <span>{p.location ? `${p.location}, ${p.city}` : p.city}</span>
         </div>
 
         <Link to={`/properties/${p.id}`} className="block">
-          <h3 className="font-serif-display text-2xl text-ivory mb-2 group-hover:text-copper transition-colors duration-500 leading-snug">
+          <h3 className="font-serif-display text-2xl text-[#1C1C1C] mb-1.5 group-hover:text-[#B87333] transition-colors duration-300 leading-snug">
             {p.project_name}
           </h3>
         </Link>
 
         {p.builder && (
-          <div className="text-xs text-copper/90 tracking-widest uppercase mb-3 font-medium">
+          <div className="text-[11px] text-[#B87333] tracking-widest uppercase mb-3 font-medium">
             {p.builder}
           </div>
         )}
@@ -107,8 +108,8 @@ export default function PropertyCard({
 
         <div className="mt-auto flex items-center justify-between pt-5 border-t border-[#E8DED2]">
           <div>
-            <div className="text-[9px] tracking-[0.3em] uppercase text-[#737373] mb-0.5">Starting</div>
-            <span className="text-ivory font-serif-display text-lg font-medium">{price}</span>
+            <div className="text-[9px] tracking-[0.3em] uppercase text-[#737373] mb-0.5 font-medium">Starting</div>
+            <span className="text-[#1C1C1C] font-serif-display text-xl font-semibold">{price}</span>
           </div>
           <div className="flex items-center gap-2.5">
             <ShareButton
@@ -129,9 +130,9 @@ export default function PropertyCard({
             <Link
               to={`/properties/${p.id}`}
               aria-label={`Explore ${p.project_name} in ${p.location ? `${p.location}, ${p.city || "Kolkata"}` : p.city || "Kolkata"}`}
-              className="inline-flex items-center gap-1.5 text-copper text-xs tracking-[0.2em] uppercase font-medium hover:text-copper-hover transition-transform duration-300 group-hover:translate-x-1 py-2 px-1"
+              className="inline-flex items-center gap-1.5 text-[#B87333] text-xs tracking-[0.2em] uppercase font-semibold hover:text-[#5E1F28] transition-transform duration-300 group-hover:translate-x-1 py-2 px-1 min-h-[44px]"
             >
-              Explore Property <ArrowRight className="w-3.5 h-3.5" />
+              Explore <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>

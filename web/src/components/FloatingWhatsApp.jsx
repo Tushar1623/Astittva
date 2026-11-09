@@ -24,38 +24,38 @@ export default function FloatingWhatsApp() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.98 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute bottom-[148px] sm:bottom-[164px] right-0 w-[300px] sm:w-[320px] bg-[#121212] border border-copper/25 shadow-2xl shadow-black/50"
+            className="absolute bottom-[130px] sm:bottom-[140px] right-0 w-[300px] sm:w-[330px] bg-white rounded-[12px] border border-[#E8DED2] shadow-[0_20px_48px_-10px_rgba(26,22,21,0.22)] overflow-hidden"
             data-testid="whatsapp-card"
           >
-            <div className="p-5 border-b border-white/[0.06] flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#25D366]/10 border border-[#25D366]/30 flex items-center justify-center">
-                <MessageCircle className="w-4 h-4 text-[#25D366]" strokeWidth={1.5} />
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-[#2A080C] to-[#470E16] text-white flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center shrink-0">
+                <MessageCircle className="w-5 h-5 text-emerald-400" strokeWidth={1.8} />
               </div>
-              <div>
-                <div className="text-ivory text-sm font-medium">Astittva Advisory</div>
-                <div className="text-white/40 text-[10px] tracking-[0.2em] uppercase">Replies within minutes</div>
+              <div className="min-w-0">
+                <div className="text-white text-sm font-semibold tracking-wide">Astittva Concierge</div>
+                <div className="text-[#E8DCD5]/75 text-[10px] tracking-[0.18em] uppercase">Replies within minutes</div>
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="ml-auto text-white/40 hover:text-ivory"
+                className="ml-auto text-white/60 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"
                 aria-label="Close"
                 data-testid="whatsapp-close"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="p-5">
-              <p className="text-white/65 text-sm font-light leading-[1.7]">
-                Hello! Looking to invest in <span className="text-copper">New Town, Rajarhat or Kolkata</span>? Our advisors will guide you to the right opportunity — verified, RERA-compliant, ready to view.
+            <div className="p-5 bg-[#FAF8F5]">
+              <p className="text-[#3A3331] text-[13.5px] font-normal leading-[1.65]">
+                Hello! Looking to invest in <span className="font-semibold text-[#B87333]">New Town, Rajarhat or Kolkata</span>? Our senior advisors will guide you to verified, WBRERA-compliant luxury homes.
               </p>
               <a
                 href={whatsappLink("Hi Astittva, I'd like advice on premium properties in Kolkata.")}
                 target="_blank"
                 rel="noopener noreferrer"
                 data-testid="whatsapp-start-chat"
-                className="mt-5 w-full inline-flex items-center justify-center gap-2 bg-[#25D366] text-[#0a0a0a] text-xs tracking-[0.18em] uppercase py-3.5 hover:bg-[#1ebe57] transition font-medium"
+                className="mt-4 w-full inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1EBE5D] text-slate-950 text-[11.5px] tracking-[0.14em] uppercase py-3.5 rounded-[8px] transition-all font-semibold shadow-md shadow-emerald-500/20"
               >
-                <MessageCircle className="w-4 h-4" strokeWidth={2} /> Start Chat
+                <MessageCircle className="w-4 h-4" strokeWidth={2.2} /> Start WhatsApp Chat
               </a>
             </div>
           </motion.div>
@@ -69,10 +69,9 @@ export default function FloatingWhatsApp() {
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
         data-testid="phone-fab"
         aria-label={`Call ${PHONE_E164}`}
-        className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#B97832] hover:bg-[#A66A2C] shadow-2xl shadow-black/40 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+        className="relative w-12 h-12 sm:w-[50px] sm:h-[50px] rounded-full bg-gradient-to-br from-[#BD7732] to-[#9C5D24] shadow-[0_8px_24px_rgba(189,119,50,0.40)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 border border-white/25 group"
       >
-        <span className="absolute inset-0 rounded-full bg-[#B97832] animate-ping opacity-20" />
-        <Phone className="w-6 h-6 sm:w-7 sm:h-7 text-white" strokeWidth={2} />
+        <Phone className="w-5 h-5 text-white transition-transform group-hover:rotate-12" strokeWidth={2} />
       </motion.a>
 
       <motion.button
@@ -81,14 +80,13 @@ export default function FloatingWhatsApp() {
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         onClick={() => setOpen((v) => !v)}
         data-testid="whatsapp-fab"
-        className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#25D366] hover:bg-[#1ebe57] shadow-2xl shadow-black/40 flex items-center justify-center transition-all hover:scale-105 active:scale-95"
-        aria-label="WhatsApp"
+        className="relative w-12 h-12 sm:w-[50px] sm:h-[50px] rounded-full bg-gradient-to-br from-[#25D366] to-[#1DA851] shadow-[0_8px_24px_rgba(37,211,102,0.40)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 border border-white/25"
+        aria-label="WhatsApp Concierge"
       >
-        <span className="absolute inset-0 rounded-full bg-[#25D366] animate-ping opacity-20" />
         {open ? (
-          <X className="w-6 h-6 text-[#0a0a0a]" strokeWidth={2} />
+          <X className="w-5 h-5 text-white" strokeWidth={2.2} />
         ) : (
-          <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7 text-[#0a0a0a]" strokeWidth={2} />
+          <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white" strokeWidth={2} />
         )}
       </motion.button>
     </div>

@@ -62,6 +62,8 @@ export default function ShareButton({
     switch (variant) {
       case "solid":
         return "bg-[#B87333] hover:bg-[#A35D27] text-white border border-[#B87333] shadow-xs active:scale-95";
+      case "glass":
+        return "bg-white/10 hover:bg-white/20 text-white border border-white/60 hover:border-white backdrop-blur-md shadow-xs active:scale-95";
       case "light":
         return "bg-white hover:bg-[#FAF8F5] text-[#1C1C1C] hover:text-[#B87333] border border-[#E8DED2] hover:border-[#B87333]/40 shadow-xs active:scale-95";
       case "compact":

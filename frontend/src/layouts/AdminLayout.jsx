@@ -115,19 +115,19 @@ export default function AdminLayout() {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-charcoal">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-[#0E0305] text-[#FAF8F5]">
       <Seo title="Admin Console | Astittva Marketing" noIndex={true} path={location.pathname} />
 
       {/* Mobile top bar — visible < lg */}
-      <div className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 h-14 bg-charcoal border-b border-copper/15">
+      <div className="lg:hidden sticky top-0 z-40 flex items-center justify-between px-4 h-14 bg-[#160408] border-b border-[#D4A359]/20">
         <div className="flex items-center gap-2 min-w-0">
           <img
             src={LOGO_URL}
             alt="Astittva"
             className="h-7 w-7 object-contain shrink-0"
           />
-          <div className="text-ivory font-display tracking-[0.2em] text-[11px] truncate">
-            ASTITTVA · <span className="text-copper">ADMIN</span>
+          <div className="text-white font-cinzel tracking-[0.2em] text-[11px] truncate">
+            ASTITTVA · <span className="text-[#D4A359]">ADMIN</span>
           </div>
         </div>
         <button
@@ -135,7 +135,7 @@ export default function AdminLayout() {
           onClick={() => setDrawerOpen(true)}
           aria-label="Open menu"
           data-testid="admin-menu-btn"
-          className="p-2 -mr-2 text-ivory/80 hover:text-copper"
+          className="p-2 -mr-2 text-white/80 hover:text-[#D4A359]"
         >
           <Menu className="w-5 h-5" strokeWidth={1.5} />
         </button>
@@ -143,7 +143,7 @@ export default function AdminLayout() {
 
       {/* Mobile-only overlay */}
       <div
-        className={`lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-200 ${
+        className={`lg:hidden fixed inset-0 z-40 bg-black/70 backdrop-blur-sm transition-opacity duration-200 ${
           drawerOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
         aria-hidden={!drawerOpen}
@@ -156,25 +156,27 @@ export default function AdminLayout() {
         data-testid="admin-sidebar"
         className={`
           fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw]
-          bg-charcoal border-r border-copper/15
+          bg-[#160408] border-r border-[#D4A359]/20
           flex flex-col
           transform transition-transform duration-300 ease-out
           ${drawerOpen ? "translate-x-0" : "-translate-x-full"}
-          lg:static lg:translate-x-0 lg:w-64 lg:max-w-none lg:z-auto lg:bg-charcoal-2/30 lg:shrink-0
+          lg:static lg:translate-x-0 lg:w-64 lg:max-w-none lg:z-auto lg:shrink-0
         `}
       >
-        <div className="p-5 border-b border-copper/15 flex items-center justify-between">
+        <div className="p-5 border-b border-[#D4A359]/20 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
-            <img
-              src={LOGO_URL}
-              alt="Astittva"
-              className="h-9 w-9 object-contain shrink-0"
-            />
+            <div className="w-9 h-9 rounded-[8px] bg-[#3D060E] border border-[#D4A359]/35 p-1 flex items-center justify-center shrink-0">
+              <img
+                src={LOGO_URL}
+                alt="Astittva"
+                className="w-full h-full object-contain"
+              />
+            </div>
             <div className="leading-tight min-w-0">
-              <div className="text-ivory font-display tracking-[0.25em] text-xs font-medium">
+              <div className="text-white font-cinzel tracking-[0.22em] text-xs font-bold">
                 ASTITTVA
               </div>
-              <div className="text-copper text-[10px] tracking-[0.4em] uppercase font-semibold">
+              <div className="text-[#D4A359] text-[9.5px] tracking-[0.35em] uppercase font-semibold mt-0.5">
                 ADMIN CONSOLE
               </div>
             </div>
@@ -184,7 +186,7 @@ export default function AdminLayout() {
             onClick={() => setDrawerOpen(false)}
             aria-label="Close menu"
             data-testid="admin-drawer-close"
-            className="lg:hidden p-1.5 -mr-1 text-ivory/70 hover:text-copper"
+            className="lg:hidden p-1.5 -mr-1 text-white/70 hover:text-[#D4A359]"
           >
             <X className="w-5 h-5" strokeWidth={1.5} />
           </button>
@@ -194,7 +196,7 @@ export default function AdminLayout() {
           {navSections.map((sec, sIdx) => (
             <div key={sIdx} className="space-y-1">
               {sec.title && (
-                <div className="px-3 pt-2 pb-1 text-[9.5px] font-semibold tracking-[0.25em] text-copper/80 uppercase">
+                <div className="px-3 pt-2 pb-1 text-[9.5px] font-semibold tracking-[0.25em] text-[#D4A359]/90 uppercase">
                   {sec.title}
                 </div>
               )}
@@ -205,14 +207,14 @@ export default function AdminLayout() {
                   end={it.end}
                   data-testid={`nav-admin-${it.label.toLowerCase().replace(/\s+/g, "-")}`}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3.5 py-2.5 text-xs tracking-[0.14em] uppercase rounded-[4px] transition ${
+                    `flex items-center gap-3 px-3.5 py-2.5 text-xs tracking-[0.14em] uppercase rounded-[6px] transition-all duration-200 ${
                       isActive
-                        ? "bg-copper/15 text-copper border-l-2 border-copper font-medium shadow-sm"
-                        : "text-ivory/65 hover:text-ivory hover:bg-charcoal-2/60"
+                        ? "bg-[#D4A359]/15 text-[#D4A359] border-l-2 border-[#D4A359] font-semibold shadow-xs"
+                        : "text-[#E8DCD5]/75 hover:text-white hover:bg-white/[0.05]"
                     }`
                   }
                 >
-                  <it.icon className="w-4 h-4 shrink-0" strokeWidth={1.5} />
+                  <it.icon className="w-4 h-4 shrink-0" strokeWidth={1.75} />
                   <span className="truncate">{it.label}</span>
                 </NavLink>
               ))}
@@ -220,30 +222,30 @@ export default function AdminLayout() {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-copper/15 bg-charcoal/50">
+        <div className="p-4 border-t border-[#D4A359]/20 bg-[#120306]">
           <div className="px-2 mb-3 min-w-0 flex items-center justify-between">
             <div className="min-w-0">
-              <div className="text-ivory text-xs font-medium truncate">{user?.name || "Admin"}</div>
-              <div className="text-copper text-[10px] tracking-[0.25em] uppercase">
+              <div className="text-white text-xs font-medium truncate">{user?.name || "Admin"}</div>
+              <div className="text-[#D4A359] text-[10px] tracking-[0.25em] uppercase">
                 {user?.role || "Staff"}
               </div>
             </div>
-            <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+            <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
           </div>
           <Link
             to="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 text-ivory/60 hover:text-copper text-xs tracking-[0.15em] uppercase px-2 mb-2 transition"
+            className="flex items-center gap-2 text-white/70 hover:text-[#D4A359] text-xs tracking-[0.15em] uppercase px-2 py-1.5 rounded hover:bg-white/5 transition mb-1"
           >
             <Globe className="w-3.5 h-3.5" />
             <span>Live Website</span>
-            <ExternalLink className="w-2.5 h-2.5 ml-auto text-ivory/40" />
+            <ExternalLink className="w-2.5 h-2.5 ml-auto text-white/40" />
           </Link>
           <button
             onClick={onLogout}
             data-testid="admin-logout"
-            className="w-full flex items-center gap-2 text-ivory/60 hover:text-rose-400 text-xs tracking-[0.15em] uppercase px-2 py-1 transition rounded hover:bg-rose-500/10 text-left"
+            className="w-full flex items-center gap-2 text-white/70 hover:text-rose-400 text-xs tracking-[0.15em] uppercase px-2 py-1.5 transition rounded hover:bg-rose-500/10 text-left"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Logout</span>
@@ -252,18 +254,18 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content Area with Desktop Shell Header */}
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col bg-[#0E0305]">
         {/* Desktop Top Header Bar (≥ lg) */}
-        <header className="hidden lg:flex items-center justify-between px-8 h-14 border-b border-copper/15 bg-charcoal/60 backdrop-blur-md sticky top-0 z-30">
+        <header className="hidden lg:flex items-center justify-between px-8 h-14 border-b border-[#D4A359]/20 bg-[#160408]/90 backdrop-blur-md sticky top-0 z-30">
           {/* Breadcrumbs */}
           <div className="flex items-center gap-2 text-xs">
             {breadcrumb.map((bc, idx) => (
               <span key={idx} className="flex items-center gap-2">
-                {idx > 0 && <ChevronRight className="w-3 h-3 text-ivory/30" />}
+                {idx > 0 && <ChevronRight className="w-3 h-3 text-white/30" />}
                 {bc.to ? (
                   <Link
                     to={bc.to}
-                    className="text-ivory/60 hover:text-copper uppercase tracking-wider text-[11px] transition-colors"
+                    className="text-white/60 hover:text-[#D4A359] uppercase tracking-wider text-[11px] transition-colors"
                   >
                     {bc.label}
                   </Link>
@@ -271,8 +273,8 @@ export default function AdminLayout() {
                   <span
                     className={`uppercase tracking-wider text-[11px] ${
                       idx === breadcrumb.length - 1
-                        ? "text-ivory font-medium"
-                        : "text-ivory/50"
+                        ? "text-white font-medium"
+                        : "text-white/40"
                     }`}
                   >
                     {bc.label}
@@ -288,22 +290,22 @@ export default function AdminLayout() {
               to="/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-ivory/60 hover:text-copper transition-colors px-2.5 py-1 rounded border border-copper/15 hover:border-copper/40"
+              className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-white/70 hover:text-[#D4A359] transition-colors px-2.5 py-1 rounded border border-[#D4A359]/25 hover:border-[#D4A359]/60"
             >
-              <Globe className="w-3 h-3" />
+              <Globe className="w-3 h-3 text-[#D4A359]" />
               <span>astittva.in</span>
-              <ExternalLink className="w-2.5 h-2.5 text-ivory/40" />
+              <ExternalLink className="w-2.5 h-2.5 text-white/40" />
             </Link>
 
-            <div className="h-4 w-px bg-copper/20" />
+            <div className="h-4 w-px bg-white/10" />
 
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-copper/15 border border-copper/30 flex items-center justify-center text-copper text-xs font-medium">
+              <div className="w-7 h-7 rounded-full bg-[#D4A359]/20 border border-[#D4A359]/40 flex items-center justify-center text-[#D4A359] text-xs font-semibold">
                 {(user?.name || "A")[0].toUpperCase()}
               </div>
               <div className="text-left leading-tight hidden xl:block">
-                <div className="text-xs text-ivory font-medium">{user?.name || "Administrator"}</div>
-                <div className="text-[10px] text-copper tracking-wider uppercase font-mono">
+                <div className="text-xs text-white font-medium">{user?.name || "Administrator"}</div>
+                <div className="text-[10px] text-[#D4A359] tracking-wider uppercase font-mono">
                   {user?.role || "admin"}
                 </div>
               </div>
@@ -312,7 +314,7 @@ export default function AdminLayout() {
             <button
               onClick={onLogout}
               title="Logout"
-              className="p-1.5 text-ivory/50 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
+              className="p-1.5 text-white/50 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -321,7 +323,7 @@ export default function AdminLayout() {
 
         {/* Page Content */}
         <main className="flex-1 min-w-0 overflow-y-auto">
-          <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto w-full">
+          <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto w-full text-white">
             <ErrorBoundary>
               <Outlet />
             </ErrorBoundary>

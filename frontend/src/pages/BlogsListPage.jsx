@@ -31,7 +31,7 @@ function BlogCard({ blog, idx }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.55, delay: Math.min(idx, 8) * 0.05 }}
-      className="group luxury-card overflow-hidden flex flex-col"
+      className="group bg-white rounded-2xl border border-[#E8DED2] overflow-hidden flex flex-col shadow-xs hover:border-[#D4A359] hover:-translate-y-1 hover:shadow-[0_16px_36px_-10px_rgba(184,115,51,0.18)] transition-all duration-400"
       data-testid={`blog-card-${idx}`}
     >
       <Link
@@ -99,7 +99,7 @@ function BlogCard({ blog, idx }) {
             author={blog.author || ""}
             date={formatDate(blog.publish_date || blog.created_at)}
             variant="iconOnly"
-            className="w-8 h-8 !p-0"
+            className="w-10 h-10 min-w-[40px] min-h-[40px] sm:w-11 sm:h-11 sm:min-w-[44px] sm:min-h-[44px] !p-0"
             label=""
           />
         </div>

@@ -250,7 +250,7 @@ export default function PropertyDetailPage() {
 
         {/* Gallery */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-12">
-          <div className={`${images.length > 1 ? "lg:col-span-9" : "lg:col-span-12"} aspect-[16/10] overflow-hidden bg-charcoal-2/40 border border-copper/15`}>
+          <div className={`${images.length > 1 ? "lg:col-span-9" : "lg:col-span-12"} aspect-[16/10] overflow-hidden bg-white border border-[#E8DED2] rounded-xl shadow-xs`}>
             {images.length > 0 && images[activeImg] ? (
               <SafeImage
                 priority={true}
@@ -275,7 +275,7 @@ export default function PropertyDetailPage() {
                 <button
                   key={i}
                   onClick={() => setActiveImg(i)}
-                  className={`relative aspect-[4/3] lg:aspect-auto lg:flex-1 lg:min-h-0 overflow-hidden border ${activeImg === i ? "border-copper" : "border-copper/15"} transition bg-charcoal/30`}
+                  className={`relative aspect-[4/3] lg:aspect-auto lg:flex-1 lg:min-h-0 overflow-hidden rounded-lg border ${activeImg === i ? "border-[#B87333] ring-2 ring-[#B87333]/25" : "border-[#E8DED2]"} transition-all bg-[#FAF8F5]`}
                 >
                   <SafeImage
                     src={img}
@@ -314,7 +314,7 @@ export default function PropertyDetailPage() {
 
             <p className="text-ivory/75 leading-relaxed font-light whitespace-pre-line text-base">{property.description}</p>
 
-            <div className="mt-12 grid grid-cols-2 sm:grid-cols-3 gap-px bg-copper/15">
+            <div className="mt-12 grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[
                 ["Type", property.property_type],
                 ["Category", property.property_category || "—"],
@@ -323,7 +323,7 @@ export default function PropertyDetailPage() {
                 ["Possession", property.possession_date || "—"],
                 ["Starting Price", property.price_label || (property.starting_price ? `₹${property.starting_price}` : "On request")],
               ].map(([k, v]) => (
-                <div key={k} className="bg-white border border-[#E8DED2] p-5">
+                <div key={k} className="bg-white border border-[#E8DED2] rounded-xl p-5 shadow-2xs">
                   <div className="text-[10px] text-[#737373] tracking-[0.25em] uppercase mb-2">{k}</div>
                   <div className="text-ivory font-display text-sm font-light">{v}</div>
                 </div>
@@ -335,7 +335,7 @@ export default function PropertyDetailPage() {
                 <h2 className="overline mb-5">Amenities</h2>
                 <div className="flex flex-wrap gap-2">
                   {property.amenities.map((a) => (
-                    <span key={a} className="border border-copper/25 text-ivory/80 text-xs px-4 py-2 tracking-wider">{a}</span>
+                    <span key={a} className="border border-[#E8DED2] bg-white text-[#1C1C1C] text-xs px-4 py-2 tracking-wider rounded-lg shadow-2xs font-medium">{a}</span>
                   ))}
                 </div>
               </div>
@@ -361,7 +361,7 @@ export default function PropertyDetailPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Link
                   to="/calculators/home-loan-emi"
-                  className="p-4 border border-copper/20 bg-charcoal-2/30 hover:border-copper/50 transition-colors group"
+                  className="p-5 border border-[#E8DED2] bg-white rounded-xl hover:border-[#D4A359] hover:shadow-xs transition-all group"
                 >
                   <div className="text-copper text-xs tracking-widest uppercase font-medium mb-1 group-hover:text-rose-gold">
                     Home Loan EMI Calculator &rarr;
@@ -372,7 +372,7 @@ export default function PropertyDetailPage() {
                 </Link>
                 <Link
                   to="/calculators/stamp-duty-registration"
-                  className="p-4 border border-copper/20 bg-charcoal-2/30 hover:border-copper/50 transition-colors group"
+                  className="p-5 border border-[#E8DED2] bg-white rounded-xl hover:border-[#D4A359] hover:shadow-xs transition-all group"
                 >
                   <div className="text-copper text-xs tracking-widest uppercase font-medium mb-1 group-hover:text-rose-gold">
                     West Bengal Stamp Duty Calculator &rarr;
@@ -398,15 +398,15 @@ export default function PropertyDetailPage() {
 
           {/* Enquiry */}
           <aside className="lg:col-span-1">
-            <div className="sticky top-28 luxury-card p-8">
-              <div className="overline mb-3">Enquire</div>
-              <h3 className="font-display text-2xl text-ivory mb-2 font-light">Request details</h3>
-              <p className="text-ivory/60 text-sm mb-6 font-light">A senior advisor will share the brochure, pricing & site visit slots.</p>
+            <div className="sticky top-28 bg-white rounded-2xl border border-[#E8DED2] p-8 shadow-xs">
+              <div className="text-[10px] tracking-[0.3em] uppercase text-[#B87333] font-semibold mb-3">Enquire</div>
+              <h3 className="font-serif-display text-2xl text-[#1C1C1C] mb-2 font-medium">Request Details</h3>
+              <p className="text-[#737373] text-sm mb-6 font-light">A senior advisor will share the brochure, pricing & site visit slots.</p>
               <form onSubmit={submit} className="space-y-4" data-testid="property-enquiry-form">
-                <input required id="detail-name" name="name" aria-label="Your full name" placeholder="Name" data-testid="enquiry-name" className="input-luxury" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} />
-                <input required type="tel" id="detail-phone" name="phone" aria-label="Your phone number" placeholder="Phone" data-testid="enquiry-phone" className="input-luxury" value={form.phone} onChange={(e) => setForm({...form, phone: e.target.value})} />
-                <input required type="email" id="detail-email" name="email" aria-label="Your email address" placeholder="Email" data-testid="enquiry-email" className="input-luxury" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} />
-                <textarea rows={3} id="detail-message" name="message" aria-label="Message or questions" placeholder="Message (optional)" data-testid="enquiry-message" className="input-luxury" value={form.message} onChange={(e) => setForm({...form, message: e.target.value})} />
+                <input required id="detail-name" name="name" aria-label="Your full name" placeholder="Name" data-testid="enquiry-name" className="input-consultation" value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} />
+                <input required type="tel" id="detail-phone" name="phone" aria-label="Your phone number" placeholder="Phone" data-testid="enquiry-phone" className="input-consultation" value={form.phone} onChange={(e) => setForm({...form, phone: e.target.value})} />
+                <input required type="email" id="detail-email" name="email" aria-label="Your email address" placeholder="Email" data-testid="enquiry-email" className="input-consultation" value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} />
+                <textarea rows={3} id="detail-message" name="message" aria-label="Message or questions" placeholder="Message (optional)" data-testid="enquiry-message" className="input-consultation" value={form.message} onChange={(e) => setForm({...form, message: e.target.value})} />
                 <button type="submit" disabled={submitting} data-testid="enquiry-submit" className="btn-primary w-full disabled:opacity-50">
                   {submitting ? "Sending..." : "Send Enquiry"}
                 </button>
@@ -445,11 +445,11 @@ export default function PropertyDetailPage() {
             </div>
 
             {/* Financial Planning & Corridor Cross-Linking Widget */}
-            <div className="luxury-card p-6 mt-6 space-y-4">
-              <div className="text-[10px] tracking-[0.25em] uppercase text-copper font-semibold">
+            <div className="bg-white rounded-2xl border border-[#E8DED2] p-6 mt-6 space-y-4 shadow-xs">
+              <div className="text-[10px] tracking-[0.25em] uppercase text-[#B87333] font-semibold">
                 Buyer Resources &amp; Advisory
               </div>
-              <h4 className="font-serif-display text-lg text-ivory">Financial Planning Tools</h4>
+              <h4 className="font-serif-display text-xl text-[#1C1C1C] font-medium">Financial Planning Tools</h4>
               <p className="text-xs text-ivory/70 leading-relaxed">
                 Plan your acquisition of {property.project_name} with verified calculators and regional market intelligence:
               </p>

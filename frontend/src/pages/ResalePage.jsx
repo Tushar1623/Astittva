@@ -182,7 +182,7 @@ export default function ResalePage() {
       />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#250306] via-[#35050A] to-[#1F0205] text-white py-16 sm:py-20 lg:py-24">
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#220508] via-[#2F080D] to-[#1C0306] text-white py-16 sm:py-20 lg:py-24">
         {/* Ambient lighting & subtle grid */}
         <div
           aria-hidden="true"
@@ -238,7 +238,7 @@ export default function ResalePage() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white/95 backdrop-blur-md rounded-xl p-4 sm:p-5 text-left border border-white/20 shadow-2xl max-w-5xl mx-auto"
+            className="bg-white/95 backdrop-blur-md rounded-2xl p-6 text-left border border-[#E8DED2] shadow-[0_16px_40px_rgba(30,10,12,0.12)] max-w-5xl mx-auto"
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               {/* Location Select */}
@@ -385,7 +385,7 @@ export default function ResalePage() {
                   <Link
                     key={p.id}
                     to={`/resale/${p.id}`}
-                    className="group bg-white rounded-xl border border-[#E8DED2] overflow-hidden shadow-sm hover:shadow-xl hover:border-[#B87333]/50 transition-all duration-300 flex flex-col"
+                    className="group bg-white rounded-2xl border border-[#E8DED2] overflow-hidden shadow-xs hover:shadow-[0_16px_36px_-10px_rgba(184,115,51,0.18)] hover:border-[#D4A359] hover:-translate-y-1 transition-all duration-400 flex flex-col"
                   >
                     {/* Image Box */}
                     <div className="relative aspect-[16/10] bg-[#1a1a1a] overflow-hidden">
@@ -500,7 +500,7 @@ export default function ResalePage() {
               <button
                 type="button"
                 onClick={handleResetFilters}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded bg-[#35050A] text-white text-xs uppercase tracking-wider font-semibold"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded bg-[#2A080C] text-white hover:bg-[#3D0C13] text-xs uppercase tracking-wider font-semibold"
               >
                 <RotateCcw className="w-3.5 h-3.5" /> Reset Filters
               </button>
@@ -515,7 +515,7 @@ export default function ResalePage() {
                   <Link
                     key={p.id}
                     to={`/resale/${p.id}`}
-                    className="group bg-white rounded-xl border border-[#E8DED2] overflow-hidden shadow-sm hover:shadow-xl hover:border-[#B87333]/50 transition-all duration-300 flex flex-col"
+                    className="group bg-white rounded-2xl border border-[#E8DED2] overflow-hidden shadow-xs hover:shadow-[0_16px_36px_-10px_rgba(184,115,51,0.18)] hover:border-[#D4A359] hover:-translate-y-1 transition-all duration-400 flex flex-col"
                   >
                     {/* Image box */}
                     <div className="relative aspect-[16/10] bg-[#1a1a1a] overflow-hidden">

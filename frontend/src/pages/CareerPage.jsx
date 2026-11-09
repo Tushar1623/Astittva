@@ -164,7 +164,7 @@ export default function CareerPage() {
       />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#250306] via-[#35050A] to-[#1F0205] text-white py-16 sm:py-24 lg:py-28">
+      <section className="relative overflow-hidden bg-gradient-to-b from-[#220508] via-[#2F080D] to-[#1C0306] text-white py-16 sm:py-24 lg:py-28">
         <div
           aria-hidden="true"
           className="absolute inset-0 pointer-events-none opacity-20"
@@ -268,7 +268,7 @@ export default function CareerPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-          <div className="bg-white p-7 sm:p-8 rounded-[8px] border border-[#E8DED2] shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:border-[#B87333]/40 transition-colors">
+          <div className="bg-white p-8 rounded-xl border border-[#E8DED2] shadow-xs hover:border-[#D4A359] hover:-translate-y-1 hover:shadow-[0_16px_36px_-10px_rgba(184,115,51,0.14)] transition-all duration-300">
             <div className="w-12 h-12 rounded-[6px] bg-[#FAF8F5] border border-[#E8DED2] flex items-center justify-center text-[#B87333] mb-5">
               <Award className="w-6 h-6" strokeWidth={1.75} />
             </div>
@@ -280,7 +280,7 @@ export default function CareerPage() {
             </p>
           </div>
 
-          <div className="bg-white p-7 sm:p-8 rounded-[8px] border border-[#E8DED2] shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:border-[#B87333]/40 transition-colors">
+          <div className="bg-white p-8 rounded-xl border border-[#E8DED2] shadow-xs hover:border-[#D4A359] hover:-translate-y-1 hover:shadow-[0_16px_36px_-10px_rgba(184,115,51,0.14)] transition-all duration-300">
             <div className="w-12 h-12 rounded-[6px] bg-[#FAF8F5] border border-[#E8DED2] flex items-center justify-center text-[#B87333] mb-5">
               <Users className="w-6 h-6" strokeWidth={1.75} />
             </div>
@@ -292,7 +292,7 @@ export default function CareerPage() {
             </p>
           </div>
 
-          <div className="bg-white p-7 sm:p-8 rounded-[8px] border border-[#E8DED2] shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:border-[#B87333]/40 transition-colors">
+          <div className="bg-white p-8 rounded-xl border border-[#E8DED2] shadow-xs hover:border-[#D4A359] hover:-translate-y-1 hover:shadow-[0_16px_36px_-10px_rgba(184,115,51,0.14)] transition-all duration-300">
             <div className="w-12 h-12 rounded-[6px] bg-[#FAF8F5] border border-[#E8DED2] flex items-center justify-center text-[#B87333] mb-5">
               <Briefcase className="w-6 h-6" strokeWidth={1.75} />
             </div>
@@ -323,7 +323,7 @@ export default function CareerPage() {
               {liveJobs.map((job) => (
                 <div
                   key={job.id || job._id}
-                  className="bg-white p-5 sm:p-6 rounded-[6px] border border-[#E8DED2] flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-[#B87333]/50 transition-all shadow-[0_2px_12px_rgba(0,0,0,0.02)]"
+                  className="bg-white p-6 sm:p-7 rounded-xl border border-[#E8DED2] flex flex-col sm:flex-row sm:items-center justify-between gap-5 hover:border-[#D4A359] hover:shadow-xs transition-all shadow-2xs"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1.5">
@@ -432,7 +432,7 @@ export default function CareerPage() {
       {/* Early Application Form */}
       <section id="apply-early" className="py-16 sm:py-20 bg-[#F5F1EC] border-t border-[#E8DED2]">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white p-8 sm:p-10 lg:p-12 rounded-[10px] border border-[#E8DED2] shadow-[0_12px_40px_rgba(0,0,0,0.05)]">
+          <div className="bg-white p-8 sm:p-10 lg:p-12 rounded-2xl border border-[#E8DED2] shadow-[0_16px_40px_rgba(30,10,12,0.06)]">
             <div className="text-center mb-8">
               <span className="font-sans text-[11px] font-semibold tracking-[0.28em] uppercase text-[#B87333]">
                 Express Your Interest
