@@ -156,30 +156,30 @@ export default function JobDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-charcoal text-ivory pt-32 pb-20 flex flex-col items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-copper border-t-transparent mb-4" />
-        <p className="text-xs font-mono uppercase tracking-widest text-copper/60">Loading Position Details…</p>
+      <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-32 pb-20 flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#B87333] border-t-transparent mb-4" />
+        <p className="text-xs font-mono uppercase tracking-widest text-[#B87333]">Loading Position Details…</p>
       </div>
     );
   }
 
   if (error || !job) {
     return (
-      <div className="min-h-screen bg-charcoal text-ivory pt-32 pb-20 px-4 max-w-xl mx-auto text-center">
-        <div className="luxury-card rounded-[8px] p-8 shadow-sm">
-          <Briefcase className="w-10 h-10 text-copper/40 mx-auto mb-3" />
-          <h1 className="text-xl font-display text-ivory mb-2">Opening Not Available</h1>
-          <p className="text-sm text-ivory/60 mb-6 font-sans">{error || "This vacancy could not be found."}</p>
+      <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-32 pb-20 px-4 max-w-xl mx-auto text-center">
+        <div className="bg-white border border-[#E8DED2] rounded-xl p-8 shadow-xs">
+          <Briefcase className="w-10 h-10 text-[#B87333]/40 mx-auto mb-3" />
+          <h1 className="text-xl font-serif-display text-[#1C1C1C] mb-2 font-medium">Opening Not Available</h1>
+          <p className="text-sm text-[#5F5F5F] mb-6 font-light">{error || "This vacancy could not be found."}</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               to="/careers/jobs"
-              className="px-4 py-2 text-xs uppercase tracking-wider text-ivory border border-copper/40 rounded-[4px] hover:bg-copper/10 transition-colors w-full sm:w-auto font-semibold"
+              className="btn-outline text-xs w-full sm:w-auto"
             >
               Browse All Openings
             </Link>
             <Link
               to="/career"
-              className="px-4 py-2 text-xs uppercase tracking-[0.12em] text-white font-semibold bg-copper hover:bg-copper-light rounded-[4px] transition-colors w-full sm:w-auto shadow-sm"
+              className="btn-primary text-xs w-full sm:w-auto"
             >
               General Application
             </Link>
@@ -192,7 +192,7 @@ export default function JobDetailPage() {
   const jobSchema = generateJobPostingSchema();
 
   return (
-    <div className="min-h-screen bg-charcoal pt-24 pb-20">
+    <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-28 pb-20">
       <Seo
         title={`${job.title} | Career Openings | Astittva Marketing Kolkata`}
         description={job.description ? job.description.slice(0, 160) : `Apply for ${job.title} at Astittva Marketing Kolkata.`}
@@ -200,51 +200,51 @@ export default function JobDetailPage() {
         jsonLd={jobSchema}
       />
 
-      <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pt-6">
+      <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pt-4">
         {/* Back Link */}
         <div className="mb-6">
           <Link
             to="/careers/jobs"
-            className="inline-flex items-center gap-2 text-xs text-copper hover:underline font-semibold uppercase tracking-[0.12em] transition-colors"
+            className="inline-flex items-center gap-2 text-xs text-[#B87333] hover:text-[#5E1F28] font-semibold uppercase tracking-[0.12em] transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back to All Positions
           </Link>
         </div>
 
         {/* Hero Card */}
-        <div className="luxury-card rounded-[8px] p-6 sm:p-10 mb-8 shadow-sm">
+        <div className="bg-white border border-[#E8DED2] rounded-xl p-6 sm:p-10 mb-8 shadow-xs">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="max-w-3xl">
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 {job.isFeatured && (
-                  <span className="px-3 py-1 rounded-[3px] text-[11px] font-mono tracking-wider uppercase bg-copper/15 border border-copper/30 text-copper font-medium flex items-center gap-1.5">
+                  <span className="px-3 py-1 rounded-[4px] text-[11px] font-mono tracking-wider uppercase bg-[#B87333]/15 border border-[#B87333]/30 text-[#B87333] font-semibold flex items-center gap-1.5">
                     <Sparkles className="w-3 h-3" /> Featured Role
                   </span>
                 )}
-                <span className="px-3 py-1 rounded-[3px] text-[11px] font-mono tracking-wider uppercase bg-charcoal border border-copper/20 text-ivory/80">
+                <span className="px-3 py-1 rounded-[4px] text-[11px] font-mono tracking-wider uppercase bg-[#FAF8F5] border border-[#E8DED2] text-[#5F5F5F] font-medium">
                   {job.department}
                 </span>
-                <span className="px-3 py-1 rounded-[3px] text-[11px] font-mono tracking-wider uppercase bg-charcoal border border-copper/20 text-ivory/80">
+                <span className="px-3 py-1 rounded-[4px] text-[11px] font-mono tracking-wider uppercase bg-[#FAF8F5] border border-[#E8DED2] text-[#5F5F5F] font-medium">
                   {job.employmentType}
                 </span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-display font-medium text-ivory tracking-tight mb-4">
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-serif-display font-medium text-[#1C1C1C] tracking-tight mb-4">
                 {job.title}
               </h1>
 
               {/* Quick Info Grid */}
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs sm:text-sm text-ivory/70">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs sm:text-sm text-[#5F5F5F]">
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-copper shrink-0" />
+                  <MapPin className="w-4 h-4 text-[#B87333] shrink-0" />
                   <span>{job.location}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Building className="w-4 h-4 text-copper shrink-0" />
+                  <Building className="w-4 h-4 text-[#B87333] shrink-0" />
                   <span>{job.workplaceType}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Briefcase className="w-4 h-4 text-copper shrink-0" />
+                  <Briefcase className="w-4 h-4 text-[#B87333] shrink-0" />
                   <span>
                     {job.experienceMinYears && job.experienceMaxYears
                       ? `${job.experienceMinYears} - ${job.experienceMaxYears} Years Experience`
@@ -252,7 +252,7 @@ export default function JobDetailPage() {
                   </span>
                 </div>
                 {job.salaryRange?.isDisclosed && job.salaryRange?.min > 0 && (
-                  <div className="flex items-center gap-2 text-copper font-medium">
+                  <div className="flex items-center gap-2 text-[#B87333] font-semibold">
                     <IndianRupee className="w-4 h-4 shrink-0" />
                     <span>
                       ₹{(job.salaryRange.min / 100000).toFixed(1)}L - ₹{(job.salaryRange.max / 100000).toFixed(1)}L PA
@@ -266,14 +266,14 @@ export default function JobDetailPage() {
             <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
               <Link
                 to={`/careers/jobs/${job.slug}/apply`}
-                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-[4px] bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.15em] transition-colors shadow-sm"
+                className="btn-primary"
               >
                 Apply For This Position <ArrowRight className="w-4 h-4" />
               </Link>
               <button
                 type="button"
                 onClick={handleShare}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[4px] border border-copper/30 hover:border-copper text-ivory/80 hover:text-white text-xs font-semibold uppercase tracking-[0.15em] transition-colors"
+                className="btn-outline"
               >
                 <Share2 className="w-4 h-4" /> Share Position
               </button>
@@ -287,11 +287,11 @@ export default function JobDetailPage() {
           <div className="lg:col-span-2 space-y-8">
             {/* Role Overview */}
             {job.description && (
-              <div className="luxury-card rounded-[8px] p-6 sm:p-8">
-                <h2 className="text-xl font-display text-ivory mb-4 flex items-center gap-2">
-                  <Award className="w-5 h-5 text-copper" /> Role Overview
+              <div className="bg-white border border-[#E8DED2] rounded-xl p-6 sm:p-8 shadow-xs">
+                <h2 className="text-xl font-serif-display text-[#1C1C1C] mb-4 flex items-center gap-2 font-medium">
+                  <Award className="w-5 h-5 text-[#B87333]" /> Role Overview
                 </h2>
-                <div className="text-sm sm:text-base text-ivory/80 leading-relaxed font-sans whitespace-pre-line space-y-4">
+                <div className="text-sm sm:text-base text-[#4A4A4A] leading-relaxed font-light whitespace-pre-line space-y-4">
                   {job.description}
                 </div>
               </div>
@@ -299,14 +299,14 @@ export default function JobDetailPage() {
 
             {/* Key Responsibilities */}
             {Array.isArray(job.responsibilities) && job.responsibilities.length > 0 && (
-              <div className="luxury-card rounded-[8px] p-6 sm:p-8">
-                <h2 className="text-xl font-display text-ivory mb-4 flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-copper" /> Key Responsibilities
+              <div className="bg-white border border-[#E8DED2] rounded-xl p-6 sm:p-8 shadow-xs">
+                <h2 className="text-xl font-serif-display text-[#1C1C1C] mb-4 flex items-center gap-2 font-medium">
+                  <CheckCircle2 className="w-5 h-5 text-[#B87333]" /> Key Responsibilities
                 </h2>
-                <ul className="space-y-3 font-sans text-sm sm:text-base text-ivory/80">
+                <ul className="space-y-3 text-sm sm:text-base text-[#4A4A4A] font-light">
                   {job.responsibilities.map((resp, idx) => (
                     <li key={idx} className="flex items-start gap-3">
-                      <span className="w-1.5 h-1.5 rounded-full bg-copper mt-2 shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#B87333] mt-2.5 shrink-0" />
                       <span>{resp}</span>
                     </li>
                   ))}
@@ -316,14 +316,14 @@ export default function JobDetailPage() {
 
             {/* Requirements & Qualifications */}
             {Array.isArray(job.requirements) && job.requirements.length > 0 && (
-              <div className="luxury-card rounded-[8px] p-6 sm:p-8">
-                <h2 className="text-xl font-display text-ivory mb-4 flex items-center gap-2">
-                  <Briefcase className="w-5 h-5 text-copper" /> Candidate Requirements
+              <div className="bg-white border border-[#E8DED2] rounded-xl p-6 sm:p-8 shadow-xs">
+                <h2 className="text-xl font-serif-display text-[#1C1C1C] mb-4 flex items-center gap-2 font-medium">
+                  <Briefcase className="w-5 h-5 text-[#B87333]" /> Candidate Requirements
                 </h2>
-                <ul className="space-y-3 font-sans text-sm sm:text-base text-ivory/80">
+                <ul className="space-y-3 text-sm sm:text-base text-[#4A4A4A] font-light">
                   {job.requirements.map((req, idx) => (
                     <li key={idx} className="flex items-start gap-3">
-                      <span className="w-1.5 h-1.5 rounded-full bg-copper mt-2 shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#B87333] mt-2.5 shrink-0" />
                       <span>{req}</span>
                     </li>
                   ))}
@@ -333,14 +333,14 @@ export default function JobDetailPage() {
 
             {/* Benefits & Perks */}
             {Array.isArray(job.benefits) && job.benefits.length > 0 && (
-              <div className="luxury-card rounded-[8px] p-6 sm:p-8">
-                <h2 className="text-xl font-display text-ivory mb-4 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-copper" /> What We Offer
+              <div className="bg-white border border-[#E8DED2] rounded-xl p-6 sm:p-8 shadow-xs">
+                <h2 className="text-xl font-serif-display text-[#1C1C1C] mb-4 flex items-center gap-2 font-medium">
+                  <Sparkles className="w-5 h-5 text-[#B87333]" /> What We Offer
                 </h2>
-                <ul className="space-y-3 font-sans text-sm sm:text-base text-ivory/80">
+                <ul className="space-y-3 text-sm sm:text-base text-[#4A4A4A] font-light">
                   {job.benefits.map((ben, idx) => (
                     <li key={idx} className="flex items-start gap-3">
-                      <span className="w-1.5 h-1.5 rounded-full bg-copper mt-2 shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#B87333] mt-2.5 shrink-0" />
                       <span>{ben}</span>
                     </li>
                   ))}
@@ -352,51 +352,51 @@ export default function JobDetailPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Apply Card */}
-            <div className="luxury-card rounded-[8px] p-6 text-center shadow-sm">
-              <h3 className="text-lg font-display text-ivory mb-2">Ready to Apply?</h3>
-              <p className="text-xs text-ivory/60 leading-relaxed mb-5 font-sans">
+            <div className="bg-white border border-[#E8DED2] rounded-xl p-6 sm:p-7 text-center shadow-xs">
+              <h3 className="text-xl font-serif-display text-[#1C1C1C] mb-2 font-medium">Ready to Apply?</h3>
+              <p className="text-xs sm:text-sm text-[#5F5F5F] leading-relaxed mb-6 font-light">
                 Submit your CV and portfolio directly to our talent acquisition team. We typically respond within 3 business days.
               </p>
               <Link
                 to={`/careers/jobs/${job.slug}/apply`}
-                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-[4px] bg-copper hover:bg-copper-light text-white font-semibold text-xs tracking-[0.15em] uppercase transition-colors shadow-sm"
+                className="btn-primary w-full"
               >
                 Apply For This Role <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
 
             {/* At a Glance Box */}
-            <div className="luxury-card rounded-[8px] p-6 space-y-4 text-xs font-sans">
-              <h4 className="text-xs font-mono uppercase tracking-widest text-copper border-b border-copper/15 pb-2">
+            <div className="bg-white border border-[#E8DED2] rounded-xl p-6 space-y-4 text-xs">
+              <h4 className="text-xs font-mono uppercase tracking-widest text-[#B87333] border-b border-[#E8DED2] pb-2 font-semibold">
                 Position Snapshot
               </h4>
 
               <div className="flex items-center justify-between">
-                <span className="text-ivory/60">Department</span>
-                <span className="text-ivory font-medium">{job.department}</span>
+                <span className="text-[#5F5F5F]">Department</span>
+                <span className="text-[#1C1C1C] font-medium">{job.department}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-ivory/60">Work Location</span>
-                <span className="text-ivory font-medium">{job.location}</span>
+                <span className="text-[#5F5F5F]">Work Location</span>
+                <span className="text-[#1C1C1C] font-medium">{job.location}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-ivory/60">Arrangement</span>
-                <span className="text-ivory font-medium">{job.workplaceType}</span>
+                <span className="text-[#5F5F5F]">Arrangement</span>
+                <span className="text-[#1C1C1C] font-medium">{job.workplaceType}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-ivory/60">Employment</span>
-                <span className="text-ivory font-medium">{job.employmentType}</span>
+                <span className="text-[#5F5F5F]">Employment</span>
+                <span className="text-[#1C1C1C] font-medium">{job.employmentType}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-ivory/60">Experience</span>
-                <span className="text-ivory font-medium">
+                <span className="text-[#5F5F5F]">Experience</span>
+                <span className="text-[#1C1C1C] font-medium">
                   {job.experienceMinYears && job.experienceMaxYears
                     ? `${job.experienceMinYears} - ${job.experienceMaxYears} Yrs`
                     : job.experienceLevel}
                 </span>
               </div>
               {job.salaryRange?.isDisclosed && job.salaryRange?.min > 0 && (
-                <div className="flex items-center justify-between text-copper font-medium">
+                <div className="flex items-center justify-between text-[#B87333] font-semibold">
                   <span>Compensation</span>
                   <span>₹{(job.salaryRange.min / 100000).toFixed(1)}L - ₹{(job.salaryRange.max / 100000).toFixed(1)}L</span>
                 </div>
@@ -404,14 +404,14 @@ export default function JobDetailPage() {
             </div>
 
             {/* Advisory Practice Highlights */}
-            <div className="luxury-card rounded-[8px] p-6 text-xs text-ivory/70 space-y-3 font-sans">
-              <div className="flex items-center gap-2 text-copper font-medium uppercase tracking-wider text-[11px]">
+            <div className="bg-white border border-[#E8DED2] rounded-xl p-6 text-xs text-[#5F5F5F] space-y-3">
+              <div className="flex items-center gap-2 text-[#B87333] font-semibold uppercase tracking-wider text-[11px]">
                 <ShieldCheck className="w-4 h-4" /> Why Astittva?
               </div>
-              <p>
-                We represent Kolkata’s most prestigious residential enclaves in New Town, Rajarhat, and EM Bypass.
+              <p className="leading-relaxed">
+                We represent Kolkata&apos;s most prestigious residential enclaves in New Town, Rajarhat, and EM Bypass.
               </p>
-              <p>
+              <p className="leading-relaxed">
                 Consultants enjoy clear commission structures, marketing back-office support, verified developer mandates, and professional executive training.
               </p>
             </div>

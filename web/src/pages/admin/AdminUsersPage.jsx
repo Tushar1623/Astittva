@@ -123,7 +123,7 @@ export default function AdminUsersPage() {
             type="button"
             onClick={() => setShowForm(!showForm)}
             data-testid="toggle-user-form"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.12em] rounded-[4px] transition-colors shadow-sm"
+            className="btn-admin-primary"
           >
             {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
             <span>{showForm ? "Cancel" : "Add User"}</span>
@@ -133,18 +133,18 @@ export default function AdminUsersPage() {
 
       {/* Collapsible Add User Form Card */}
       {showForm && (
-        <div className="bg-white border border-copper/25 rounded-[8px] p-6 shadow-md space-y-4 animate-fadeIn text-[#1C1C1C]">
-          <div className="flex items-center justify-between pb-3 border-b border-copper/15">
+        <div className="admin-card rounded-[8px] p-6 shadow-md space-y-4 animate-fadeIn">
+          <div className="flex items-center justify-between pb-3 border-b border-[var(--admin-border-subtle)]">
             <div>
-              <h3 className="text-base font-display font-medium text-[#1C1C1C]">Create New User Account</h3>
-              <p className="text-xs text-[#1C1C1C]/60">
+              <h3 className="text-base font-display font-medium text-[var(--admin-text-primary)]">Create New User Account</h3>
+              <p className="text-xs text-[var(--admin-text-muted)]">
                 Configure account credentials and console access permissions.
               </p>
             </div>
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="w-8 h-8 rounded-full border border-copper/20 hover:border-copper flex items-center justify-center text-[#1C1C1C]/60 hover:text-copper bg-[#FAF8F5] transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-full border border-[var(--admin-border)] hover:border-[var(--admin-accent)] flex items-center justify-center text-[var(--admin-text-muted)] hover:text-[var(--admin-accent)] bg-[var(--admin-surface)] transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -156,16 +156,16 @@ export default function AdminUsersPage() {
             data-testid="create-user-form"
           >
             <div>
-              <label className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1.5 font-semibold">
+              <label className="text-[10px] tracking-[0.2em] uppercase text-[var(--admin-accent)] block mb-1.5 font-semibold">
                 Full Name
               </label>
               <div className="relative">
-                <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#1C1C1C]/40" />
+                <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-muted)]" />
                 <input
                   required
                   data-testid="user-name"
                   placeholder="e.g. John Doe"
-                  className="w-full h-10 pl-9 pr-3 bg-[#FAF8F5] border border-copper/25 rounded-[4px] text-xs text-[#1C1C1C] placeholder:text-[#1C1C1C]/40 focus:outline-none focus:border-copper font-medium"
+                  className="w-full h-10 pl-9 pr-3 bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)] font-medium"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
@@ -173,17 +173,17 @@ export default function AdminUsersPage() {
             </div>
 
             <div>
-              <label className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1.5 font-semibold">
+              <label className="text-[10px] tracking-[0.2em] uppercase text-[var(--admin-accent)] block mb-1.5 font-semibold">
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#1C1C1C]/40" />
+                <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-muted)]" />
                 <input
                   required
                   type="email"
                   data-testid="user-email"
                   placeholder="name@astitva.com"
-                  className="w-full h-10 pl-9 pr-3 bg-[#FAF8F5] border border-copper/25 rounded-[4px] text-xs text-[#1C1C1C] placeholder:text-[#1C1C1C]/40 focus:outline-none focus:border-copper font-medium"
+                  className="w-full h-10 pl-9 pr-3 bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)] font-medium"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                 />
@@ -191,19 +191,19 @@ export default function AdminUsersPage() {
             </div>
 
             <div>
-              <label className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1.5 font-semibold">
+              <label className="text-[10px] tracking-[0.2em] uppercase text-[var(--admin-accent)] block mb-1.5 font-semibold">
                 Role &amp; Permissions
               </label>
               <div className="relative">
-                <ShieldCheck className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#1C1C1C]/40" />
+                <ShieldCheck className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-muted)]" />
                 <select
                   data-testid="user-role"
-                  className="w-full h-10 pl-9 pr-3 bg-[#FAF8F5] border border-copper/25 rounded-[4px] text-xs text-[#1C1C1C] focus:outline-none focus:border-copper uppercase tracking-wider font-mono cursor-pointer font-semibold"
+                  className="w-full h-10 pl-9 pr-3 bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)] uppercase tracking-wider font-mono cursor-pointer font-semibold"
                   value={form.role}
                   onChange={(e) => setForm({ ...form, role: e.target.value })}
                 >
                   {ROLES.map((r) => (
-                    <option key={r} value={r}>
+                    <option key={r} value={r} className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)]">
                       {r.toUpperCase()}
                     </option>
                   ))}
@@ -212,18 +212,18 @@ export default function AdminUsersPage() {
             </div>
 
             <div>
-              <label className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1.5 font-semibold">
+              <label className="text-[10px] tracking-[0.2em] uppercase text-[var(--admin-accent)] block mb-1.5 font-semibold">
                 Password
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#1C1C1C]/40" />
+                <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-text-muted)]" />
                 <input
                   required
                   type="password"
                   minLength={6}
                   data-testid="user-password"
                   placeholder="Minimum 6 characters"
-                  className="w-full h-10 pl-9 pr-3 bg-[#FAF8F5] border border-copper/25 rounded-[4px] text-xs text-[#1C1C1C] placeholder:text-[#1C1C1C]/40 focus:outline-none focus:border-copper"
+                  className="w-full h-10 pl-9 pr-3 bg-[var(--admin-surface-muted)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] placeholder:text-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                 />
@@ -234,7 +234,7 @@ export default function AdminUsersPage() {
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="px-4 py-2 border border-copper/30 hover:border-copper text-[#1C1C1C] hover:bg-[#FAF8F5] text-xs uppercase tracking-[0.1em] rounded-[4px] transition-colors cursor-pointer font-medium"
+                className="btn-admin-secondary"
               >
                 Cancel
               </button>
@@ -242,7 +242,7 @@ export default function AdminUsersPage() {
                 type="submit"
                 disabled={submitting}
                 data-testid="create-user-submit"
-                className="px-5 py-2 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.12em] rounded-[4px] transition-colors disabled:opacity-50 shadow-sm cursor-pointer"
+                className="btn-admin-primary"
               >
                 {submitting ? "Creating Account…" : "Create User"}
               </button>
@@ -271,7 +271,7 @@ export default function AdminUsersPage() {
 
       {/* Main Table */}
       {loading ? (
-        <div className="text-ivory/50 text-center py-20 tracking-[0.3em] uppercase text-xs">
+        <div className="text-[var(--admin-text-muted)] text-center py-20 tracking-[0.3em] uppercase text-xs">
           Loading Users…
         </div>
       ) : filtered.length === 0 ? (
@@ -289,26 +289,26 @@ export default function AdminUsersPage() {
           }
         />
       ) : (
-        <div className="border border-copper/15 rounded-[6px] overflow-hidden bg-charcoal-2/20 shadow-lg">
+        <div className="admin-table-wrap">
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[560px]" data-testid="users-table">
-              <thead className="bg-charcoal text-ivory/60 text-[10px] tracking-[0.22em] uppercase border-b border-copper/15">
+              <thead className="admin-thead">
                 <tr>
-                  <th className="text-left p-4 font-normal">Staff Member</th>
-                  <th className="text-left p-4 font-normal">Email Address</th>
-                  <th className="text-left p-4 font-normal">Assigned Role</th>
-                  <th className="text-right p-4 font-normal">Actions</th>
+                  <th className="text-left p-4 font-semibold">Staff Member</th>
+                  <th className="text-left p-4 font-semibold">Email Address</th>
+                  <th className="text-left p-4 font-semibold">Assigned Role</th>
+                  <th className="text-right p-4 font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {paginated.map((u) => (
                   <tr
                     key={u.id}
-                    className="border-t border-copper/10 hover:bg-charcoal/50 transition-colors"
+                    className="admin-tr transition-colors"
                   >
-                    <td className="p-4 font-medium text-ivory text-sm">{u.name}</td>
-                    <td className="p-4 text-ivory/70 text-xs font-mono">
-                      <a href={`mailto:${u.email}`} className="hover:text-copper transition-colors">
+                    <td className="p-4 font-medium text-[var(--admin-text-primary)] text-sm">{u.name}</td>
+                    <td className="p-4 text-[var(--admin-text-secondary)] text-xs font-mono">
+                      <a href={`mailto:${u.email}`} className="hover:text-[var(--admin-accent)] transition-colors">
                         {u.email}
                       </a>
                     </td>
@@ -325,7 +325,7 @@ export default function AdminUsersPage() {
                             email: u.email,
                           })
                         }
-                        className="p-1.5 text-ivory/40 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                        className="p-1.5 text-[var(--admin-text-muted)] hover:text-rose-500 hover:bg-rose-500/15 rounded transition-colors"
                         title="Delete User Account"
                         data-testid={`delete-user-${u.id}`}
                       >

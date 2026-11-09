@@ -120,7 +120,7 @@ export default function AdminBlogsPage() {
           <Link
             to="/admin/blogs/new"
             data-testid="add-blog-btn"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.12em] rounded-[4px] transition-colors shadow-sm"
+            className="btn-admin-primary"
           >
             <Plus className="w-4 h-4" />
             <span>New Blog</span>
@@ -148,7 +148,7 @@ export default function AdminBlogsPage() {
 
       {/* Main Table */}
       {loading ? (
-        <div className="text-ivory/50 text-center py-20 tracking-[0.3em] uppercase text-xs">
+        <div className="text-[var(--admin-text-muted)] text-center py-20 tracking-[0.3em] uppercase text-xs">
           Loading Blog Articles…
         </div>
       ) : filtered.length === 0 ? (
@@ -170,23 +170,23 @@ export default function AdminBlogsPage() {
           }
         />
       ) : (
-        <div className="border border-copper/15 rounded-[6px] overflow-hidden bg-charcoal-2/20 shadow-lg">
+        <div className="admin-table-wrap">
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[640px]" data-testid="admin-blogs-table">
-              <thead className="bg-charcoal text-ivory/60 text-[10px] tracking-[0.22em] uppercase border-b border-copper/15">
+              <thead className="admin-thead">
                 <tr>
-                  <th className="text-left p-4 font-normal">Article &amp; Author</th>
-                  <th className="text-left p-4 font-normal hidden md:table-cell">URL Slug</th>
-                  <th className="text-left p-4 font-normal hidden lg:table-cell">Publish Date</th>
-                  <th className="text-left p-4 font-normal">Status</th>
-                  <th className="text-right p-4 font-normal">Actions</th>
+                  <th className="text-left p-4 font-semibold">Article &amp; Author</th>
+                  <th className="text-left p-4 font-semibold hidden md:table-cell">URL Slug</th>
+                  <th className="text-left p-4 font-semibold hidden lg:table-cell">Publish Date</th>
+                  <th className="text-left p-4 font-semibold">Status</th>
+                  <th className="text-right p-4 font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {paginated.map((b) => (
                   <tr
                     key={b.id}
-                    className="border-t border-copper/10 hover:bg-charcoal/50 transition-colors"
+                    className="admin-tr transition-colors"
                     data-testid={`admin-blog-row-${b.id}`}
                   >
                     {/* Title & Author */}
@@ -199,16 +199,16 @@ export default function AdminBlogsPage() {
                           seed={b}
                           fallbackSrc={pickBlogFallback(b)}
                           width={200}
-                          className="w-12 h-12 object-cover border border-copper/20 rounded-[4px] shrink-0 bg-charcoal-2"
+                          className="w-12 h-12 object-cover border border-[var(--admin-border)] rounded-[4px] shrink-0 bg-[var(--admin-surface-muted)]"
                         />
                         <div className="min-w-0">
                           <Link
                             to={`/admin/blogs/${b.id}/edit`}
-                            className="text-ivory font-display text-sm font-medium hover:text-copper transition-colors block truncate max-w-sm"
+                            className="text-[var(--admin-text-primary)] font-display text-sm font-medium hover:text-[var(--admin-accent)] transition-colors block truncate max-w-sm"
                           >
                             {b.title}
                           </Link>
-                          <div className="text-ivory/50 text-xs mt-0.5">
+                          <div className="text-[var(--admin-text-muted)] text-xs mt-0.5">
                             By {b.author || "Editorial Team"}
                           </div>
                         </div>
@@ -216,14 +216,14 @@ export default function AdminBlogsPage() {
                     </td>
 
                     {/* Slug */}
-                    <td className="p-4 text-ivory/65 hidden md:table-cell font-mono text-xs">
+                    <td className="p-4 text-[var(--admin-text-secondary)] hidden md:table-cell font-mono text-xs">
                       <span className="truncate block max-w-[200px]" title={b.slug}>
                         /blogs/{b.slug}
                       </span>
                     </td>
 
                     {/* Publish Date */}
-                    <td className="p-4 text-xs text-ivory/70 hidden lg:table-cell font-mono whitespace-nowrap">
+                    <td className="p-4 text-xs text-[var(--admin-text-muted)] hidden lg:table-cell font-mono whitespace-nowrap">
                       {b.publish_date
                         ? new Date(b.publish_date).toLocaleDateString("en-IN", {
                             day: "2-digit",
@@ -247,7 +247,7 @@ export default function AdminBlogsPage() {
                             target="_blank"
                             rel="noopener noreferrer"
                             title="Open live article"
-                            className="p-1.5 text-ivory/60 hover:text-copper hover:bg-copper/10 rounded transition-colors"
+                            className="p-1.5 text-[var(--admin-text-muted)] hover:text-[var(--admin-accent)] hover:bg-[var(--admin-surface-muted)] rounded transition-colors"
                             data-testid={`view-blog-${b.id}`}
                           >
                             <ExternalLink className="w-4 h-4" />
@@ -259,7 +259,7 @@ export default function AdminBlogsPage() {
                             type="button"
                             onClick={() => setStatus(b.id, "published")}
                             title="Publish Live"
-                            className="p-1.5 text-ivory/60 hover:text-green-400 hover:bg-green-500/10 rounded transition-colors"
+                            className="p-1.5 text-[var(--admin-text-muted)] hover:text-emerald-500 hover:bg-emerald-500/15 rounded transition-colors"
                             data-testid={`publish-blog-${b.id}`}
                           >
                             <Eye className="w-4 h-4" />
@@ -269,7 +269,7 @@ export default function AdminBlogsPage() {
                             type="button"
                             onClick={() => setStatus(b.id, "draft")}
                             title="Move to Draft"
-                            className="p-1.5 text-ivory/60 hover:text-amber-400 hover:bg-amber-500/10 rounded transition-colors"
+                            className="p-1.5 text-[var(--admin-text-muted)] hover:text-amber-500 hover:bg-amber-500/15 rounded transition-colors"
                             data-testid={`unpublish-blog-${b.id}`}
                           >
                             <EyeOff className="w-4 h-4" />
@@ -278,7 +278,7 @@ export default function AdminBlogsPage() {
 
                         <Link
                           to={`/admin/blogs/${b.id}/edit`}
-                          className="p-1.5 text-ivory/60 hover:text-copper hover:bg-copper/10 rounded transition-colors"
+                          className="p-1.5 text-[var(--admin-text-muted)] hover:text-[var(--admin-accent)] hover:bg-[var(--admin-surface-muted)] rounded transition-colors"
                           title="Edit Article"
                           data-testid={`edit-blog-${b.id}`}
                         >
@@ -289,7 +289,7 @@ export default function AdminBlogsPage() {
                           <button
                             type="button"
                             onClick={() => setDeleteTarget({ id: b.id, title: b.title })}
-                            className="p-1.5 text-ivory/40 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                            className="p-1.5 text-[var(--admin-text-muted)] hover:text-rose-500 hover:bg-rose-500/15 rounded transition-colors"
                             title="Delete Article"
                             data-testid={`delete-blog-${b.id}`}
                           >

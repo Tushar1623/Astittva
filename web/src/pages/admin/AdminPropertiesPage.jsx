@@ -130,7 +130,7 @@ export default function AdminPropertiesPage() {
           <Link
             to="/admin/properties/new"
             data-testid="add-property-btn"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.12em] rounded-[4px] transition-colors shadow-sm"
+            className="btn-admin-primary"
           >
             <Plus className="w-4 h-4" />
             <span>Add Property</span>
@@ -158,7 +158,7 @@ export default function AdminPropertiesPage() {
 
       {/* Main Table */}
       {loading ? (
-        <div className="text-ivory/50 text-center py-20 tracking-[0.3em] uppercase text-xs">
+        <div className="text-[var(--admin-text-muted)] text-center py-20 tracking-[0.3em] uppercase text-xs">
           Loading Properties…
         </div>
       ) : filtered.length === 0 ? (
@@ -180,23 +180,23 @@ export default function AdminPropertiesPage() {
           }
         />
       ) : (
-        <div className="border border-copper/15 rounded-[6px] overflow-hidden bg-charcoal-2/20 shadow-lg">
+        <div className="admin-table-wrap">
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[640px]" data-testid="properties-table">
-              <thead className="bg-charcoal text-ivory/60 text-[10px] tracking-[0.22em] uppercase border-b border-copper/15">
+              <thead className="admin-thead">
                 <tr>
-                  <th className="text-left p-4 font-normal">Project &amp; Builder</th>
-                  <th className="text-left p-4 font-normal hidden md:table-cell">City &amp; Location</th>
-                  <th className="text-left p-4 font-normal hidden lg:table-cell">Type &amp; Category</th>
-                  <th className="text-left p-4 font-normal">Status</th>
-                  <th className="text-right p-4 font-normal">Actions</th>
+                  <th className="text-left p-4">Project &amp; Builder</th>
+                  <th className="text-left p-4 hidden md:table-cell">City &amp; Location</th>
+                  <th className="text-left p-4 hidden lg:table-cell">Type &amp; Category</th>
+                  <th className="text-left p-4">Status</th>
+                  <th className="text-right p-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {paginated.map((p) => (
                   <tr
                     key={p.id}
-                    className="border-t border-copper/10 hover:bg-charcoal/50 transition-colors"
+                    className="admin-tr transition-colors"
                   >
                     {/* Project */}
                     <td className="p-4">
@@ -223,18 +223,18 @@ export default function AdminPropertiesPage() {
                               seed={p.id}
                               fallbackSrc={fallback}
                               width={150}
-                              className="w-12 h-12 object-cover border border-copper/20 rounded-[4px] shrink-0 bg-charcoal-2"
+                              className="w-12 h-12 object-cover border border-[var(--admin-border)] rounded-[4px] shrink-0 bg-[var(--admin-surface-muted)]"
                             />
                           );
                         })()}
                         <div className="min-w-0">
                           <Link
                             to={`/admin/properties/${p.id}/edit`}
-                            className="text-ivory font-display text-sm font-medium hover:text-copper transition-colors block truncate max-w-[220px]"
+                            className="text-[var(--admin-text-primary)] font-display text-sm font-medium hover:text-[var(--admin-accent)] transition-colors block truncate max-w-[220px]"
                           >
                             {p.project_name}
                           </Link>
-                          <div className="text-ivory/50 text-xs truncate max-w-[200px]">
+                          <div className="text-[var(--admin-text-muted)] text-xs truncate max-w-[200px]">
                             {p.builder || "—"}
                           </div>
                         </div>
@@ -242,17 +242,17 @@ export default function AdminPropertiesPage() {
                     </td>
 
                     {/* City & Location */}
-                    <td className="p-4 text-xs text-ivory/75 hidden md:table-cell">
-                      <div className="font-medium text-ivory">{p.city || "Kolkata"}</div>
-                      <div className="text-ivory/45 text-[11px] truncate max-w-[180px]">
+                    <td className="p-4 text-xs hidden md:table-cell">
+                      <div className="font-medium text-[var(--admin-text-primary)]">{p.city || "Kolkata"}</div>
+                      <div className="text-[var(--admin-text-muted)] text-[11px] truncate max-w-[180px]">
                         {p.location || "—"}
                       </div>
                     </td>
 
                     {/* Type & Category */}
-                    <td className="p-4 text-xs text-ivory/70 hidden lg:table-cell">
-                      <div>{p.property_type || "Residential"}</div>
-                      <div className="text-copper/80 text-[10px] tracking-wider uppercase">
+                    <td className="p-4 text-xs hidden lg:table-cell">
+                      <div className="text-[var(--admin-text-primary)]">{p.property_type || "Residential"}</div>
+                      <div className="text-[var(--admin-accent)] text-[10px] tracking-wider uppercase font-semibold">
                         {p.property_category || "Luxury"}
                       </div>
                     </td>
@@ -270,7 +270,7 @@ export default function AdminPropertiesPage() {
                             type="button"
                             onClick={() => setStatus(p.id, "published")}
                             title="Publish Live"
-                            className="p-1.5 text-ivory/60 hover:text-green-400 hover:bg-green-500/10 rounded transition-colors"
+                            className="p-1.5 text-[var(--admin-text-muted)] hover:text-emerald-500 hover:bg-emerald-500/15 rounded transition-colors"
                             data-testid={`publish-${p.id}`}
                           >
                             <Eye className="w-4 h-4" />
@@ -280,7 +280,7 @@ export default function AdminPropertiesPage() {
                             type="button"
                             onClick={() => setStatus(p.id, "unpublished")}
                             title="Unpublish (Save as Draft)"
-                            className="p-1.5 text-ivory/60 hover:text-amber-400 hover:bg-amber-500/10 rounded transition-colors"
+                            className="p-1.5 text-[var(--admin-text-muted)] hover:text-amber-500 hover:bg-amber-500/15 rounded transition-colors"
                             data-testid={`unpublish-${p.id}`}
                           >
                             <EyeOff className="w-4 h-4" />
@@ -289,7 +289,7 @@ export default function AdminPropertiesPage() {
 
                         <Link
                           to={`/admin/properties/${p.id}/edit`}
-                          className="p-1.5 text-ivory/60 hover:text-copper hover:bg-copper/10 rounded transition-colors"
+                          className="p-1.5 text-[var(--admin-text-muted)] hover:text-[var(--admin-accent)] hover:bg-[var(--admin-surface-muted)] rounded transition-colors"
                           title="Edit Property"
                           data-testid={`edit-${p.id}`}
                         >
@@ -300,7 +300,7 @@ export default function AdminPropertiesPage() {
                           <button
                             type="button"
                             onClick={() => setDeleteTarget({ id: p.id, name: p.project_name })}
-                            className="p-1.5 text-ivory/40 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                            className="p-1.5 text-[var(--admin-text-muted)] hover:text-rose-500 hover:bg-rose-500/15 rounded transition-colors"
                             title="Delete Property"
                             data-testid={`delete-${p.id}`}
                           >

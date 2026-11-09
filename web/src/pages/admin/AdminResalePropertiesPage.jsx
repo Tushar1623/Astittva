@@ -51,7 +51,7 @@ export default function AdminResalePropertiesPage() {
   const pageSize = 15;
 
   // Delete Modal State
-  const [deleteTarget, setDeleteTarget] = useState(null); // { id, title }
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const loadProperties = () => {
@@ -151,15 +151,15 @@ export default function AdminResalePropertiesPage() {
             <Link
               to="/resale"
               target="_blank"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 text-xs uppercase tracking-[0.12em] font-semibold text-ivory/80 hover:text-white border border-copper/30 hover:border-copper rounded-[4px] transition-colors"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 text-xs uppercase tracking-[0.1em] font-semibold text-[var(--admin-text-secondary)] hover:text-[var(--admin-accent)] border border-[var(--admin-border)] hover:border-[var(--admin-accent)] rounded-md transition-colors bg-[var(--admin-surface)]"
             >
               <span>Public Resale Board</span>
-              <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink className="w-3.5 h-3.5 opacity-50" />
             </Link>
             <Link
               to="/admin/resale/new"
               data-testid="add-resale-property-btn"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.12em] rounded-[4px] transition-colors shadow-sm"
+              className="btn-admin-primary"
             >
               <Plus className="w-4 h-4" />
               <span>Add Resale Property</span>
@@ -169,17 +169,29 @@ export default function AdminResalePropertiesPage() {
       />
 
       {/* Filter and Search Bar */}
-      <div className="bg-charcoal-2/40 border border-copper/15 p-4 rounded-[6px] space-y-3">
+      <div
+        className="p-3.5 sm:p-4 rounded-lg border transition-colors shadow-2xs"
+        style={{
+          backgroundColor: "var(--admin-surface)",
+          borderColor: "var(--admin-border)",
+        }}
+      >
         <form onSubmit={handleSearchSubmit} className="flex flex-wrap items-center gap-3">
           {/* Text Search */}
           <div className="flex-1 min-w-[240px] relative">
-            <Search className="w-4 h-4 text-ivory/40 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-4 h-4 text-[var(--admin-placeholder)] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               placeholder="Search title, locality, seller name, or phone..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-9 pl-9 pr-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper"
+              className="w-full h-9 pl-9 pr-3 rounded-md text-xs transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--admin-accent)]"
+              style={{
+                backgroundColor: "var(--admin-input-bg)",
+                borderColor: "var(--admin-input-border)",
+                borderWidth: "1px",
+                color: "var(--admin-input-text)",
+              }}
             />
           </div>
 
@@ -191,7 +203,13 @@ export default function AdminResalePropertiesPage() {
                 setStatusFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full h-9 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+              className="w-full h-9 px-3 rounded-md text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[var(--admin-accent)] cursor-pointer"
+              style={{
+                backgroundColor: "var(--admin-input-bg)",
+                borderColor: "var(--admin-input-border)",
+                borderWidth: "1px",
+                color: "var(--admin-input-text)",
+              }}
             >
               {STATUS_OPTIONS.map((st) => (
                 <option key={st} value={st}>
@@ -209,7 +227,13 @@ export default function AdminResalePropertiesPage() {
                 setTypeFilter(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full h-9 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+              className="w-full h-9 px-3 rounded-md text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[var(--admin-accent)] cursor-pointer"
+              style={{
+                backgroundColor: "var(--admin-input-bg)",
+                borderColor: "var(--admin-input-border)",
+                borderWidth: "1px",
+                color: "var(--admin-input-text)",
+              }}
             >
               {PROPERTY_TYPES.map((tp) => (
                 <option key={tp} value={tp}>
@@ -222,7 +246,7 @@ export default function AdminResalePropertiesPage() {
           {/* Submit Search Button */}
           <button
             type="submit"
-            className="px-4 h-9 bg-copper hover:bg-copper-light text-white font-semibold rounded-[4px] text-xs tracking-wider uppercase transition-colors shadow-sm"
+            className="btn-admin-primary h-9 px-4"
           >
             Filter
           </button>
@@ -232,7 +256,12 @@ export default function AdminResalePropertiesPage() {
             <button
               type="button"
               onClick={handleResetFilters}
-              className="px-3 h-9 text-xs text-ivory/60 hover:text-ivory border border-copper/20 rounded-[4px] flex items-center gap-1.5 transition-colors"
+              className="h-9 px-3 text-xs border rounded-md flex items-center gap-1.5 transition-colors cursor-pointer"
+              style={{
+                backgroundColor: "var(--admin-surface-2)",
+                borderColor: "var(--admin-border)",
+                color: "var(--admin-text-secondary)",
+              }}
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset</span>
@@ -243,33 +272,32 @@ export default function AdminResalePropertiesPage() {
 
       {/* Main Table */}
       {loading ? (
-        <div className="text-ivory/50 text-center py-20 tracking-[0.3em] uppercase text-xs">
-          Loading Resale Inventory…
+        <div className="text-[var(--admin-text-muted)] text-center py-20 tracking-[0.25em] uppercase text-xs flex flex-col items-center justify-center gap-3">
+          <Repeat className="w-5 h-5 text-[var(--admin-accent)] animate-spin" />
+          <span>Loading Resale Inventory…</span>
         </div>
       ) : properties.length === 0 ? (
         <AdminEmptyState
           icon={Repeat}
           title="No resale properties found."
           message="Adjust your search criteria or add your first verified resale property listing."
-          onClearFilters={
-            search || statusFilter !== "All" || typeFilter !== "All"
-              ? handleResetFilters
-              : null
-          }
+          actionLabel={search || statusFilter !== "All" || typeFilter !== "All" ? "Clear Filters" : "Add Resale Property"}
+          actionTo={search || statusFilter !== "All" || typeFilter !== "All" ? null : "/admin/resale/new"}
+          onAction={search || statusFilter !== "All" || typeFilter !== "All" ? handleResetFilters : null}
         />
       ) : (
-        <div className="border border-copper/15 rounded-[6px] overflow-hidden bg-charcoal-2/20 shadow-lg">
+        <div className="admin-table-wrap">
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[720px]">
-              <thead className="bg-charcoal text-ivory/60 text-[10px] tracking-[0.22em] uppercase border-b border-copper/15">
+              <thead className="admin-thead">
                 <tr>
-                  <th className="text-left p-4 font-normal">Property</th>
-                  <th className="text-left p-4 font-normal hidden md:table-cell">Location &amp; Type</th>
-                  <th className="text-left p-4 font-normal">Price</th>
-                  <th className="text-left p-4 font-normal hidden lg:table-cell">Seller Contact</th>
-                  <th className="text-left p-4 font-normal">Status</th>
-                  <th className="text-center p-4 font-normal">Featured</th>
-                  <th className="text-right p-4 font-normal">Actions</th>
+                  <th className="text-left p-4 font-semibold">Property</th>
+                  <th className="text-left p-4 font-semibold hidden md:table-cell">Location &amp; Type</th>
+                  <th className="text-left p-4 font-semibold">Price</th>
+                  <th className="text-left p-4 font-semibold hidden lg:table-cell">Seller Contact</th>
+                  <th className="text-left p-4 font-semibold">Status</th>
+                  <th className="text-center p-4 font-semibold">Featured</th>
+                  <th className="text-right p-4 font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -285,7 +313,7 @@ export default function AdminResalePropertiesPage() {
                   return (
                     <tr
                       key={p.id}
-                      className="border-t border-copper/10 hover:bg-charcoal/50 transition-colors"
+                      className="admin-tr transition-colors"
                     >
                       {/* Property Title & Thumbnail */}
                       <td className="p-4">
@@ -294,24 +322,24 @@ export default function AdminResalePropertiesPage() {
                             <img
                               src={thumbUrl}
                               alt=""
-                              className="w-12 h-12 object-cover border border-copper/20 rounded-[4px] shrink-0 bg-charcoal-2"
+                              className="w-12 h-12 object-cover border border-[var(--admin-border)] rounded-md shrink-0 bg-[var(--admin-surface-2)]"
                               onError={(e) => {
                                 e.currentTarget.style.display = "none";
                               }}
                             />
                           ) : (
-                            <div className="w-12 h-12 bg-charcoal-2/80 border border-copper/15 rounded-[4px] flex items-center justify-center text-ivory/30 text-xs shrink-0 font-mono">
+                            <div className="w-12 h-12 bg-[var(--admin-surface-2)] border border-[var(--admin-border)] rounded-md flex items-center justify-center text-[var(--admin-text-muted)] text-xs shrink-0 font-mono">
                               N/A
                             </div>
                           )}
                           <div className="min-w-0">
                             <Link
                               to={`/admin/resale/${p.id}/edit`}
-                              className="text-ivory font-display text-sm font-medium hover:text-copper transition-colors block truncate max-w-[220px]"
+                              className="font-serif-display text-sm font-medium text-[var(--admin-text-primary)] hover:text-[var(--admin-accent)] transition-colors block truncate max-w-[220px]"
                             >
                               {p.title}
                             </Link>
-                            <div className="text-[10px] text-ivory/45 font-mono">
+                            <div className="text-[10px] text-[var(--admin-text-muted)] font-mono">
                               ID: {p.id.slice(-6)} • {p.bedrooms ? `${p.bedrooms} BHK` : ""}
                             </div>
                           </div>
@@ -319,20 +347,20 @@ export default function AdminResalePropertiesPage() {
                       </td>
 
                       {/* Location & Type */}
-                      <td className="p-4 text-xs text-ivory/75 hidden md:table-cell">
-                        <div className="font-medium text-ivory">{p.location || "Kolkata"}</div>
-                        <div className="text-ivory/45 text-[11px]">{p.propertyType || "Apartment"}</div>
+                      <td className="p-4 text-xs text-[var(--admin-text-secondary)] hidden md:table-cell">
+                        <div className="font-semibold text-[var(--admin-text-primary)]">{p.location || "Kolkata"}</div>
+                        <div className="text-[11px] text-[var(--admin-text-muted)]">{p.propertyType || "Apartment"}</div>
                       </td>
 
                       {/* Price */}
-                      <td className="p-4 font-mono font-medium text-copper text-xs whitespace-nowrap">
+                      <td className="p-4 font-mono font-semibold text-[var(--admin-accent)] text-xs whitespace-nowrap">
                         {formatPriceINR(p.price)}
                       </td>
 
                       {/* Seller Contact */}
-                      <td className="p-4 text-xs text-ivory/70 hidden lg:table-cell">
-                        <div>{p.sellerName || "—"}</div>
-                        <div className="text-ivory/45 text-[11px] font-mono">{p.sellerPhone || ""}</div>
+                      <td className="p-4 text-xs text-[var(--admin-text-secondary)] hidden lg:table-cell">
+                        <div className="font-medium text-[var(--admin-text-primary)]">{p.sellerName || "—"}</div>
+                        <div className="text-[11px] font-mono text-[var(--admin-text-muted)]">{p.sellerPhone || ""}</div>
                       </td>
 
                       {/* Status */}
@@ -346,13 +374,13 @@ export default function AdminResalePropertiesPage() {
                           type="button"
                           onClick={() => toggleFeatured(p.id, p.featured)}
                           title={p.featured ? "Unmark Featured" : "Mark as Featured"}
-                          className={`p-1.5 rounded transition-colors ${
+                          className={`p-1.5 rounded-md transition-colors cursor-pointer ${
                             p.featured
-                              ? "text-copper bg-copper/10 hover:bg-copper/20"
-                              : "text-ivory/30 hover:text-copper"
+                              ? "text-[var(--admin-accent)] bg-[var(--admin-surface-2)]"
+                              : "text-[var(--admin-text-muted)] hover:text-[var(--admin-accent)]"
                           }`}
                         >
-                          <Star className={`w-4 h-4 ${p.featured ? "fill-copper" : ""}`} />
+                          <Star className={`w-4 h-4 ${p.featured ? "fill-[var(--admin-accent)] text-[var(--admin-accent)]" : ""}`} />
                         </button>
                       </td>
 
@@ -365,7 +393,7 @@ export default function AdminResalePropertiesPage() {
                               target="_blank"
                               rel="noopener noreferrer"
                               title="View Public Listing"
-                              className="p-1.5 text-ivory/60 hover:text-copper hover:bg-copper/10 rounded transition-colors"
+                              className="p-1.5 text-[var(--admin-text-secondary)] hover:text-[var(--admin-accent)] hover:bg-[var(--admin-surface-2)] rounded-md transition-colors"
                             >
                               <Eye className="w-4 h-4" />
                             </Link>
@@ -373,7 +401,7 @@ export default function AdminResalePropertiesPage() {
                           <Link
                             to={`/admin/resale/${p.id}/edit`}
                             title="Edit Listing"
-                            className="p-1.5 text-ivory/60 hover:text-copper hover:bg-copper/10 rounded transition-colors"
+                            className="p-1.5 text-[var(--admin-text-secondary)] hover:text-[var(--admin-accent)] hover:bg-[var(--admin-surface-2)] rounded-md transition-colors"
                           >
                             <Pencil className="w-4 h-4" />
                           </Link>
@@ -382,7 +410,7 @@ export default function AdminResalePropertiesPage() {
                               type="button"
                               onClick={() => setDeleteTarget({ id: p.id, title: p.title })}
                               title="Delete Listing"
-                              className="p-1.5 text-ivory/40 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                              className="p-1.5 text-[var(--admin-error)] hover:bg-[var(--admin-error-bg)] rounded-md transition-colors cursor-pointer"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>

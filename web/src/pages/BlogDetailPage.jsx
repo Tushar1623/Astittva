@@ -82,7 +82,7 @@ export default function BlogDetailPage() {
         className="pt-40 max-w-3xl mx-auto px-6 text-center"
       >
         <Seo title="Story Not Found | Astittva Marketing" noIndex={true} />
-        <h2 className="font-serif-display text-3xl text-ivory mb-4">
+        <h2 className="font-serif-display text-3xl text-[#1C1C1C] mb-4">
           Story not found
         </h2>
         <p className="text-[#5F5F5F] font-light mb-8">
@@ -140,7 +140,7 @@ export default function BlogDetailPage() {
   ];
 
   return (
-    <div data-testid="blog-detail-page" className="relative text-ivory">
+    <div data-testid="blog-detail-page" className="relative text-[#1C1C1C]">
       <Seo
         title={formattedBlogTitle}
         description={seoDesc}

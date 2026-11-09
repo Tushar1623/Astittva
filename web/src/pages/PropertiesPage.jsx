@@ -51,7 +51,7 @@ function FilterSelect({ label, value, onChange, options, allLabel, testId }) {
         data-testid={testId}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-charcoal-2/60 border border-copper/15 hover:border-copper/35 focus:border-copper/60 focus:outline-none text-ivory text-sm px-3.5 py-2.5 tracking-wide font-light transition-colors cursor-pointer appearance-none bg-[url('data:image/svg+xml;utf8,<svg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2210%22%20height=%226%22%20viewBox=%220%200%2010%206%22><path%20d=%22M1%201l4%204%204-4%22%20stroke=%22%23C68642%22%20fill=%22none%22%20stroke-width=%221.5%22/></svg>')] bg-no-repeat bg-[right_0.85rem_center] pr-9"
+        className="w-full bg-white border border-[#E8DED2] rounded-lg hover:border-[#B87333]/50 focus:border-[#B87333] focus:outline-none text-[#1C1C1C] text-sm px-3.5 py-2.5 tracking-wide font-normal transition-colors cursor-pointer appearance-none bg-[url('data:image/svg+xml;utf8,<svg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2210%22%20height=%226%22%20viewBox=%220%200%2010%206%22><path%20d=%22M1%201l4%204%204-4%22%20stroke=%22%23C68642%22%20fill=%22none%22%20stroke-width=%221.5%22/></svg>')] bg-no-repeat bg-[right_0.85rem_center] pr-9"
       >
         <option value="">{allLabel}</option>
         {options.map((o) => {
@@ -186,7 +186,7 @@ export default function PropertiesPage() {
   }
 
   return (
-    <div data-testid="properties-page" className="relative pt-28 pb-16 sm:pt-32 sm:pb-24 text-ivory">
+    <div data-testid="properties-page" className="relative pt-28 pb-16 sm:pt-32 sm:pb-24 text-[#1C1C1C]">
       <Seo
         title={pageTitle}
         description={pageDescription}
@@ -199,10 +199,10 @@ export default function PropertiesPage() {
           className="mb-12 sm:mb-14"
         >
           <div className="overline mb-4">Curated Portfolio</div>
-          <h1 className="font-display font-light text-3xl sm:text-5xl lg:text-6xl text-ivory tracking-tight">
+          <h1 className="font-serif-display font-medium text-3xl sm:text-5xl lg:text-6xl text-[#1C1C1C] tracking-tight">
             {pageH1}
           </h1>
-          <p className="text-ivory/55 font-light mt-4 max-w-2xl text-sm sm:text-base">
+          <p className="text-[#5F5F5F] font-light mt-4 max-w-2xl text-sm sm:text-base">
             Every listing is verified, RERA-compliant where applicable, and curated by our advisory desk.
             Refine by micro-market, budget or builder to surface the right opportunity.
           </p>

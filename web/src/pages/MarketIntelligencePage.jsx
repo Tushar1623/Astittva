@@ -132,7 +132,7 @@ function NewsCard({ a, idx }) {
       </div>
 
       <a href={a.link} target="_blank" rel="noopener noreferrer" className="block">
-        <h3 className="font-serif-display text-lg sm:text-xl text-ivory leading-[1.3] group-hover:text-copper transition-colors line-clamp-3 mb-3">
+        <h3 className="font-serif-display text-lg sm:text-xl text-[#1C1C1C] leading-[1.3] group-hover:text-copper transition-colors line-clamp-3 mb-3">
           {cleanTitle}
         </h3>
         {!isDuplicateSummary && (
@@ -218,7 +218,7 @@ function NewsGrid({ articles, loading, visibleCount = 12, onLoadMore }) {
             <button
               type="button"
               onClick={onLoadMore}
-              className="px-8 py-3.5 text-[11px] font-semibold tracking-[0.25em] uppercase border border-copper/50 text-copper bg-burgundy/20 hover:bg-burgundy/40 hover:border-copper transition-all duration-300 rounded-[4px]"
+              className="btn-outline text-xs"
               data-testid="mi-load-more"
             >
               Load More Stories ({articles.length - visibleCount} remaining)
@@ -416,7 +416,7 @@ export default function MarketIntelligencePage() {
   }, [all, activeFilter]);
 
   return (
-    <div data-testid="market-intelligence-page" className="relative text-ivory">
+    <div data-testid="market-intelligence-page" className="relative text-[#1C1C1C]">
       <SEO />
 
       {/* ============== HERO ============== */}
@@ -479,7 +479,7 @@ export default function MarketIntelligencePage() {
                   className={`shrink-0 text-[10px] tracking-[0.25em] uppercase px-4 py-2.5 border transition-all duration-300 ${
                     activeFilter === f.key
                       ? "border-copper text-copper bg-burgundy/40"
-                      : "border-[#E8DED2] text-[#5F5F5F] hover:border-copper/40 hover:text-ivory"
+                      : "border-[#E8DED2] text-[#5F5F5F] hover:border-copper/40 hover:text-[#1C1C1C]"
                   }`}
                 >
                   {f.label}
@@ -518,7 +518,7 @@ export default function MarketIntelligencePage() {
       </section>
 
       {/* ============== INVESTMENT INSIGHTS ============== */}
-      <section data-testid="investment-insights" className="relative py-16 sm:py-24 bg-charcoal-2 border-y border-copper/10">
+      <section data-testid="investment-insights" className="relative py-16 sm:py-24 bg-[#F5F1EC] border-y border-copper/10">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-16">
           <motion.div {...fadeUp} className="mb-12 sm:mb-16 max-w-3xl">
             <div className="eyebrow-line mb-6"><span className="text-[10px] tracking-[0.5em] uppercase text-[#5F5F5F]">Section · 03 · Investor Lens</span></div>
@@ -534,10 +534,10 @@ export default function MarketIntelligencePage() {
               <motion.div key={c.title}
                 initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                 transition={{ duration: 0.55, delay: i * 0.08 }}
-                className="bg-white border border-[#E8DED2] p-8 sm:p-10"
+                className="bg-white rounded-xl border border-[#E8DED2] p-8 sm:p-10 shadow-xs"
               >
                 <c.icon className="w-7 h-7 text-copper mb-7" strokeWidth={1.1} />
-                <h3 className="font-serif-display text-xl sm:text-2xl text-ivory mb-4">{c.title}</h3>
+                <h3 className="font-serif-display text-xl sm:text-2xl text-[#1C1C1C] mb-4">{c.title}</h3>
                 <p className="text-muted-fg font-light leading-[1.85] text-[15px]">{c.body}</p>
               </motion.div>
             ))}
@@ -559,7 +559,7 @@ export default function MarketIntelligencePage() {
               <motion.div key={`${o.location}-${o.asset}`}
                 initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.05 }}
-                className="luxury-card p-7 sm:p-8 group hover:bg-burgundy/15"
+                className="luxury-card rounded-xl p-7 sm:p-8 group hover:border-[#B87333]"
                 data-testid={`opportunity-${i}`}
               >
                 <div className="flex items-center justify-between mb-5">
@@ -569,12 +569,12 @@ export default function MarketIntelligencePage() {
                     o.risk === "Medium" ? "border-amber-500/40 text-amber-400" : "border-rose-300/30 text-rose-300"
                   }`}>{o.risk} Risk</span>
                 </div>
-                <h3 className="font-serif-display text-2xl text-ivory mb-2">{o.location}</h3>
+                <h3 className="font-serif-display text-2xl text-[#1C1C1C] mb-2">{o.location}</h3>
                 <p className="text-muted-fg text-sm font-light mb-6">{o.asset}</p>
                 <dl className="space-y-3 pt-5 border-t border-[#E8DED2]">
                   <div className="flex justify-between text-sm">
                     <dt className="text-[#737373] text-[10px] tracking-[0.25em] uppercase">Horizon</dt>
-                    <dd className="text-ivory font-light">{o.horizon}</dd>
+                    <dd className="text-[#1C1C1C] font-light">{o.horizon}</dd>
                   </div>
                   <div className="flex justify-between text-sm">
                     <dt className="text-[#737373] text-[10px] tracking-[0.25em] uppercase">Upside</dt>
@@ -588,7 +588,7 @@ export default function MarketIntelligencePage() {
       </section>
 
       {/* ============== MARKETS WE TRACK ============== */}
-      <section data-testid="markets-we-track" className="relative py-16 sm:py-24 bg-charcoal-2 border-y border-copper/10 overflow-hidden">
+      <section data-testid="markets-we-track" className="relative py-16 sm:py-24 bg-[#F5F1EC] border-y border-copper/10 overflow-hidden">
         <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-16">
           <motion.div {...fadeUp} className="mb-12 sm:mb-16 max-w-3xl">
             <div className="eyebrow-line mb-6"><span className="text-[10px] tracking-[0.5em] uppercase text-[#5F5F5F]">Section · 05 · Coverage</span></div>
@@ -600,11 +600,11 @@ export default function MarketIntelligencePage() {
               <motion.div key={m.country}
                 initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                 transition={{ duration: 0.55, delay: i * 0.08 }}
-                className="bg-white border border-[#E8DED2] p-7 sm:p-8 group"
+                className="bg-white rounded-xl border border-[#E8DED2] p-7 sm:p-8 group shadow-xs hover:border-[#B87333]"
                 data-testid={`market-${m.country}`}
               >
                 <div className="text-4xl mb-4" aria-hidden="true">{m.flag}</div>
-                <h3 className="font-serif-display text-xl text-ivory mb-2">{m.country}</h3>
+                <h3 className="font-serif-display text-xl text-[#1C1C1C] mb-2">{m.country}</h3>
                 <p className="text-[#5F5F5F] text-[12px] font-light leading-relaxed mb-4">{m.cities}</p>
                 <div className="text-[9px] tracking-[0.3em] uppercase text-copper border-t border-[#E8DED2] pt-3">{m.focus}</div>
               </motion.div>
@@ -627,10 +627,10 @@ export default function MarketIntelligencePage() {
               <motion.div key={r.phase}
                 initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                 transition={{ duration: 0.55, delay: i * 0.1 }}
-                className="bg-white border border-[#E8DED2] p-10 sm:p-12 text-center"
+                className="bg-white rounded-xl border border-[#E8DED2] p-10 sm:p-12 text-center shadow-xs"
               >
                 <div className="text-copper text-[10px] tracking-[0.4em] uppercase mb-5">{r.phase}</div>
-                <div className="font-serif-display text-2xl sm:text-3xl text-ivory leading-tight">{r.area}</div>
+                <div className="font-serif-display text-2xl sm:text-3xl text-[#1C1C1C] leading-tight">{r.area}</div>
               </motion.div>
             ))}
           </div>

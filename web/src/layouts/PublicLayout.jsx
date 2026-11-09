@@ -57,24 +57,14 @@ const GLOBAL_JSON_LD = [
 
 export default function PublicLayout() {
   return (
-    <div className="relative bg-charcoal text-ivory min-h-screen overflow-x-hidden">
+    <div className="relative bg-[#FAF8F5] text-[#1C1C1C] min-h-screen overflow-x-hidden">
       <Helmet prioritizeSeoTags>
         <script type="application/ld+json">{JSON.stringify(GLOBAL_JSON_LD)}</script>
       </Helmet>
       <AmbientGlow />
       <div className="relative z-10">
         <Header />
-        {/*
-          id="main-content" is the skip-link target (NAV-03).
-          tabIndex="-1" allows programmatic focus without changing tab order.
-          scroll-padding-top is handled via the CSS `html { scroll-padding-top }` rule
-          so the fixed header doesn’t obscure the heading when the anchor is followed.
-        */}
-        <main
-          id="main-content"
-          tabIndex="-1"
-          style={{ outline: "none" }}
-        >
+        <main>
           <Outlet />
         </main>
         <Footer />

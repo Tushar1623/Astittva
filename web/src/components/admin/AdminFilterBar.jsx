@@ -2,7 +2,7 @@ import React from "react";
 import { Search, X } from "lucide-react";
 
 /**
- * Standardized Admin Search and Filter Toolbar
+ * Standardized Admin Search and Filter Toolbar (Theme Adaptive)
  * Supports both statusOptions/statusFilter and tabs/activeTab conventions.
  */
 export default function AdminFilterBar({
@@ -41,8 +41,14 @@ export default function AdminFilterBar({
   }
 
   return (
-    <div className="bg-charcoal-2/40 border border-copper/15 p-4 rounded-[6px] space-y-3">
-      <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
+    <div
+      className="p-3.5 sm:p-4 rounded-lg border transition-colors space-y-3 shadow-2xs"
+      style={{
+        backgroundColor: "var(--admin-surface)",
+        borderColor: "var(--admin-border)",
+      }}
+    >
+      <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 items-stretch lg:items-center justify-between">
         {/* Status Filter Tabs */}
         {normalizedTabs.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
@@ -55,10 +61,10 @@ export default function AdminFilterBar({
                   key={t.key}
                   type="button"
                   onClick={() => handleStatusChange && handleStatusChange(t.key)}
-                  className={`px-3 py-1.5 rounded-[4px] text-xs font-medium tracking-[0.08em] uppercase transition-all whitespace-nowrap cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium tracking-[0.06em] uppercase transition-all whitespace-nowrap cursor-pointer ${
                     isActive
-                      ? "bg-copper text-white font-semibold shadow-sm"
-                      : "bg-charcoal/60 text-ivory/70 hover:text-ivory hover:bg-charcoal"
+                      ? "bg-[var(--admin-brand)] text-[var(--admin-brand-text)] font-semibold shadow-xs"
+                      : "bg-[var(--admin-surface-2)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:bg-[var(--admin-surface-hover)] border border-[var(--admin-border-subtle)]"
                   }`}
                 >
                   {t.label}
@@ -70,24 +76,32 @@ export default function AdminFilterBar({
         )}
 
         {/* Search Input and Secondary Controls */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           {children}
 
           {(typeof search === "string" || typeof searchValue === "string") && (
             <div className="relative flex-1 sm:w-64">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ivory/40 pointer-events-none" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--admin-placeholder)] pointer-events-none" />
               <input
                 type="text"
                 value={currentSearch}
                 onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="w-full h-9 pl-9 pr-8 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper"
+                className="w-full h-9 pl-9 pr-8 rounded-md text-xs transition-colors focus:outline-none focus:ring-1 focus:ring-[var(--admin-accent)]"
+                style={{
+                  backgroundColor: "var(--admin-input-bg)",
+                  borderColor: "var(--admin-input-border)",
+                  borderWidth: "1px",
+                  color: "var(--admin-input-text)",
+                }}
               />
               {currentSearch && (
                 <button
                   type="button"
                   onClick={() => onSearchChange && onSearchChange("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ivory/40 hover:text-ivory p-0.5"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--admin-placeholder)] hover:text-[var(--admin-text-primary)] p-0.5 cursor-pointer"
+                  title="Clear search"
+                  aria-label="Clear search"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>

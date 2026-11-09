@@ -232,7 +232,7 @@ export default function AdminResalePropertyFormPage() {
 
   if (loading) {
     return (
-      <div className="text-center py-24 text-ivory/50 tracking-[0.3em] uppercase text-xs">
+      <div className="text-center py-24 text-[var(--admin-text-muted)] tracking-[0.3em] uppercase text-xs">
         Loading property details...
       </div>
     );
@@ -244,34 +244,34 @@ export default function AdminResalePropertyFormPage() {
       <div className="mb-8">
         <Link
           to="/admin/resale"
-          className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-ivory/60 hover:text-copper transition-colors mb-4"
+          className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-[var(--admin-text-muted)] hover:text-[var(--admin-accent)] transition-colors mb-4"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Back to Resale Inventory
         </Link>
-        <div className="overline mb-2 text-copper tracking-[0.25em] text-[11px] uppercase">
+        <div className="overline mb-2 text-[var(--admin-accent)] tracking-[0.25em] text-[11px] uppercase font-semibold">
           Secondary Market Database
         </div>
-        <h1 className="font-display font-light text-3xl sm:text-4xl text-ivory">
+        <h1 className="font-display font-light text-3xl sm:text-4xl text-[var(--admin-text-primary)]">
           {isEdit ? "Edit Resale Property" : "Add Resale Property"}
         </h1>
-        <p className="text-ivory/50 text-xs sm:text-sm mt-1">
-          This property will be stored strictly in the isolated <code className="text-copper">resale_properties</code> collection.
+        <p className="text-[var(--admin-text-muted)] text-xs sm:text-sm mt-1">
+          This property will be stored strictly in the isolated <code className="text-[var(--admin-accent)]">resale_properties</code> collection.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* SECTION 1: PROPERTY INFORMATION */}
-        <div className="bg-charcoal-2/30 border border-copper/15 rounded-lg p-6 sm:p-8">
-          <div className="flex items-center gap-3 pb-4 mb-6 border-b border-copper/10">
-            <div className="w-2 h-2 rounded-full bg-copper" />
-            <h2 className="text-sm font-semibold tracking-wider uppercase text-ivory">
+        <div className="admin-card rounded-lg p-6 sm:p-8">
+          <div className="flex items-center gap-3 pb-4 mb-6 border-b border-[var(--admin-border-subtle)]">
+            <div className="w-2 h-2 rounded-full bg-[var(--admin-accent)]" />
+            <h2 className="text-sm font-semibold tracking-wider uppercase text-[var(--admin-text-primary)]">
               1. Property Information
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="md:col-span-2">
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Property Title *
               </label>
               <input
@@ -280,21 +280,21 @@ export default function AdminResalePropertyFormPage() {
                 placeholder="e.g. 3 BHK Luxury Resale Apartment in Uniworld City"
                 value={form.title}
                 onChange={(e) => setField("title", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Property Type *
               </label>
               <select
                 value={form.propertyType}
                 onChange={(e) => setField("propertyType", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               >
                 {PROPERTY_TYPES.map((pt) => (
-                  <option key={pt} value={pt} className="bg-charcoal text-ivory">
+                  <option key={pt} value={pt} className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)]">
                     {pt}
                   </option>
                 ))}
@@ -302,21 +302,21 @@ export default function AdminResalePropertyFormPage() {
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Listing Type
               </label>
               <select
                 value={form.listingType}
                 onChange={(e) => setField("listingType", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               >
-                <option value="For Sale" className="bg-charcoal text-ivory">For Sale (Default)</option>
-                <option value="For Rent" className="bg-charcoal text-ivory">For Rent</option>
+                <option value="For Sale" className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)]">For Sale (Default)</option>
+                <option value="For Rent" className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)]">For Rent</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Locality / Sub-Area
               </label>
               <input
@@ -324,12 +324,12 @@ export default function AdminResalePropertyFormPage() {
                 placeholder="e.g. Action Area I, New Town"
                 value={form.locality}
                 onChange={(e) => setField("locality", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 City *
               </label>
               <input
@@ -338,12 +338,12 @@ export default function AdminResalePropertyFormPage() {
                 placeholder="e.g. Kolkata"
                 value={form.city}
                 onChange={(e) => setField("city", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 General Location / Landmark
               </label>
               <input
@@ -351,12 +351,12 @@ export default function AdminResalePropertyFormPage() {
                 placeholder="e.g. Near Eco Space / Major Arterial Road"
                 value={form.location}
                 onChange={(e) => setField("location", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Pincode
               </label>
               <input
@@ -364,12 +364,12 @@ export default function AdminResalePropertyFormPage() {
                 placeholder="e.g. 700156"
                 value={form.pincode}
                 onChange={(e) => setField("pincode", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Full Address
               </label>
               <input
@@ -377,24 +377,24 @@ export default function AdminResalePropertyFormPage() {
                 placeholder="e.g. Tower 4, Flat 12B, Uniworld City, Action Area III, New Town, Kolkata"
                 value={form.address}
                 onChange={(e) => setField("address", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
           </div>
         </div>
 
         {/* SECTION 2: PRICING */}
-        <div className="bg-charcoal-2/30 border border-copper/15 rounded-lg p-6 sm:p-8">
-          <div className="flex items-center gap-3 pb-4 mb-6 border-b border-copper/10">
-            <div className="w-2 h-2 rounded-full bg-copper" />
-            <h2 className="text-sm font-semibold tracking-wider uppercase text-ivory">
+        <div className="admin-card rounded-lg p-6 sm:p-8">
+          <div className="flex items-center gap-3 pb-4 mb-6 border-b border-[var(--admin-border-subtle)]">
+            <div className="w-2 h-2 rounded-full bg-[var(--admin-accent)]" />
+            <h2 className="text-sm font-semibold tracking-wider uppercase text-[var(--admin-text-primary)]">
               2. Pricing
             </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Total Resale Price (₹ INR) *
               </label>
               <input
@@ -405,17 +405,17 @@ export default function AdminResalePropertyFormPage() {
                 placeholder="e.g. 8500000 (85 Lakh)"
                 value={form.price}
                 onChange={(e) => setField("price", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
               {form.price && !isNaN(Number(form.price)) && (
-                <div className="text-copper text-xs mt-1.5 font-medium">
+                <div className="text-[var(--admin-accent)] text-xs mt-1.5 font-medium">
                   Formatted: {Number(form.price) >= 10000000 ? `₹${(Number(form.price) / 10000000).toFixed(2)} Cr` : `₹${(Number(form.price) / 100000).toFixed(2)} Lakh`}
                 </div>
               )}
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Price Per Sq. Ft. (₹)
               </label>
               <input
@@ -424,9 +424,9 @@ export default function AdminResalePropertyFormPage() {
                 placeholder="Auto-calculated from Price / Area"
                 value={form.pricePerSqFt}
                 onChange={(e) => setField("pricePerSqFt", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
-              <div className="text-ivory/40 text-[11px] mt-1.5">
+              <div className="text-[var(--admin-text-muted)] text-[11px] mt-1.5">
                 Auto-calculated if area is filled, or enter custom rate.
               </div>
             </div>
@@ -434,17 +434,17 @@ export default function AdminResalePropertyFormPage() {
         </div>
 
         {/* SECTION 3: PROPERTY DETAILS */}
-        <div className="bg-charcoal-2/30 border border-copper/15 rounded-lg p-6 sm:p-8">
-          <div className="flex items-center gap-3 pb-4 mb-6 border-b border-copper/10">
-            <div className="w-2 h-2 rounded-full bg-copper" />
-            <h2 className="text-sm font-semibold tracking-wider uppercase text-ivory">
+        <div className="admin-card rounded-lg p-6 sm:p-8">
+          <div className="flex items-center gap-3 pb-4 mb-6 border-b border-[var(--admin-border-subtle)]">
+            <div className="w-2 h-2 rounded-full bg-[var(--admin-accent)]" />
+            <h2 className="text-sm font-semibold tracking-wider uppercase text-[var(--admin-text-primary)]">
               3. Property Details &amp; Specifications
             </h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Super Built-up / Carpet Area
               </label>
               <input
@@ -453,29 +453,29 @@ export default function AdminResalePropertyFormPage() {
                 placeholder="e.g. 1450"
                 value={form.area}
                 onChange={(e) => setField("area", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Area Unit
               </label>
               <select
                 value={form.areaUnit}
                 onChange={(e) => setField("areaUnit", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               >
-                <option value="sq.ft." className="bg-charcoal text-ivory">sq.ft.</option>
-                <option value="sq.yd." className="bg-charcoal text-ivory">sq.yd.</option>
-                <option value="sq.m." className="bg-charcoal text-ivory">sq.m.</option>
-                <option value="kottah" className="bg-charcoal text-ivory">kottah</option>
-                <option value="acres" className="bg-charcoal text-ivory">acres</option>
+                <option value="sq.ft." className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)]">sq.ft.</option>
+                <option value="sq.yd." className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)]">sq.yd.</option>
+                <option value="sq.m." className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)]">sq.m.</option>
+                <option value="kottah" className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)]">kottah</option>
+                <option value="acres" className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)]">acres</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Bedrooms (BHK)
               </label>
               <input
@@ -483,12 +483,12 @@ export default function AdminResalePropertyFormPage() {
                 placeholder="e.g. 3 or 3 BHK"
                 value={form.bedrooms}
                 onChange={(e) => setField("bedrooms", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Bathrooms
               </label>
               <input
@@ -496,12 +496,12 @@ export default function AdminResalePropertyFormPage() {
                 placeholder="e.g. 2"
                 value={form.bathrooms}
                 onChange={(e) => setField("bathrooms", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Balconies
               </label>
               <input
@@ -509,12 +509,12 @@ export default function AdminResalePropertyFormPage() {
                 placeholder="e.g. 1"
                 value={form.balconies}
                 onChange={(e) => setField("balconies", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Floor / Total Floors
               </label>
               <div className="flex gap-2">
@@ -523,74 +523,74 @@ export default function AdminResalePropertyFormPage() {
                   placeholder="Floor (e.g. 7)"
                   value={form.floor}
                   onChange={(e) => setField("floor", e.target.value)}
-                  className="w-1/2 px-3 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                  className="w-1/2 px-3 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
                 />
                 <input
                   type="text"
                   placeholder="Total (e.g. 18)"
                   value={form.totalFloors}
                   onChange={(e) => setField("totalFloors", e.target.value)}
-                  className="w-1/2 px-3 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                  className="w-1/2 px-3 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Furnishing Status
               </label>
               <select
                 value={form.furnishingStatus}
                 onChange={(e) => setField("furnishingStatus", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               >
                 {FURNISHING_OPTIONS.map((f) => (
-                  <option key={f} value={f} className="bg-charcoal text-ivory">{f}</option>
+                  <option key={f} value={f} className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)]">{f}</option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Parking
               </label>
               <select
                 value={form.parking}
                 onChange={(e) => setField("parking", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               >
                 {PARKING_OPTIONS.map((p) => (
-                  <option key={p} value={p} className="bg-charcoal text-ivory">{p}</option>
+                  <option key={p} value={p} className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)]">{p}</option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Age of Property
               </label>
               <select
                 value={form.ageOfProperty}
                 onChange={(e) => setField("ageOfProperty", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               >
                 {AGE_OPTIONS.map((a) => (
-                  <option key={a} value={a} className="bg-charcoal text-ivory">{a}</option>
+                  <option key={a} value={a} className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)]">{a}</option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Possession Status
               </label>
               <select
                 value={form.possessionStatus}
                 onChange={(e) => setField("possessionStatus", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               >
                 {POSSESSION_OPTIONS.map((pos) => (
-                  <option key={pos} value={pos} className="bg-charcoal text-ivory">{pos}</option>
+                  <option key={pos} value={pos} className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)]">{pos}</option>
                 ))}
               </select>
             </div>
@@ -598,17 +598,17 @@ export default function AdminResalePropertyFormPage() {
         </div>
 
         {/* SECTION 4: DESCRIPTION & AMENITIES */}
-        <div className="bg-charcoal-2/30 border border-copper/15 rounded-lg p-6 sm:p-8">
-          <div className="flex items-center gap-3 pb-4 mb-6 border-b border-copper/10">
-            <div className="w-2 h-2 rounded-full bg-copper" />
-            <h2 className="text-sm font-semibold tracking-wider uppercase text-ivory">
+        <div className="admin-card rounded-lg p-6 sm:p-8">
+          <div className="flex items-center gap-3 pb-4 mb-6 border-b border-[var(--admin-border-subtle)]">
+            <div className="w-2 h-2 rounded-full bg-[var(--admin-accent)]" />
+            <h2 className="text-sm font-semibold tracking-wider uppercase text-[var(--admin-text-primary)]">
               4. Description &amp; Amenities
             </h2>
           </div>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Property Overview &amp; Description
               </label>
               <textarea
@@ -616,12 +616,12 @@ export default function AdminResalePropertyFormPage() {
                 placeholder="Highlight property USPs, legal clarity, ventilation, view, interior condition, and key reasons to purchase..."
                 value={form.description}
                 onChange={(e) => setField("description", e.target.value)}
-                className="w-full p-3.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                className="w-full p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Select Amenities
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 mb-4">
@@ -634,8 +634,8 @@ export default function AdminResalePropertyFormPage() {
                       onClick={() => handleToggleAmenity(amenity)}
                       className={`text-left px-3 py-2 rounded text-xs transition-colors border ${
                         selected
-                          ? "bg-copper/20 border-copper text-copper font-medium"
-                          : "bg-charcoal-3/40 border-copper/15 text-ivory/60 hover:text-ivory hover:border-copper/40"
+                          ? "bg-[var(--admin-accent)]/20 border-[var(--admin-accent)] text-[var(--admin-accent)] font-medium"
+                          : "bg-[var(--admin-surface-muted)] border-[var(--admin-border)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] hover:border-[var(--admin-accent)]/40"
                       }`}
                     >
                       {selected ? "✓ " : "+ "} {amenity}
@@ -657,12 +657,12 @@ export default function AdminResalePropertyFormPage() {
                       handleAddCustomAmenity();
                     }
                   }}
-                  className="flex-1 px-3 py-2 bg-charcoal-3/60 border border-copper/20 rounded text-xs text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                  className="flex-1 px-3 py-2 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-xs text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
                 />
                 <button
                   type="button"
                   onClick={handleAddCustomAmenity}
-                  className="px-4 py-2 bg-charcoal-3 hover:bg-copper/20 border border-copper/30 text-copper rounded text-xs uppercase tracking-wider font-semibold transition-colors"
+                  className="btn-admin-secondary text-xs uppercase tracking-wider font-semibold transition-colors"
                 >
                   Add
                 </button>
@@ -670,17 +670,17 @@ export default function AdminResalePropertyFormPage() {
 
               {/* Selected Amenities Tags */}
               {form.amenities.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-copper/10">
+                <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-[var(--admin-border-subtle)]">
                   {form.amenities.map((a) => (
                     <span
                       key={a}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-copper/15 border border-copper/30 text-copper text-xs"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[var(--admin-accent)]/15 border border-[var(--admin-accent)]/30 text-[var(--admin-accent)] text-xs font-medium"
                     >
                       {a}
                       <button
                         type="button"
                         onClick={() => handleToggleAmenity(a)}
-                        className="hover:text-white"
+                        className="hover:text-rose-500"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -693,17 +693,17 @@ export default function AdminResalePropertyFormPage() {
         </div>
 
         {/* SECTION 5: MEDIA */}
-        <div className="bg-charcoal-2/30 border border-copper/15 rounded-lg p-6 sm:p-8">
-          <div className="flex items-center gap-3 pb-4 mb-6 border-b border-copper/10">
-            <div className="w-2 h-2 rounded-full bg-copper" />
-            <h2 className="text-sm font-semibold tracking-wider uppercase text-ivory">
+        <div className="admin-card rounded-lg p-6 sm:p-8">
+          <div className="flex items-center gap-3 pb-4 mb-6 border-b border-[var(--admin-border-subtle)]">
+            <div className="w-2 h-2 rounded-full bg-[var(--admin-accent)]" />
+            <h2 className="text-sm font-semibold tracking-wider uppercase text-[var(--admin-text-primary)]">
               5. Media &amp; Photographs
             </h2>
           </div>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Paste Image Links (Google Drive link or Direct HTTP URL)
               </label>
               <div className="flex gap-2">
@@ -712,12 +712,12 @@ export default function AdminResalePropertyFormPage() {
                   placeholder="Paste Google Drive link or image URL (comma or newline separated for multiple)..."
                   value={imageInputUrl}
                   onChange={(e) => setImageInputUrl(e.target.value)}
-                  className="flex-1 p-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-xs text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                  className="flex-1 p-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-xs text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
                 />
                 <button
                   type="button"
                   onClick={handleAddImages}
-                  className="px-5 bg-copper/20 hover:bg-copper/30 border border-copper/40 text-copper rounded text-xs uppercase tracking-wider font-semibold transition-colors shrink-0"
+                  className="btn-admin-secondary text-xs uppercase tracking-wider font-semibold transition-colors shrink-0"
                 >
                   Attach Links
                 </button>
@@ -727,7 +727,7 @@ export default function AdminResalePropertyFormPage() {
             {/* Display Image Gallery & Primary Thumbnail Selector */}
             {form.images && form.images.length > 0 ? (
               <div>
-                <div className="text-xs uppercase tracking-wider text-ivory/70 mb-3">
+                <div className="text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-3 font-medium">
                   Property Gallery ({form.images.length} photos) — Click star to set primary thumbnail
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -739,8 +739,8 @@ export default function AdminResalePropertyFormPage() {
                     return (
                       <div
                         key={idx}
-                        className={`relative group rounded border overflow-hidden aspect-video bg-charcoal-3 ${
-                          isFeatured ? "border-amber-400 ring-2 ring-amber-400/40" : "border-copper/20"
+                        className={`relative group rounded border overflow-hidden aspect-video bg-[var(--admin-surface-muted)] ${
+                          isFeatured ? "border-amber-400 ring-2 ring-amber-400/40" : "border-[var(--admin-border)]"
                         }`}
                       >
                         <img
@@ -788,9 +788,9 @@ export default function AdminResalePropertyFormPage() {
                 </div>
               </div>
             ) : (
-              <div className="border border-dashed border-copper/20 rounded-md p-8 text-center bg-charcoal-3/20">
-                <ImageIcon className="w-8 h-8 text-copper/40 mx-auto mb-2" />
-                <p className="text-xs text-ivory/50">
+              <div className="border border-dashed border-[var(--admin-border)] rounded-md p-8 text-center bg-[var(--admin-surface-muted)]">
+                <ImageIcon className="w-8 h-8 text-[var(--admin-accent)]/40 mx-auto mb-2" />
+                <p className="text-xs text-[var(--admin-text-muted)]">
                   No images added yet. Paste a Google Drive share link above to preview.
                 </p>
               </div>
@@ -799,22 +799,22 @@ export default function AdminResalePropertyFormPage() {
         </div>
 
         {/* SECTION 6: SELLER INFORMATION */}
-        <div className="bg-charcoal-2/30 border border-copper/15 rounded-lg p-6 sm:p-8">
-          <div className="flex items-center justify-between pb-4 mb-6 border-b border-copper/10">
+        <div className="admin-card rounded-lg p-6 sm:p-8">
+          <div className="flex items-center justify-between pb-4 mb-6 border-b border-[var(--admin-border-subtle)]">
             <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-copper" />
-              <h2 className="text-sm font-semibold tracking-wider uppercase text-ivory">
+              <div className="w-2 h-2 rounded-full bg-[var(--admin-accent)]" />
+              <h2 className="text-sm font-semibold tracking-wider uppercase text-[var(--admin-text-primary)]">
                 6. Seller Information (Private to Admin)
               </h2>
             </div>
-            <span className="text-[10px] tracking-wider uppercase text-rose-400 font-medium">
+            <span className="text-[10px] tracking-wider uppercase text-rose-500 font-semibold">
               Confidential — Not displayed on public site
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Seller Name
               </label>
               <input
@@ -822,12 +822,12 @@ export default function AdminResalePropertyFormPage() {
                 placeholder="e.g. Joydeep Ghosh"
                 value={form.sellerName}
                 onChange={(e) => setField("sellerName", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Seller Phone Number
               </label>
               <input
@@ -835,12 +835,12 @@ export default function AdminResalePropertyFormPage() {
                 placeholder="e.g. +91 98300 00000"
                 value={form.sellerPhone}
                 onChange={(e) => setField("sellerPhone", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Seller Email Address
               </label>
               <input
@@ -848,39 +848,39 @@ export default function AdminResalePropertyFormPage() {
                 placeholder="e.g. joydeep@example.com"
                 value={form.sellerEmail}
                 onChange={(e) => setField("sellerEmail", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory placeholder-ivory/30 focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] placeholder-[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
           </div>
         </div>
 
         {/* SECTION 7: PUBLISHING */}
-        <div className="bg-charcoal-2/30 border border-copper/15 rounded-lg p-6 sm:p-8">
-          <div className="flex items-center gap-3 pb-4 mb-6 border-b border-copper/10">
-            <div className="w-2 h-2 rounded-full bg-copper" />
-            <h2 className="text-sm font-semibold tracking-wider uppercase text-ivory">
+        <div className="admin-card rounded-lg p-6 sm:p-8">
+          <div className="flex items-center gap-3 pb-4 mb-6 border-b border-[var(--admin-border-subtle)]">
+            <div className="w-2 h-2 rounded-full bg-[var(--admin-accent)]" />
+            <h2 className="text-sm font-semibold tracking-wider uppercase text-[var(--admin-text-primary)]">
               7. Publishing &amp; Visibility Controls
             </h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
             <div>
-              <label className="block text-xs uppercase tracking-wider text-ivory/70 mb-2">
+              <label className="block text-xs uppercase tracking-wider text-[var(--admin-text-secondary)] mb-2 font-medium">
                 Publishing Status *
               </label>
               <select
                 value={form.status}
                 onChange={(e) => setField("status", e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-charcoal-3/60 border border-copper/20 rounded text-sm text-ivory focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded text-sm text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               >
                 {STATUS_OPTIONS.map((st) => (
-                  <option key={st} value={st} className="bg-charcoal text-ivory">
+                  <option key={st} value={st} className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)]">
                     {st}
                   </option>
                 ))}
               </select>
-              <div className="text-ivory/40 text-[11px] mt-1.5">
-                Note: Only properties with status <strong className="text-emerald-400">Published</strong> are visible on the public /resale marketplace.
+              <div className="text-[var(--admin-text-muted)] text-[11px] mt-1.5">
+                Note: Only properties with status <strong className="text-emerald-500 font-semibold">Published</strong> are visible on the public /resale marketplace.
               </div>
             </div>
 
@@ -890,13 +890,13 @@ export default function AdminResalePropertyFormPage() {
                   type="checkbox"
                   checked={form.featured}
                   onChange={(e) => setField("featured", e.target.checked)}
-                  className="w-4 h-4 accent-copper rounded cursor-pointer"
+                  className="w-4 h-4 accent-[var(--admin-accent)] rounded cursor-pointer"
                 />
                 <div>
-                  <span className="text-xs uppercase tracking-wider text-ivory font-medium">
+                  <span className="text-xs uppercase tracking-wider text-[var(--admin-text-primary)] font-medium">
                     Mark as Featured Resale
                   </span>
-                  <p className="text-[11px] text-ivory/40">
+                  <p className="text-[11px] text-[var(--admin-text-muted)]">
                     Featured properties are highlighted in the top carousel on /resale
                   </p>
                 </div>
@@ -906,17 +906,17 @@ export default function AdminResalePropertyFormPage() {
         </div>
 
         {/* Submit Actions */}
-        <div className="flex items-center justify-end gap-4 pt-4 border-t border-copper/15">
+        <div className="flex items-center justify-end gap-4 pt-4 border-t border-[var(--admin-border-subtle)]">
           <Link
             to="/admin/resale"
-            className="px-6 py-2.5 text-xs uppercase tracking-widest text-ivory/60 hover:text-white transition-colors"
+            className="btn-admin-secondary"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={saving}
-            className="btn-primary min-w-[180px] justify-center"
+            className="btn-admin-primary min-w-[180px] justify-center"
           >
             {saving ? "Saving Property…" : isEdit ? "Update Property" : "Publish to Resale"}
           </button>

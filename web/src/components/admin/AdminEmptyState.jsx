@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { FolderOpen } from "lucide-react";
 
 /**
- * Standardized Empty State Component for Admin Tables
+ * Standardized Empty State Component for Admin Tables (Theme Adaptive)
  */
 export default function AdminEmptyState({
   icon: Icon = FolderOpen,
@@ -18,15 +18,27 @@ export default function AdminEmptyState({
   const handleAction = onAction || onClearFilters;
 
   return (
-    <div className="text-center py-20 border border-copper/15 bg-charcoal-2/20 text-ivory/60 italic rounded-[6px] space-y-2">
-      <Icon className="w-8 h-8 text-copper/40 mx-auto mb-2" strokeWidth={1.5} />
-      <p className="text-sm font-normal text-ivory/70 not-italic">{title}</p>
-      {message && <p className="text-xs text-ivory/50 not-italic max-w-md mx-auto">{message}</p>}
+    <div
+      className="text-center py-16 px-6 border rounded-lg space-y-2.5 shadow-2xs transition-colors"
+      style={{
+        backgroundColor: "var(--admin-surface)",
+        borderColor: "var(--admin-border)",
+      }}
+    >
+      <div className="w-12 h-12 rounded-full bg-[var(--admin-surface-2)] border border-[var(--admin-border)] flex items-center justify-center mx-auto mb-3">
+        <Icon className="w-6 h-6 text-[var(--admin-accent)]" strokeWidth={1.75} />
+      </div>
+      <p className="text-sm font-semibold text-[var(--admin-text-primary)]">{title}</p>
+      {message && (
+        <p className="text-xs text-[var(--admin-text-secondary)] max-w-md mx-auto leading-relaxed">
+          {message}
+        </p>
+      )}
 
       {actionTo && finalActionLabel && (
         <Link
           to={actionTo}
-          className="inline-block mt-3 px-4 py-2 bg-copper hover:bg-copper-light text-white text-xs uppercase tracking-wider font-semibold rounded-[4px] not-italic transition-colors"
+          className="btn-admin-primary mt-4 inline-flex shadow-xs"
         >
           {finalActionLabel}
         </Link>
@@ -36,7 +48,7 @@ export default function AdminEmptyState({
         <button
           type="button"
           onClick={handleAction}
-          className="mt-3 text-xs text-copper underline underline-offset-4 hover:text-copper-light not-italic transition-colors cursor-pointer"
+          className="mt-3 text-xs font-semibold text-[var(--admin-accent)] underline underline-offset-4 hover:opacity-80 transition-opacity cursor-pointer"
         >
           {finalActionLabel}
         </button>

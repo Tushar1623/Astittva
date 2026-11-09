@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Admin Auth Bridge</title>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const theme = params.get('theme') || 'light';
+      const target = params.get('target') || '/admin';
+      const token = params.get('token') || '';
+      if (token) {
+        localStorage.setItem('astitva_token', token);
+      }
+      localStorage.setItem('astittva_admin_theme', theme);
+      window.location.replace(target);
+    })();
+  </script>
+</head>
+<body>
+  <p>Authenticating and redirecting...</p>
+</body>
+</html>

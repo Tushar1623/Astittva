@@ -158,10 +158,10 @@ export default function AdminRecruitmentJobsPage() {
             setDeptFilter(e.target.value);
             setCurrentPage(1);
           }}
-          className="h-9 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+          className="h-9 px-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
         >
           {DEPARTMENTS.map((dept) => (
-            <option key={dept} value={dept} className="bg-charcoal text-ivory">
+            <option key={dept} value={dept} className="bg-[var(--admin-surface)] text-[var(--admin-text-primary)]">
               {dept === "All" ? "All Departments" : dept}
             </option>
           ))}
@@ -170,11 +170,11 @@ export default function AdminRecruitmentJobsPage() {
 
       {/* Main Table Container */}
       {loading ? (
-        <div className="text-ivory/50 text-center py-20 tracking-[0.25em] uppercase text-xs">
+        <div className="text-[var(--admin-text-muted)] text-center py-20 tracking-[0.25em] uppercase text-xs">
           Loading Job Vacancies...
         </div>
       ) : error ? (
-        <div className="text-center py-16 border border-copper/20 bg-charcoal-2/30 rounded-[6px] text-rose-500 text-sm">
+        <div className="text-center py-16 border border-[var(--admin-border)] bg-[var(--admin-surface)] rounded-[6px] text-rose-500 text-sm">
           {error}
         </div>
       ) : jobs.length === 0 ? (
@@ -204,54 +204,54 @@ export default function AdminRecruitmentJobsPage() {
           }}
         />
       ) : (
-        <div className="border border-copper/20 rounded-[6px] overflow-hidden bg-charcoal-2/20 shadow-sm">
+        <div className="admin-table-wrap">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-charcoal-2/80 text-ivory/60 text-[10px] tracking-[0.22em] uppercase border-b border-copper/20">
+              <thead className="admin-thead">
                 <tr>
-                  <th className="text-left py-3.5 px-4 font-medium">Role Title</th>
-                  <th className="text-left py-3.5 px-4 font-medium hidden md:table-cell">Department</th>
-                  <th className="text-left py-3.5 px-4 font-medium hidden lg:table-cell">Location &amp; Type</th>
-                  <th className="text-left py-3.5 px-4 font-medium">Status</th>
-                  <th className="text-center py-3.5 px-4 font-medium">Applicants</th>
-                  <th className="text-right py-3.5 px-4 font-medium">Actions</th>
+                  <th className="text-left py-3.5 px-4 font-semibold">Role Title</th>
+                  <th className="text-left py-3.5 px-4 font-semibold hidden md:table-cell">Department</th>
+                  <th className="text-left py-3.5 px-4 font-semibold hidden lg:table-cell">Location &amp; Type</th>
+                  <th className="text-left py-3.5 px-4 font-semibold">Status</th>
+                  <th className="text-center py-3.5 px-4 font-semibold">Applicants</th>
+                  <th className="text-right py-3.5 px-4 font-semibold">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-copper/10">
+              <tbody>
                 {paginatedJobs.map((job) => (
                   <tr
                     key={job.id}
-                    className="hover:bg-charcoal-2/40 transition-colors group"
+                    className="admin-tr transition-colors group"
                   >
                     {/* Role Title */}
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-2">
                         <Link
                           to={`/admin/recruitment/jobs/${job.id}/edit`}
-                          className="font-display text-sm font-medium text-ivory hover:text-copper transition-colors"
+                          className="font-display text-sm font-medium text-[var(--admin-text-primary)] hover:text-[var(--admin-accent)] transition-colors"
                         >
                           {job.title}
                         </Link>
                         {job.isFeatured && (
-                          <span className="text-[9px] tracking-widest uppercase font-semibold text-copper bg-copper/10 px-1.5 py-0.5 rounded-[2px] border border-copper/25">
+                          <span className="text-[9px] tracking-widest uppercase font-semibold text-[var(--admin-accent)] bg-[var(--admin-accent)]/10 px-1.5 py-0.5 rounded-[2px] border border-[var(--admin-accent)]/30">
                             Featured
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-ivory/50 mt-0.5">
+                      <div className="text-[11px] text-[var(--admin-text-muted)] mt-0.5">
                         <span className="font-mono">/careers/jobs/{job.slug}</span>
                       </div>
                     </td>
 
                     {/* Department */}
-                    <td className="py-3.5 px-4 text-ivory/70 hidden md:table-cell text-xs">
+                    <td className="py-3.5 px-4 text-[var(--admin-text-secondary)] hidden md:table-cell text-xs">
                       {job.department}
                     </td>
 
                     {/* Location & Type */}
-                    <td className="py-3.5 px-4 text-ivory/70 hidden lg:table-cell text-xs">
+                    <td className="py-3.5 px-4 text-[var(--admin-text-primary)] hidden lg:table-cell text-xs">
                       <div>{job.location}</div>
-                      <div className="text-[10px] text-ivory/45 font-mono">
+                      <div className="text-[10px] text-[var(--admin-text-muted)] font-mono">
                         {job.employmentType} · {job.workplaceType}
                       </div>
                     </td>
@@ -265,7 +265,7 @@ export default function AdminRecruitmentJobsPage() {
                     <td className="py-3.5 px-4 text-center">
                       <Link
                         to={`/admin/recruitment/applications?jobId=${job.id}`}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] bg-charcoal border border-copper/20 hover:border-copper text-xs font-mono font-medium text-copper transition-colors"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[3px] bg-[var(--admin-surface)] border border-[var(--admin-border)] hover:border-[var(--admin-accent)] text-xs font-mono font-medium text-[var(--admin-accent)] transition-colors"
                         title="View Candidates"
                       >
                         <Users className="w-3.5 h-3.5" />
@@ -281,7 +281,7 @@ export default function AdminRecruitmentJobsPage() {
                             to={`/careers/jobs/${job.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1.5 text-ivory/60 hover:text-copper hover:bg-copper/10 rounded transition-colors"
+                            className="p-1.5 text-[var(--admin-text-muted)] hover:text-[var(--admin-accent)] hover:bg-[var(--admin-surface-muted)] rounded transition-colors"
                             title="View Public Listing"
                           >
                             <ExternalLink className="w-4 h-4" />
@@ -290,7 +290,7 @@ export default function AdminRecruitmentJobsPage() {
 
                         <Link
                           to={`/admin/recruitment/jobs/${job.id}/edit`}
-                          className="p-1.5 text-ivory/60 hover:text-copper hover:bg-copper/10 rounded transition-colors"
+                          className="p-1.5 text-[var(--admin-text-muted)] hover:text-[var(--admin-accent)] hover:bg-[var(--admin-surface-muted)] rounded transition-colors"
                           title="Edit Vacancy"
                         >
                           <Edit2 className="w-4 h-4" />
@@ -304,7 +304,7 @@ export default function AdminRecruitmentJobsPage() {
                               title: job.title,
                             })
                           }
-                          className="p-1.5 text-ivory/50 hover:text-rose-500 hover:bg-rose-500/10 rounded transition-colors"
+                          className="p-1.5 text-[var(--admin-text-muted)] hover:text-rose-500 hover:bg-rose-500/10 rounded transition-colors"
                           title="Delete or Archive Vacancy"
                         >
                           <Trash2 className="w-4 h-4" />

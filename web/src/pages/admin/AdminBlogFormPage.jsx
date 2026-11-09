@@ -160,7 +160,7 @@ export default function AdminBlogFormPage() {
 
   if (loading) {
     return (
-      <div className="text-ivory/50 text-center py-16 tracking-[0.3em] uppercase text-xs">
+      <div className="text-white/50 text-center py-16 tracking-[0.3em] uppercase text-xs">
         Loading...
       </div>
     );
@@ -233,8 +233,8 @@ export default function AdminBlogFormPage() {
               }}
               placeholder="auto-generated-from-title"
             />
-            <p className="text-ivory/40 text-xs mt-1.5">
-              Live URL: <span className="text-copper">/blogs/{form.slug || "…"}</span>
+            <p className="text-[var(--admin-text-muted)] text-xs mt-1.5">
+              Live URL: <span className="text-[var(--admin-accent)]">/blogs/{form.slug || "…"}</span>
             </p>
           </div>
 
@@ -262,7 +262,7 @@ export default function AdminBlogFormPage() {
                 'Write with HTML: <h2>Section</h2>, <p>Paragraph…</p>, <strong>bold</strong>, <em>italic</em>, <a href="…">link</a>, <ul><li>…</li></ul>, <blockquote>…</blockquote>, <img src="…" alt="…" />'
               }
             />
-            <p className="text-ivory/40 text-xs mt-1.5">
+            <p className="text-[var(--admin-text-muted)] text-xs mt-1.5">
               Supports HTML: h2, h3, p, strong, em, a, ul/ol, blockquote, img.
             </p>
           </div>
@@ -270,14 +270,14 @@ export default function AdminBlogFormPage() {
           {preview && (
             <div
               data-testid="blog-body-preview"
-              className="border border-copper/20 p-6 bg-white blog-prose text-[#1C1C1C]"
+              className="border border-[var(--admin-border)] rounded-[8px] p-6 bg-white blog-prose text-[#1C1C1C]"
               dangerouslySetInnerHTML={{ __html: sanitizeBlogHtml(form.body) || "<em>Nothing to preview yet.</em>" }}
             />
           )}
 
           {/* SEO */}
-          <div className="border border-copper/15 p-6 bg-charcoal-2/30 space-y-5">
-            <div className="overline">SEO Metadata</div>
+          <div className="admin-card rounded-[8px] p-6 space-y-5">
+            <div className="overline text-[var(--admin-accent)] font-semibold tracking-wider text-xs">SEO Metadata</div>
             <div>
               <label className="input-label">SEO Title</label>
               <input
@@ -314,8 +314,8 @@ export default function AdminBlogFormPage() {
 
         {/* SIDEBAR */}
         <aside className="space-y-6">
-          <div className="border border-copper/15 p-6 bg-charcoal-2/30 space-y-4">
-            <div className="overline">Publishing</div>
+          <div className="admin-card rounded-[8px] p-6 space-y-4">
+            <div className="overline text-[var(--admin-accent)] font-semibold tracking-wider text-xs">Publishing</div>
             <div>
               <label className="input-label">Status</label>
               <select
@@ -337,7 +337,7 @@ export default function AdminBlogFormPage() {
                 value={(form.publish_date || "").slice(0, 10)}
                 onChange={(e) => set("publish_date", e.target.value)}
               />
-              <p className="text-ivory/40 text-xs mt-1.5">
+              <p className="text-[var(--admin-text-muted)] text-xs mt-1.5">
                 Auto-set to today when publishing (leave empty).
               </p>
             </div>
@@ -352,15 +352,15 @@ export default function AdminBlogFormPage() {
             </div>
           </div>
 
-          <div className="border border-copper/15 p-6 bg-charcoal-2/30 space-y-4">
+          <div className="admin-card rounded-[8px] p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <div className="overline">Featured Image</div>
+              <div className="overline text-[var(--admin-accent)] font-semibold tracking-wider text-xs">Featured Image</div>
               {imgSrc && (
                 <button
                   type="button"
                   onClick={removeImage}
                   data-testid="remove-featured-image"
-                  className="text-[10px] uppercase tracking-wider text-rose-400 hover:text-rose-300 transition"
+                  className="text-[10px] uppercase tracking-wider text-rose-500 hover:text-rose-400 font-semibold transition"
                 >
                   Remove
                 </button>
@@ -369,11 +369,11 @@ export default function AdminBlogFormPage() {
 
             {imgSrc ? (
               <div className="space-y-2">
-                <div className="relative overflow-hidden rounded-[4px] border border-copper/20 bg-charcoal-2 min-h-[140px]">
+                <div className="relative overflow-hidden rounded-[4px] border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] min-h-[140px]">
                   {imageLoading && (
-                    <div className="absolute inset-0 bg-charcoal-2/80 backdrop-blur-sm flex flex-col items-center justify-center gap-2 z-10">
-                      <Loader2 className="w-5 h-5 text-copper animate-spin" />
-                      <span className="text-[11px] text-ivory/80 uppercase tracking-widest">
+                    <div className="absolute inset-0 bg-[var(--admin-surface)]/80 backdrop-blur-sm flex flex-col items-center justify-center gap-2 z-10">
+                      <Loader2 className="w-5 h-5 text-[var(--admin-accent)] animate-spin" />
+                      <span className="text-[11px] text-[var(--admin-text-secondary)] uppercase tracking-widest font-medium">
                         Fetching image…
                       </span>
                     </div>
@@ -392,7 +392,6 @@ export default function AdminBlogFormPage() {
                         }}
                         onError={() => {
                           if (imageRetryCount === 0 && driveId) {
-                            // Automatically fall back to backend proxy cache on first CDN error
                             setImageRetryCount(1);
                           } else {
                             setImageLoading(false);
@@ -403,19 +402,19 @@ export default function AdminBlogFormPage() {
                       <button
                         type="button"
                         onClick={removeImage}
-                        className="absolute top-2 right-2 bg-black/70 hover:bg-red-500 text-white p-1.5 transition rounded z-20"
+                        className="absolute top-2 right-2 bg-black/70 hover:bg-rose-500 text-white p-1.5 transition rounded z-20"
                         title="Remove image"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   ) : (
-                    <div className="p-5 text-center bg-rose-950/20 border border-rose-500/30 rounded flex flex-col items-center justify-center gap-2">
-                      <AlertCircle className="w-6 h-6 text-rose-400" />
-                      <div className="text-xs text-rose-200 font-medium">
+                    <div className="p-5 text-center bg-rose-500/10 border border-rose-500/30 rounded flex flex-col items-center justify-center gap-2">
+                      <AlertCircle className="w-6 h-6 text-rose-500" />
+                      <div className="text-xs text-rose-600 dark:text-rose-300 font-medium">
                         Could not load image from Google Drive
                       </div>
-                      <p className="text-[11px] text-ivory/70 max-w-xs leading-relaxed">
+                      <p className="text-[11px] text-[var(--admin-text-muted)] max-w-xs leading-relaxed">
                         Please check Google Drive sharing: Open Drive &rarr; Share &rarr; General access &rarr; set to <strong>Anyone with the link &rarr; Viewer</strong>.
                       </p>
                       <div className="flex items-center gap-2 mt-2">
@@ -423,7 +422,7 @@ export default function AdminBlogFormPage() {
                           href={currentImageUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="btn-outline text-[11px] py-1 px-3 inline-flex items-center gap-1"
+                          className="btn-admin-secondary text-[11px] py-1 px-3 inline-flex items-center gap-1"
                         >
                           Check Permissions <ExternalLink className="w-3 h-3" />
                         </a>
@@ -434,7 +433,7 @@ export default function AdminBlogFormPage() {
                             setImageLoading(true);
                             setImageRetryCount((c) => c + 1);
                           }}
-                          className="btn-primary text-[11px] py-1 px-3 inline-flex items-center gap-1"
+                          className="btn-admin-primary text-[11px] py-1 px-3 inline-flex items-center gap-1"
                         >
                           <RefreshCw className="w-3 h-3" /> Retry
                         </button>
@@ -444,14 +443,14 @@ export default function AdminBlogFormPage() {
                 </div>
 
                 {!imageLoading && !imageError && driveId && (
-                  <div className="flex items-center gap-1.5 text-emerald-400 text-xs">
+                  <div className="flex items-center gap-1.5 text-emerald-500 text-xs font-medium">
                     <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                     <span>Live Google Drive preview loaded</span>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="border border-dashed border-copper/25 p-6 text-center text-ivory/50 text-xs tracking-[0.25em] uppercase rounded-[4px]">
+              <div className="border border-dashed border-[var(--admin-border)] p-6 text-center text-[var(--admin-text-muted)] text-xs tracking-[0.25em] uppercase rounded-[4px] bg-[var(--admin-surface-muted)]">
                 No featured image attached
               </div>
             )}
@@ -477,7 +476,7 @@ export default function AdminBlogFormPage() {
                   <button
                     type="button"
                     onClick={applyDriveImage}
-                    className="btn-outline px-3 py-1.5 text-xs whitespace-nowrap"
+                    className="btn-admin-secondary px-3 py-1.5 text-xs whitespace-nowrap"
                     title="Apply image link"
                   >
                     Preview
@@ -485,27 +484,27 @@ export default function AdminBlogFormPage() {
                 </div>
 
                 {hasIncompleteDriveUrl && (
-                  <p className="text-[11px] text-amber-400/90">
+                  <p className="text-[11px] text-amber-500 font-medium">
                     Incomplete link. Please paste the full Google Drive link (file ID must be 20+ characters).
                   </p>
                 )}
 
                 {(driveImageUrlInput || form.featured_image) && (
-                  <div className="flex items-center justify-between text-[11px] text-ivory/60 pt-1">
-                    <span className="truncate max-w-[220px] text-copper/80">
+                  <div className="flex items-center justify-between text-[11px] text-[var(--admin-text-secondary)] pt-1">
+                    <span className="truncate max-w-[220px] text-[var(--admin-accent)]">
                       Linked: {driveImageUrlInput || form.featured_image}
                     </span>
                     <button
                       type="button"
                       onClick={removeImage}
-                      className="text-rose-400 hover:text-rose-300 ml-2"
+                      className="text-rose-500 hover:text-rose-400 font-medium ml-2"
                     >
                       Clear
                     </button>
                   </div>
                 )}
               </div>
-              <p className="text-[10px] text-ivory/50 mt-2 font-light">
+              <p className="text-[10px] text-[var(--admin-text-muted)] mt-2">
                 Before adding the image, open Google Drive &rarr; Share &rarr; General access &rarr; Anyone with the link &rarr; Viewer.
               </p>
             </div>
@@ -516,7 +515,7 @@ export default function AdminBlogFormPage() {
               type="submit"
               disabled={saving}
               data-testid="save-blog-btn"
-              className="btn-primary w-full"
+              className="btn-admin-primary w-full justify-center"
             >
               {saving ? (
                 <>
@@ -533,7 +532,7 @@ export default function AdminBlogFormPage() {
               onClick={(e) => submit(e, "published")}
               disabled={saving}
               data-testid="publish-blog-btn"
-              className="btn-outline w-full"
+              className="btn-admin-secondary w-full justify-center"
             >
               {isEdit ? "Save & Publish" : "Publish Now"}
             </button>

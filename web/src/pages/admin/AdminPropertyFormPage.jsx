@@ -151,8 +151,8 @@ export default function AdminPropertyFormPage() {
   if (loading) {
     return (
       <div className="py-24 flex flex-col items-center justify-center space-y-4">
-        <div className="w-8 h-8 border-2 border-copper/30 border-t-copper rounded-full animate-spin" />
-        <div className="text-copper text-xs tracking-[0.3em] uppercase">Loading Property Details...</div>
+        <div className="w-8 h-8 border-2 border-[var(--admin-border)] border-t-[var(--admin-accent)] rounded-full animate-spin" />
+        <div className="text-[var(--admin-accent)] text-xs tracking-[0.3em] uppercase">Loading Property Details...</div>
       </div>
     );
   }
@@ -160,11 +160,11 @@ export default function AdminPropertyFormPage() {
   if (loadError) {
     return (
       <div className="py-24 text-center space-y-4">
-        <p className="text-rose-400 text-sm">{loadError}</p>
+        <p className="text-rose-500 text-sm font-medium">{loadError}</p>
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="btn-outline text-xs tracking-[0.2em] uppercase px-4 py-2"
+          className="btn-admin-secondary text-xs tracking-[0.2em] uppercase px-4 py-2"
         >
           Retry
         </button>
@@ -190,10 +190,10 @@ export default function AdminPropertyFormPage() {
 
       <form onSubmit={submit} className="space-y-8">
         {/* Basic */}
-        <section className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-6">
-          <div className="flex items-center gap-3 pb-3 border-b border-copper/15">
-            <div className="w-2 h-2 rounded-full bg-copper" />
-            <h2 className="text-sm font-semibold tracking-wider uppercase text-ivory">
+        <section className="admin-card rounded-[8px] p-6 sm:p-8 space-y-6">
+          <div className="flex items-center gap-3 pb-3 border-b border-[var(--admin-border-subtle)]">
+            <div className="w-2 h-2 rounded-full bg-[var(--admin-accent)]" />
+            <h2 className="text-sm font-semibold tracking-wider uppercase text-[var(--admin-text-primary)]">
               1. Basic Project Details
             </h2>
           </div>
@@ -270,16 +270,16 @@ export default function AdminPropertyFormPage() {
         </section>
 
           {/* Images */}
-          <section className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-6">
-            <div className="flex items-center justify-between pb-3 border-b border-copper/15">
+          <section className="admin-card rounded-[8px] p-6 sm:p-8 space-y-6">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--admin-border-subtle)]">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-copper" />
-                <h2 className="text-sm font-semibold tracking-wider uppercase text-ivory">
+                <div className="w-2 h-2 rounded-full bg-[var(--admin-accent)]" />
+                <h2 className="text-sm font-semibold tracking-wider uppercase text-[var(--admin-text-primary)]">
                   2. Project Imagery (Google Drive &amp; CDN)
                 </h2>
               </div>
               {Array.isArray(form.images) && form.images.length > 0 && (
-                <span className="text-copper text-xs tracking-wider">
+                <span className="text-[var(--admin-accent)] text-xs font-medium tracking-wider">
                   {form.images.length} Image{form.images.length !== 1 ? "s" : ""} Attached
                 </span>
               )}
@@ -292,7 +292,7 @@ export default function AdminPropertyFormPage() {
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
                     {driveImages.map((path) => (
-                      <div key={path} className="relative group border border-copper/20 bg-charcoal/30 flex flex-col overflow-hidden rounded-[4px]">
+                      <div key={path} className="relative group border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] flex flex-col overflow-hidden rounded-[4px]">
                         <div className="aspect-[4/3] w-full overflow-hidden relative">
                           <img
                             loading="lazy"
@@ -314,14 +314,14 @@ export default function AdminPropertyFormPage() {
                             type="button"
                             onClick={() => removeImage(path)}
                             data-testid="remove-image"
-                            className="absolute top-1 right-1 w-7 h-7 bg-charcoal/90 border border-copper/40 flex items-center justify-center text-copper hover:bg-copper hover:text-charcoal transition rounded"
+                            className="absolute top-1 right-1 w-7 h-7 bg-[var(--admin-surface)]/90 border border-[var(--admin-accent)]/40 flex items-center justify-center text-[var(--admin-accent)] hover:bg-[var(--admin-accent)] hover:text-white transition rounded"
                             title="Remove image"
                           >
                             <X className="w-4 h-4" />
                           </button>
                         </div>
-                        <div className="p-2 bg-charcoal-2/80 border-t border-copper/10">
-                          <span className="text-[10px] text-ivory/60 truncate block font-mono" title={path}>
+                        <div className="p-2 bg-[var(--admin-surface)] border-t border-[var(--admin-border-subtle)]">
+                          <span className="text-[10px] text-[var(--admin-text-muted)] truncate block font-mono" title={path}>
                             {path}
                           </span>
                         </div>
@@ -329,7 +329,7 @@ export default function AdminPropertyFormPage() {
                     ))}
                   </div>
                   {driveImages.length === 0 && (
-                    <p className="text-xs text-ivory/40 mb-6 italic">No Google Drive images added yet.</p>
+                    <p className="text-xs text-[var(--admin-text-muted)] mb-6 italic">No Google Drive images added yet.</p>
                   )}
                 </>
               );
@@ -357,22 +357,22 @@ export default function AdminPropertyFormPage() {
                   type="button"
                   onClick={addDriveImage}
                   data-testid="add-drive-image-button"
-                  className="btn-outline shrink-0 inline-flex items-center justify-center gap-2"
+                  className="btn-admin-secondary shrink-0 inline-flex items-center justify-center gap-2"
                 >
                   + Add Drive Image
                 </button>
               </div>
-              <p className="text-[11px] text-ivory/50 mt-2 font-light">
+              <p className="text-[11px] text-[var(--admin-text-muted)] mt-2">
                 Paste any Google Drive link (e.g. view, sharing, or /file/d/ link). Links are automatically saved when submitting.
               </p>
             </div>
           </section>
 
         {/* Details */}
-        <section className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-6">
-          <div className="flex items-center gap-3 pb-3 border-b border-copper/15">
-            <div className="w-2 h-2 rounded-full bg-copper" />
-            <h2 className="text-sm font-semibold tracking-wider uppercase text-ivory">
+        <section className="admin-card rounded-[8px] p-6 sm:p-8 space-y-6">
+          <div className="flex items-center gap-3 pb-3 border-b border-[var(--admin-border-subtle)]">
+            <div className="w-2 h-2 rounded-full bg-[var(--admin-accent)]" />
+            <h2 className="text-sm font-semibold tracking-wider uppercase text-[var(--admin-text-primary)]">
               3. Specifications &amp; Amenities
             </h2>
           </div>
@@ -408,13 +408,13 @@ export default function AdminPropertyFormPage() {
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addAmenity(); } }}
                   placeholder="e.g. Swimming Pool, Clubhouse"
                 />
-                <button type="button" onClick={addAmenity} className="btn-outline">Add</button>
+                <button type="button" onClick={addAmenity} className="btn-admin-secondary">Add</button>
               </div>
               <div className="flex flex-wrap gap-2">
                 {form.amenities.map((a) => (
-                  <span key={a} className="border border-copper/30 text-ivory/80 text-xs px-3 py-1.5 flex items-center gap-2 rounded">
+                  <span key={a} className="border border-[var(--admin-border)] bg-[var(--admin-surface-muted)] text-[var(--admin-text-primary)] text-xs px-3 py-1.5 flex items-center gap-2 rounded">
                     {a}
-                    <button type="button" onClick={() => setForm((f) => ({ ...f, amenities: f.amenities.filter((x) => x !== a) }))} className="text-copper hover:text-rose-gold">
+                    <button type="button" onClick={() => setForm((f) => ({ ...f, amenities: f.amenities.filter((x) => x !== a) }))} className="text-[var(--admin-accent)] hover:text-rose-500">
                       <X className="w-3 h-3" />
                     </button>
                   </span>
@@ -425,10 +425,10 @@ export default function AdminPropertyFormPage() {
         </section>
 
         {/* Status */}
-        <section className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-6">
-          <div className="flex items-center gap-3 pb-3 border-b border-copper/15">
-            <div className="w-2 h-2 rounded-full bg-copper" />
-            <h2 className="text-sm font-semibold tracking-wider uppercase text-ivory">
+        <section className="admin-card rounded-[8px] p-6 sm:p-8 space-y-6">
+          <div className="flex items-center gap-3 pb-3 border-b border-[var(--admin-border-subtle)]">
+            <div className="w-2 h-2 rounded-full bg-[var(--admin-accent)]" />
+            <h2 className="text-sm font-semibold tracking-wider uppercase text-[var(--admin-text-primary)]">
               4. Publication &amp; Feature Visibility
             </h2>
           </div>
@@ -442,32 +442,32 @@ export default function AdminPropertyFormPage() {
               </select>
             </div>
             <div className="flex items-end">
-              <label className="flex items-center gap-3 cursor-pointer text-ivory/80">
+              <label className="flex items-center gap-3 cursor-pointer text-[var(--admin-text-primary)]">
                 <input
                   type="checkbox"
                   data-testid="form-featured"
                   checked={form.is_featured}
                   onChange={(e) => set("is_featured", e.target.checked)}
-                  className="w-4 h-4 accent-copper"
+                  className="w-4 h-4 accent-[var(--admin-accent)]"
                 />
-                <span className="text-xs tracking-[0.2em] uppercase">Mark as Featured</span>
+                <span className="text-xs tracking-[0.2em] uppercase font-medium">Mark as Featured</span>
               </label>
             </div>
           </div>
         </section>
 
-        <div className="flex items-center gap-4 pt-4 border-t border-copper/15">
+        <div className="flex items-center gap-4 pt-4 border-t border-[var(--admin-border-subtle)]">
           <button
             type="submit"
             disabled={saving}
             data-testid="form-submit"
-            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.15em] rounded-[4px] transition-colors shadow-sm disabled:opacity-50"
+            className="btn-admin-primary"
           >
             {saving ? "Saving..." : (isEdit ? "Update Property" : "Create Property")}
           </button>
           <Link
             to="/admin/properties"
-            className="px-5 py-2.5 border border-copper/30 hover:border-copper text-xs font-semibold uppercase tracking-[0.15em] text-ivory/80 hover:text-white rounded-[4px] transition-colors"
+            className="btn-admin-secondary"
           >
             Cancel
           </Link>
