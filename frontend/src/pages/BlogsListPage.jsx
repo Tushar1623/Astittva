@@ -69,7 +69,7 @@ function BlogCard({ blog, idx }) {
         </div>
 
         <Link to={`/blogs/${blog.slug}`} className="block">
-          <h3 className="font-serif-display text-xl sm:text-2xl text-ivory leading-[1.25] group-hover:text-copper transition-colors line-clamp-3 mb-4">
+          <h3 className="font-serif-display text-xl sm:text-2xl text-[#1C1C1C] leading-[1.25] group-hover:text-copper transition-colors line-clamp-3 mb-4">
             {blog.title}
           </h3>
         </Link>
@@ -171,7 +171,7 @@ export default function BlogsListPage() {
   };
 
   return (
-    <div data-testid="blogs-list-page" className="relative text-ivory">
+    <div data-testid="blogs-list-page" className="relative text-[#1C1C1C]">
       <Seo
         title="Real Estate Blog | Property Insights Kolkata | Astittva"
         description="Read expert analysis on Kolkata real estate, property investment trends, New Town infrastructure updates, and homebuyer advisory guides by Astittva Marketing."

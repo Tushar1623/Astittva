@@ -30,8 +30,8 @@ export default class ErrorBoundary extends React.Component {
         window.location.pathname.startsWith("/admin");
 
       return (
-        <div className="min-h-screen bg-charcoal text-ivory flex items-center justify-center p-6">
-          <div className="max-w-lg w-full border border-copper/30 bg-charcoal-2/95 p-8 text-center space-y-6 shadow-2xl rounded-[8px]">
+        <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] flex items-center justify-center p-6">
+          <div className="max-w-lg w-full border border-[#E8DED2] bg-white p-8 text-center space-y-6 shadow-2xl rounded-xl">
             <div className="w-12 h-12 mx-auto rounded-full bg-copper/15 border border-copper/40 flex items-center justify-center text-copper text-xl font-bold">
               !
             </div>
@@ -40,17 +40,17 @@ export default class ErrorBoundary extends React.Component {
               <div className="text-copper text-xs tracking-[0.3em] uppercase mb-2 font-semibold">
                 Notice
               </div>
-              <h2 className="text-2xl font-display font-light text-ivory mb-2">
+              <h2 className="text-2xl font-serif-display font-medium text-[#1C1C1C] mb-2">
                 Unable to load this view
               </h2>
-              <p className="text-xs text-ivory/60 font-light leading-relaxed max-w-sm mx-auto">
+              <p className="text-xs text-[#5F5F5F] font-light leading-relaxed max-w-sm mx-auto">
                 A temporary error occurred while rendering this page. You can retry loading or return to a previous section.
               </p>
             </div>
 
             {/* Error diagnostics collapsible */}
             <div className="text-left bg-black/40 border border-copper/20 rounded-[6px] p-4 text-xs font-mono space-y-2">
-              <div className="flex items-center justify-between text-[11px] text-ivory/60">
+              <div className="flex items-center justify-between text-[11px] text-[#5F5F5F]">
                 <span className="font-semibold text-copper tracking-wider uppercase">Diagnostic Log</span>
                 <button
                   type="button"
@@ -66,7 +66,7 @@ export default class ErrorBoundary extends React.Component {
               </div>
 
               {this.state.showDetails && this.state.error?.stack && (
-                <div className="text-[11px] text-ivory/50 whitespace-pre-wrap leading-tight max-h-48 overflow-auto pt-2 border-t border-copper/15">
+                <div className="text-[11px] text-[#8C827A] whitespace-pre-wrap leading-tight max-h-48 overflow-auto pt-2 border-t border-copper/15">
                   {this.state.error.stack.split("\n").slice(0, 8).join("\n")}
                 </div>
               )}

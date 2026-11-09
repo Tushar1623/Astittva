@@ -717,7 +717,7 @@ export default function HomePage() {
                   <step.icon className="w-7 h-7 text-copper" strokeWidth={1} />
                 </div>
                 <div className="text-copper text-[10px] tracking-[0.4em] uppercase mb-3">{step.phase}</div>
-                <div className="font-serif-display text-ivory text-lg max-w-[180px]">{step.area}</div>
+                <div className="font-serif-display text-[#1C1C1C] text-lg max-w-[180px]">{step.area}</div>
               </motion.div>
             ))}
           </div>
@@ -787,7 +787,7 @@ export default function HomePage() {
 
               <div className="mt-10 pt-8 sm:pt-10 border-t border-[#E8DED2]">
                 <div className="text-[10px] tracking-[0.4em] uppercase text-[#737373] mb-3">Or call us directly</div>
-                <a href={`tel:${PHONE_DISPLAY.replace(/\s/g, "")}`} className="font-serif-display text-2xl text-ivory hover:text-copper transition">{PHONE_DISPLAY}</a>
+                <a href={`tel:${PHONE_DISPLAY.replace(/\s/g, "")}`} className="font-serif-display text-2xl text-[#1C1C1C] hover:text-copper transition">{PHONE_DISPLAY}</a>
               </div>
             </div>
 

@@ -9,15 +9,9 @@ import {
   Phone,
   Mail,
   Calendar,
-  Search,
   ExternalLink,
-  MessageSquare,
   X,
   RefreshCw,
-  Home,
-  Tag,
-  CheckCircle2,
-  Clock,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import AdminHeader from "@/components/admin/AdminHeader";
@@ -144,14 +138,12 @@ export default function AdminResaleLeadsPage() {
   // Filtered Leads
   const filteredLeads = useMemo(() => {
     return leads.filter((lead) => {
-      // Status filter
       if (
         statusFilter !== "ALL" &&
         (lead.status || "").toLowerCase() !== statusFilter.toLowerCase()
       ) {
         return false;
       }
-      // Search term
       if (searchTerm.trim()) {
         const q = searchTerm.toLowerCase();
         const name = (lead.name || "").toLowerCase();
@@ -172,7 +164,6 @@ export default function AdminResaleLeadsPage() {
   }, [leads, statusFilter, searchTerm]);
 
   // Pagination slice
-  const totalPages = Math.ceil(filteredLeads.length / pageSize) || 1;
   const paginatedLeads = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return filteredLeads.slice(start, start + pageSize);
@@ -193,7 +184,7 @@ export default function AdminResaleLeadsPage() {
       <AdminHeader
         category="Lead Management"
         title="Resale Enquiries"
-        subtitle="Secondary marketplace client inquiries, property evaluation & buyer connection desk"
+        subtitle="Secondary marketplace client inquiries, property evaluation & buyer connection desk."
         actions={[
           {
             label: "Refresh",
@@ -206,35 +197,60 @@ export default function AdminResaleLeadsPage() {
 
       {/* KPI Summary Tiles */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        <div className="p-4 rounded border border-copper/20 bg-charcoal-2/30">
-          <div className="text-[10px] uppercase tracking-wider text-ivory/50">
+        {/* Total Enquiries */}
+        <div className="admin-card p-4 rounded-lg">
+          <div className="text-[10.5px] uppercase tracking-wider text-[var(--admin-text-secondary)] font-medium">
             Total Resale Enquiries
           </div>
-          <div className="text-2xl font-light font-display text-ivory mt-1">
+          <div className="text-2xl font-serif-display font-medium text-[var(--admin-text-primary)] mt-1">
             {metrics.total}
           </div>
         </div>
-        <div className="p-4 rounded border border-copper/20 bg-charcoal-2/30">
-          <div className="text-[10px] uppercase tracking-wider text-rose-400">
+
+        {/* New Enquiries */}
+        <div
+          className="p-4 rounded-lg border text-left"
+          style={{
+            backgroundColor: "var(--admin-error-bg)",
+            borderColor: "var(--admin-error-border)",
+          }}
+        >
+          <div className="text-[10.5px] uppercase tracking-wider text-[var(--admin-error)] font-semibold">
             New Enquiries
           </div>
-          <div className="text-2xl font-light font-display text-rose-400 mt-1">
+          <div className="text-2xl font-serif-display font-medium text-[var(--admin-error)] mt-1">
             {metrics.newCount}
           </div>
         </div>
-        <div className="p-4 rounded border border-copper/20 bg-charcoal-2/30">
-          <div className="text-[10px] uppercase tracking-wider text-amber-400">
+
+        {/* Active Follow-ups */}
+        <div
+          className="p-4 rounded-lg border text-left"
+          style={{
+            backgroundColor: "var(--admin-warning-bg)",
+            borderColor: "var(--admin-warning-border)",
+          }}
+        >
+          <div className="text-[10.5px] uppercase tracking-wider text-[var(--admin-warning)] font-semibold">
             Active Follow-ups
           </div>
-          <div className="text-2xl font-light font-display text-amber-400 mt-1">
+          <div className="text-2xl font-serif-display font-medium text-[var(--admin-warning)] mt-1">
             {metrics.followUpCount}
           </div>
         </div>
-        <div className="p-4 rounded border border-copper/20 bg-charcoal-2/30">
-          <div className="text-[10px] uppercase tracking-wider text-emerald-400">
+
+        {/* Converted Deals */}
+        <div
+          className="p-4 rounded-lg border text-left"
+          style={{
+            backgroundColor: "var(--admin-success-bg)",
+            borderColor: "var(--admin-success-border)",
+          }}
+        >
+          <div className="text-[10.5px] uppercase tracking-wider text-[var(--admin-success)] font-semibold">
             Converted Deals
           </div>
-          <div className="text-2xl font-light font-display text-emerald-400 mt-1">
+          <div className="text-2xl font-serif-display font-medium text-[var(--admin-success)] mt-1">
             {metrics.convertedCount}
           </div>
         </div>
@@ -258,7 +274,7 @@ export default function AdminResaleLeadsPage() {
 
       {/* Leads Table */}
       {loading ? (
-        <div className="text-ivory/50 text-center py-20 tracking-[0.25em] uppercase text-xs">
+        <div className="text-[var(--admin-text-muted)] text-center py-20 tracking-[0.25em] uppercase text-xs">
           Loading resale enquiries...
         </div>
       ) : filteredLeads.length === 0 ? (
@@ -278,32 +294,29 @@ export default function AdminResaleLeadsPage() {
           }}
         />
       ) : (
-        <div className="border border-copper/20 rounded bg-charcoal-2/20 overflow-hidden shadow-sm">
+        <div className="admin-table-wrap">
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[850px]" data-testid="resale-leads-table">
-              <thead className="bg-charcoal-2/60 text-ivory/60 text-[10px] tracking-[0.2em] uppercase border-b border-copper/20">
+              <thead className="admin-thead">
                 <tr>
-                  <th className="text-left py-3.5 px-4 font-medium">Enquirer</th>
-                  <th className="text-left py-3.5 px-4 font-medium">Contact</th>
-                  <th className="text-left py-3.5 px-4 font-medium">Resale Listing</th>
-                  <th className="text-left py-3.5 px-4 font-medium">Message</th>
-                  <th className="text-left py-3.5 px-4 font-medium">Status</th>
-                  <th className="text-left py-3.5 px-4 font-medium">Date</th>
-                  <th className="text-right py-3.5 px-4 font-medium">Actions</th>
+                  <th className="text-left py-3.5 px-4 font-semibold">Enquirer</th>
+                  <th className="text-left py-3.5 px-4 font-semibold">Contact</th>
+                  <th className="text-left py-3.5 px-4 font-semibold">Resale Listing</th>
+                  <th className="text-left py-3.5 px-4 font-semibold">Message</th>
+                  <th className="text-left py-3.5 px-4 font-semibold">Status</th>
+                  <th className="text-left py-3.5 px-4 font-semibold">Date</th>
+                  <th className="text-right py-3.5 px-4 font-semibold">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-copper/10">
+              <tbody>
                 {paginatedLeads.map((l) => (
-                  <tr
-                    key={l.id}
-                    className="hover:bg-charcoal-2/40 transition-colors group"
-                  >
+                  <tr key={l.id} className="admin-tr group">
                     {/* Enquirer Name */}
                     <td className="py-3.5 px-4">
-                      <div className="text-ivory font-medium text-xs sm:text-sm">
+                      <div className="font-semibold text-xs sm:text-sm text-[var(--admin-text-primary)]">
                         {l.name || "Anonymous Enquiry"}
                       </div>
-                      <div className="text-ivory/40 text-[10px] uppercase tracking-wider mt-0.5">
+                      <div className="text-[var(--admin-text-muted)] text-[10px] uppercase tracking-wider mt-0.5">
                         Source: {l.source || "resale-page"}
                       </div>
                     </td>
@@ -314,7 +327,7 @@ export default function AdminResaleLeadsPage() {
                         {l.phone && (
                           <a
                             href={`tel:${l.phone}`}
-                            className="flex items-center gap-1.5 text-xs text-copper hover:underline"
+                            className="flex items-center gap-1.5 text-xs text-[var(--admin-accent)] hover:underline font-mono"
                           >
                             <Phone className="w-3 h-3 shrink-0" />
                             <span>{l.phone}</span>
@@ -323,9 +336,9 @@ export default function AdminResaleLeadsPage() {
                         {l.email && (
                           <a
                             href={`mailto:${l.email}`}
-                            className="flex items-center gap-1.5 text-[11px] text-ivory/60 hover:text-white truncate max-w-[170px]"
+                            className="flex items-center gap-1.5 text-[11px] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] truncate max-w-[170px]"
                           >
-                            <Mail className="w-3 h-3 shrink-0" />
+                            <Mail className="w-3 h-3 shrink-0 opacity-70" />
                             <span className="truncate">{l.email}</span>
                           </a>
                         )}
@@ -334,26 +347,26 @@ export default function AdminResaleLeadsPage() {
 
                     {/* Resale Property Title */}
                     <td className="py-3.5 px-4">
-                      <div className="text-ivory text-xs max-w-[200px] truncate font-medium">
+                      <div className="text-xs max-w-[200px] truncate font-semibold text-[var(--admin-text-primary)]">
                         {l.propertyTitle || "General Resale Consultation"}
                       </div>
                       {l.resalePropertyId ? (
                         <Link
                           to={`/resale/${l.resalePropertyId}`}
                           target="_blank"
-                          className="inline-flex items-center gap-1 text-[10px] text-copper hover:underline mt-0.5"
+                          className="inline-flex items-center gap-1 text-[10px] text-[var(--admin-accent)] hover:underline mt-0.5 font-medium"
                         >
                           <span>View Listing</span>
                           <ExternalLink className="w-2.5 h-2.5" />
                         </Link>
                       ) : (
-                        <span className="text-[10px] text-ivory/40">Marketplace Desk</span>
+                        <span className="text-[10px] text-[var(--admin-text-muted)]">Marketplace Desk</span>
                       )}
                     </td>
 
                     {/* Message */}
                     <td className="py-3.5 px-4">
-                      <p className="text-xs text-ivory/70 max-w-[220px] line-clamp-2">
+                      <p className="text-xs text-[var(--admin-text-secondary)] max-w-[220px] line-clamp-2 leading-relaxed">
                         {l.message || "—"}
                       </p>
                     </td>
@@ -363,10 +376,16 @@ export default function AdminResaleLeadsPage() {
                       <select
                         value={l.status || "New"}
                         onChange={(e) => updateStatus(l.id, e.target.value)}
-                        className="text-[10px] uppercase tracking-wider font-semibold rounded px-2 py-1 bg-charcoal border border-copper/30 text-ivory focus:outline-none focus:border-copper cursor-pointer"
+                        className="text-[10px] uppercase tracking-wider font-semibold rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--admin-accent)]"
+                        style={{
+                          backgroundColor: "var(--admin-input-bg)",
+                          borderColor: "var(--admin-input-border)",
+                          borderWidth: "1px",
+                          color: "var(--admin-input-text)",
+                        }}
                       >
                         {STATUS_OPTIONS.map((st) => (
-                          <option key={st} value={st} className="bg-charcoal text-ivory">
+                          <option key={st} value={st}>
                             {st}
                           </option>
                         ))}
@@ -374,7 +393,7 @@ export default function AdminResaleLeadsPage() {
                     </td>
 
                     {/* Date */}
-                    <td className="py-3.5 px-4 text-xs text-ivory/50 whitespace-nowrap">
+                    <td className="py-3.5 px-4 text-xs text-[var(--admin-text-secondary)] font-mono whitespace-nowrap">
                       {l.createdAt
                         ? new Date(l.createdAt).toLocaleDateString("en-IN", {
                             month: "short",
@@ -391,7 +410,7 @@ export default function AdminResaleLeadsPage() {
                           type="button"
                           onClick={() => setSelectedLead(l)}
                           title="View enquiry details"
-                          className="p-1.5 text-ivory/70 hover:text-copper hover:bg-copper/10 rounded transition-colors"
+                          className="p-1.5 text-[var(--admin-text-secondary)] hover:text-[var(--admin-accent)] hover:bg-[var(--admin-surface-2)] rounded-md transition-colors cursor-pointer"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
@@ -406,7 +425,7 @@ export default function AdminResaleLeadsPage() {
                               })
                             }
                             title="Delete enquiry"
-                            className="p-1.5 text-rose-400/70 hover:text-rose-400 hover:bg-rose-500/10 rounded transition-colors"
+                            className="p-1.5 text-[var(--admin-error)] hover:bg-[var(--admin-error-bg)] rounded-md transition-colors cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -422,77 +441,100 @@ export default function AdminResaleLeadsPage() {
           {/* Pagination */}
           <AdminPagination
             currentPage={currentPage}
-            totalPages={totalPages}
             onPageChange={setCurrentPage}
             totalItems={filteredLeads.length}
             pageSize={pageSize}
+            itemLabel="resale enquiries"
           />
         </div>
       )}
 
       {/* Enquiry Detail Modal */}
       {selectedLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#FAF8F5] border border-copper/30 rounded-lg max-w-lg w-full p-6 text-[#1C1C1C] shadow-2xl space-y-5">
-            <div className="flex items-start justify-between border-b border-copper/20 pb-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-xs animate-fadeIn"
+        >
+          <div
+            className="rounded-xl border max-w-lg w-full p-6 shadow-2xl space-y-5 transition-colors"
+            style={{
+              backgroundColor: "var(--admin-surface)",
+              borderColor: "var(--admin-border)",
+              color: "var(--admin-text-primary)",
+            }}
+          >
+            <div className="flex items-start justify-between border-b pb-4" style={{ borderColor: "var(--admin-border)" }}>
               <div>
-                <div className="text-[10px] tracking-[0.2em] uppercase text-copper font-semibold">
+                <div className="text-[10px] tracking-[0.2em] uppercase text-[var(--admin-accent)] font-semibold">
                   Resale Enquiry Details
                 </div>
-                <h3 className="text-xl font-display font-medium text-[#1C1C1C] mt-1">
+                <h3 className="text-xl font-serif-display font-medium text-[var(--admin-text-primary)] mt-1">
                   {selectedLead.name || "Anonymous Enquiry"}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedLead(null)}
-                className="w-8 h-8 rounded-full border border-copper/20 hover:border-copper flex items-center justify-center text-[#1C1C1C]/60 hover:text-copper bg-white hover:bg-[#FAF8F5] transition-colors shrink-0 cursor-pointer"
+                className="w-8 h-8 rounded-full border border-[var(--admin-border)] hover:border-[var(--admin-accent)] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] bg-[var(--admin-surface-2)] transition-colors shrink-0 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3 p-3.5 rounded bg-white border border-copper/20 shadow-sm">
+              <div
+                className="grid grid-cols-2 gap-3 p-3.5 rounded-lg border shadow-2xs"
+                style={{
+                  backgroundColor: "var(--admin-surface-2)",
+                  borderColor: "var(--admin-border-subtle)",
+                }}
+              >
                 <div>
-                  <div className="text-[#1C1C1C]/50 uppercase text-[10px] font-semibold">Phone Number</div>
+                  <div className="text-[var(--admin-text-muted)] uppercase text-[10px] font-semibold">Phone Number</div>
                   {selectedLead.phone ? (
                     <a
                       href={`tel:${selectedLead.phone}`}
-                      className="text-copper hover:underline font-mono text-xs mt-0.5 inline-block font-medium"
+                      className="text-[var(--admin-accent)] hover:underline font-mono text-xs mt-0.5 inline-block font-semibold"
                     >
                       {selectedLead.phone}
                     </a>
                   ) : (
-                    <span className="text-[#1C1C1C]/50">—</span>
+                    <span className="text-[var(--admin-text-muted)]">—</span>
                   )}
                 </div>
                 <div>
-                  <div className="text-[#1C1C1C]/50 uppercase text-[10px] font-semibold">Email Address</div>
+                  <div className="text-[var(--admin-text-muted)] uppercase text-[10px] font-semibold">Email Address</div>
                   {selectedLead.email ? (
                     <a
                       href={`mailto:${selectedLead.email}`}
-                      className="text-copper hover:underline text-xs mt-0.5 truncate block font-medium"
+                      className="text-[var(--admin-accent)] hover:underline text-xs mt-0.5 truncate block font-semibold"
                     >
                       {selectedLead.email}
                     </a>
                   ) : (
-                    <span className="text-[#1C1C1C]/50">—</span>
+                    <span className="text-[var(--admin-text-muted)]">—</span>
                   )}
                 </div>
               </div>
 
               <div>
-                <div className="text-[#1C1C1C]/50 uppercase text-[10px] mb-1 font-semibold">Target Resale Listing</div>
-                <div className="p-3.5 rounded bg-white border border-copper/20 shadow-sm flex items-center justify-between">
-                  <span className="text-[#1C1C1C] font-semibold text-xs">
+                <div className="text-[var(--admin-text-secondary)] uppercase text-[10px] mb-1 font-semibold">Target Resale Listing</div>
+                <div
+                  className="p-3.5 rounded-lg border shadow-2xs flex items-center justify-between"
+                  style={{
+                    backgroundColor: "var(--admin-surface-2)",
+                    borderColor: "var(--admin-border-subtle)",
+                  }}
+                >
+                  <span className="text-[var(--admin-text-primary)] font-semibold text-xs">
                     {selectedLead.propertyTitle || "General Resale Consultation"}
                   </span>
                   {selectedLead.resalePropertyId && (
                     <Link
                       to={`/resale/${selectedLead.resalePropertyId}`}
                       target="_blank"
-                      className="text-[11px] text-copper hover:underline inline-flex items-center gap-1 shrink-0 ml-2 font-medium"
+                      className="text-[11px] text-[var(--admin-accent)] hover:underline inline-flex items-center gap-1 shrink-0 ml-2 font-semibold"
                     >
                       <span>Open Listing</span>
                       <ExternalLink className="w-3 h-3" />
@@ -502,19 +544,32 @@ export default function AdminResaleLeadsPage() {
               </div>
 
               <div>
-                <div className="text-[#1C1C1C]/50 uppercase text-[10px] mb-1 font-semibold">Enquiry Message</div>
-                <div className="p-3.5 rounded bg-white border border-copper/20 shadow-sm text-[#1C1C1C]/85 leading-relaxed text-xs max-h-48 overflow-y-auto">
+                <div className="text-[var(--admin-text-secondary)] uppercase text-[10px] mb-1 font-semibold">Enquiry Message</div>
+                <div
+                  className="p-3.5 rounded-lg border shadow-2xs leading-relaxed text-xs max-h-48 overflow-y-auto"
+                  style={{
+                    backgroundColor: "var(--admin-surface-2)",
+                    borderColor: "var(--admin-border-subtle)",
+                    color: "var(--admin-text-primary)",
+                  }}
+                >
                   {selectedLead.message || "No custom message provided with this enquiry."}
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div>
-                  <div className="text-[#1C1C1C]/50 uppercase text-[10px] mb-1 font-semibold">Enquiry Status</div>
+                  <div className="text-[var(--admin-text-secondary)] uppercase text-[10px] mb-1 font-semibold">Enquiry Status</div>
                   <select
                     value={selectedLead.status || "New"}
                     onChange={(e) => updateStatus(selectedLead.id, e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-copper/30 rounded text-xs text-[#1C1C1C] font-medium focus:outline-none focus:border-copper cursor-pointer shadow-sm"
+                    className="w-full px-3 py-2 rounded-md text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[var(--admin-accent)] cursor-pointer"
+                    style={{
+                      backgroundColor: "var(--admin-input-bg)",
+                      borderColor: "var(--admin-input-border)",
+                      borderWidth: "1px",
+                      color: "var(--admin-input-text)",
+                    }}
                   >
                     {STATUS_OPTIONS.map((st) => (
                       <option key={st} value={st}>
@@ -524,8 +579,16 @@ export default function AdminResaleLeadsPage() {
                   </select>
                 </div>
                 <div>
-                  <div className="text-[#1C1C1C]/50 uppercase text-[10px] mb-1 font-semibold">Submission Date</div>
-                  <div className="px-3 py-2 bg-white border border-copper/20 rounded text-xs text-[#1C1C1C]/70 shadow-sm font-mono">
+                  <div className="text-[var(--admin-text-secondary)] uppercase text-[10px] mb-1 font-semibold">Submission Date</div>
+                  <div
+                    className="px-3 py-2 rounded-md text-xs font-mono"
+                    style={{
+                      backgroundColor: "var(--admin-surface-2)",
+                      borderColor: "var(--admin-border-subtle)",
+                      borderWidth: "1px",
+                      color: "var(--admin-text-primary)",
+                    }}
+                  >
                     {selectedLead.createdAt
                       ? new Date(selectedLead.createdAt).toLocaleString("en-IN")
                       : "—"}
@@ -534,7 +597,7 @@ export default function AdminResaleLeadsPage() {
               </div>
             </div>
 
-            <div className="border-t border-copper/20 pt-4 flex justify-between items-center">
+            <div className="border-t pt-4 flex justify-between items-center" style={{ borderColor: "var(--admin-border)" }}>
               {user?.role === "admin" && (
                 <button
                   type="button"
@@ -545,7 +608,7 @@ export default function AdminResaleLeadsPage() {
                       title: selectedLead.propertyTitle || "Resale Enquiry",
                     });
                   }}
-                  className="px-3.5 py-2 rounded text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
+                  className="px-3.5 py-2 rounded-md text-xs font-semibold text-[var(--admin-error)] bg-[var(--admin-error-bg)] border border-[var(--admin-error-border)] transition-colors cursor-pointer"
                 >
                   Delete Enquiry
                 </button>
@@ -553,7 +616,12 @@ export default function AdminResaleLeadsPage() {
               <button
                 type="button"
                 onClick={() => setSelectedLead(null)}
-                className="ml-auto px-5 py-2 border border-copper/30 hover:border-copper text-[#1C1C1C] hover:bg-white text-xs uppercase tracking-wider rounded transition-colors font-medium cursor-pointer"
+                className="ml-auto px-5 py-2 border rounded-md text-xs uppercase tracking-wider font-semibold transition-colors cursor-pointer"
+                style={{
+                  backgroundColor: "var(--admin-surface-2)",
+                  borderColor: "var(--admin-border)",
+                  color: "var(--admin-text-primary)",
+                }}
               >
                 Close
               </button>
@@ -566,12 +634,9 @@ export default function AdminResaleLeadsPage() {
       <DeleteConfirmModal
         isOpen={Boolean(deleteTarget)}
         title="Delete Resale Enquiry"
-        message={
-          deleteTarget
-            ? `Are you sure you want to delete the enquiry from "${deleteTarget.name}" for "${deleteTarget.title}" permanently? This cannot be undone.`
-            : ""
-        }
-        confirmLabel="Delete Enquiry"
+        itemName={deleteTarget?.name || "Anonymous Enquiry"}
+        itemType="Resale Enquiry"
+        warning="This will permanently remove the lead and all contact history from the database."
         isDeleting={isDeleting}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteTarget(null)}

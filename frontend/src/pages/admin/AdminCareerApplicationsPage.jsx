@@ -6,28 +6,25 @@ import {
   Briefcase,
   Trash2,
   Eye,
-  Phone,
-  Mail,
-  MapPin,
-  Calendar,
   Download,
-  FileText,
   Search,
   RefreshCw,
   X,
   ArrowUpDown,
-  ChevronLeft,
-  ChevronRight,
-  AlertTriangle,
-  FileCheck,
   FileX,
   Users,
   Clock,
   CheckCircle2,
+  Calendar,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import AdminHeader from "@/components/admin/AdminHeader";
+import StatusBadge from "@/components/admin/StatusBadge";
 import ApplicantDetailsModal from "@/components/admin/ApplicantDetailsModal";
 import DeleteConfirmModal from "@/components/admin/DeleteConfirmModal";
+import AdminPagination from "@/components/admin/AdminPagination";
+import AdminFilterBar from "@/components/admin/AdminFilterBar";
+import AdminEmptyState from "@/components/admin/AdminEmptyState";
 
 const CAREER_STATUSES = [
   "New",
@@ -37,17 +34,6 @@ const CAREER_STATUSES = [
   "Selected",
   "Rejected",
 ];
-
-const STATUS_BADGE_CLASSES = {
-  New: "border-blue-500/40 text-blue-400 bg-blue-500/10",
-  "Under Review": "border-amber-500/40 text-amber-400 bg-amber-500/10",
-  Reviewing: "border-amber-500/40 text-amber-400 bg-amber-500/10",
-  Shortlisted: "border-emerald-500/40 text-emerald-400 bg-emerald-500/10",
-  "Interview Scheduled": "border-purple-500/40 text-purple-400 bg-purple-500/10",
-  Interview: "border-purple-500/40 text-purple-400 bg-purple-500/10",
-  Selected: "border-green-500/40 text-green-400 bg-green-500/10",
-  Rejected: "border-red-500/40 text-red-400 bg-red-500/10",
-};
 
 export default function AdminCareerApplicationsPage() {
   const { user } = useAuth();
@@ -74,7 +60,7 @@ export default function AdminCareerApplicationsPage() {
   const [downloadingId, setDownloadingId] = useState(null);
 
   // Delete Confirmation Dialog State
-  const [deleteCandidate, setDeleteCandidate] = useState(null); // { id, name, jobTitle }
+  const [deleteCandidate, setDeleteCandidate] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const load = async () => {
@@ -148,15 +134,18 @@ export default function AdminCareerApplicationsPage() {
   const saveNotes = async (noteText) => {
     if (!selectedApp) return;
     const finalNotes = noteText !== undefined ? noteText : editingNotes;
-    setSavingNotes(true);
     try {
-      await api.patch(`/admin/leads/career/${selectedApp.id}`, { notes: finalNotes });
+      setSavingNotes(true);
+      await api.patch(`/admin/leads/career/${selectedApp.id}`, {
+        notes: finalNotes,
+      });
       setApplications((prev) =>
-        prev.map((a) => (a.id === selectedApp.id ? { ...a, notes: finalNotes } : a))
+        prev.map((a) =>
+          a.id === selectedApp.id ? { ...a, notes: finalNotes } : a
+        )
       );
       setSelectedApp((prev) => ({ ...prev, notes: finalNotes }));
-      setEditingNotes(finalNotes);
-      toast.success("Internal notes saved successfully");
+      toast.success("Notes saved successfully");
     } catch (e) {
       toast.error(formatApiErrorDetail(e.response?.data?.detail) || "Failed to save notes");
     } finally {
@@ -164,39 +153,28 @@ export default function AdminCareerApplicationsPage() {
     }
   };
 
-  // Secure Permanent Delete
   const confirmDelete = async () => {
     if (!deleteCandidate || isDeleting) return;
     try {
       setIsDeleting(true);
-      const res = await api.delete(`/admin/leads/career/${deleteCandidate.id}`);
+      await api.delete(`/admin/leads/career/${deleteCandidate.id}`);
       setApplications((prev) => prev.filter((a) => a.id !== deleteCandidate.id));
       if (selectedApp?.id === deleteCandidate.id) setSelectedApp(null);
+      toast.success("Career applicant deleted successfully");
       setDeleteCandidate(null);
-      toast.success(res.data?.message || "Career application permanently deleted");
     } catch (e) {
-      console.error("Delete career application error:", e);
-      toast.error(formatApiErrorDetail(e.response?.data?.detail) || "Failed to delete application");
+      toast.error(formatApiErrorDetail(e.response?.data?.detail) || "Failed to delete applicant");
     } finally {
       setIsDeleting(false);
     }
   };
 
-  // Secure Authenticated PDF CV Download
   const downloadResume = async (appDoc) => {
-    if (!appDoc) return;
-    if (!appDoc.hasResumeFile && (!appDoc.resumeUrl || !appDoc.resumeUrl.includes("/resume"))) {
-      if (appDoc.resumeUrl && appDoc.resumeUrl.startsWith("http")) {
-        window.open(appDoc.resumeUrl, "_blank");
-        return;
-      }
-      toast.info("No CV or resume file attached to this application.");
-      return;
-    }
-
+    if (!appDoc?.id) return;
     try {
       setDownloadingId(appDoc.id);
-      const toastId = toast.loading(`Downloading CV for ${appDoc.name}...`);
+      const toastId = toast.loading(`Preparing CV for ${appDoc.name || "applicant"}…`);
+
       const res = await api.get(`/admin/leads/career/${appDoc.id}/resume`, {
         responseType: "blob",
       });
@@ -272,7 +250,6 @@ export default function AdminCareerApplicationsPage() {
     return list;
   }, [filteredApps, sortOrder]);
 
-  const totalPages = Math.max(1, Math.ceil(sortedApps.length / pageSize));
   const paginatedApps = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return sortedApps.slice(start, start + pageSize);
@@ -281,309 +258,294 @@ export default function AdminCareerApplicationsPage() {
   return (
     <div data-testid="admin-career-applications-page" className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-copper/15">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-copper">
-              TALENT RECRUITMENT
-            </span>
-            <span className="text-ivory/30">•</span>
-            <span className="text-[10px] tracking-[0.2em] uppercase text-ivory/50">
-              GENERAL CAREER SUBMISSIONS
-            </span>
-          </div>
-          <h1 className="font-display font-light text-3xl sm:text-4xl text-ivory">
-            Career Applications
-          </h1>
-          <p className="text-ivory/55 text-sm mt-1">
-            General career submissions from the website Careers portal, with secure CV downloads and applicant management.
-          </p>
-        </div>
+      <AdminHeader
+        category="Talent Recruitment"
+        subcategory="General Career Submissions"
+        title="Career Applications"
+        subtitle="General career submissions from the website Careers portal, with secure CV downloads and applicant management."
+        onRefresh={load}
+        refreshing={loading}
+        actions={[
+          {
+            label: "Candidate Pipeline (Job Board) →",
+            to: "/admin/recruitment/applications",
+            variant: "outline",
+          },
+        ]}
+      />
 
-        <div className="flex items-center gap-3">
-          <Link
-            to="/admin/recruitment/applications"
-            className="text-xs uppercase tracking-[0.12em] px-3.5 py-2 rounded-[4px] border border-copper/30 hover:border-copper text-ivory/80 hover:text-white transition-colors"
-          >
-            Candidate Pipeline (Job Board) →
-          </Link>
-          <button
-            onClick={load}
-            disabled={loading}
-            title="Refresh submissions"
-            className="p-2 border border-copper/20 hover:border-copper/40 text-ivory/70 hover:text-copper rounded-[4px] transition-colors"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          </button>
-        </div>
-      </div>
-
-      {/* LIVE DASHBOARD SUMMARY CARDS (Calculated from actual database records) */}
+      {/* LIVE DASHBOARD SUMMARY CARDS (7 Pipeline Stages) */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
         {/* Total */}
         <button
           type="button"
-          onClick={() => setStatusFilter("ALL")}
-          className={`p-4 rounded-[6px] border text-left transition-all ${
+          onClick={() => {
+            setStatusFilter("ALL");
+            setCurrentPage(1);
+          }}
+          className={`admin-card p-4 rounded-lg text-left transition-all cursor-pointer ${
             statusFilter === "ALL"
-              ? "bg-copper/20 border-copper shadow-md ring-1 ring-copper/50"
-              : "bg-charcoal border-copper/20 hover:border-copper/50"
+              ? "ring-2 ring-[var(--admin-accent)] border-[var(--admin-accent)] shadow-xs"
+              : "hover:border-[var(--admin-accent)]"
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] tracking-[0.2em] uppercase text-ivory/60 font-semibold">
+            <span className="text-[10px] tracking-[0.18em] uppercase text-[var(--admin-text-secondary)] font-semibold">
               Total
             </span>
-            <Users className="w-4 h-4 text-copper" />
+            <Users className="w-4 h-4 text-[var(--admin-accent)]" />
           </div>
-          <div className="text-2xl sm:text-3xl font-display font-light text-ivory mt-2">
+          <div className="text-2xl sm:text-3xl font-serif-display font-medium text-[var(--admin-text-primary)] mt-2">
             {liveStats.total}
           </div>
-          <div className="text-[10px] text-ivory/40 uppercase tracking-wider mt-1">Applications</div>
+          <div className="text-[10px] text-[var(--admin-text-muted)] uppercase tracking-wider mt-1">Applications</div>
         </button>
 
         {/* New */}
         <button
           type="button"
-          onClick={() => setStatusFilter("New")}
-          className={`p-4 rounded-[6px] border text-left transition-all ${
+          onClick={() => {
+            setStatusFilter("New");
+            setCurrentPage(1);
+          }}
+          className={`p-4 rounded-lg border text-left transition-all cursor-pointer ${
             statusFilter === "New"
-              ? "bg-blue-500/20 border-blue-400 ring-1 ring-blue-400"
-              : "bg-charcoal border-blue-500/25 hover:border-blue-400"
+              ? "ring-2 ring-[var(--admin-info)] border-[var(--admin-info)] shadow-xs"
+              : ""
           }`}
+          style={{
+            backgroundColor: "var(--admin-info-bg)",
+            borderColor: "var(--admin-info-border)",
+          }}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] tracking-[0.2em] uppercase text-blue-400 font-semibold">
+            <span className="text-[10px] tracking-[0.18em] uppercase text-[var(--admin-info)] font-semibold">
               New
             </span>
-            <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-[var(--admin-info)] animate-pulse" />
           </div>
-          <div className="text-2xl sm:text-3xl font-display font-light text-blue-300 mt-2">
+          <div className="text-2xl sm:text-3xl font-serif-display font-medium text-[var(--admin-info)] mt-2">
             {liveStats.new}
           </div>
-          <div className="text-[10px] text-ivory/40 uppercase tracking-wider mt-1">Pending</div>
+          <div className="text-[10px] text-[var(--admin-info)] uppercase tracking-wider mt-1 font-medium">Pending</div>
         </button>
 
         {/* Under Review */}
         <button
           type="button"
-          onClick={() => setStatusFilter("Under Review")}
-          className={`p-4 rounded-[6px] border text-left transition-all ${
+          onClick={() => {
+            setStatusFilter("Under Review");
+            setCurrentPage(1);
+          }}
+          className={`p-4 rounded-lg border text-left transition-all cursor-pointer ${
             statusFilter === "Under Review"
-              ? "bg-amber-500/20 border-amber-400 ring-1 ring-amber-400"
-              : "bg-charcoal border-amber-500/25 hover:border-amber-400"
+              ? "ring-2 ring-[var(--admin-warning)] border-[var(--admin-warning)] shadow-xs"
+              : ""
           }`}
+          style={{
+            backgroundColor: "var(--admin-warning-bg)",
+            borderColor: "var(--admin-warning-border)",
+          }}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] tracking-[0.2em] uppercase text-amber-400 font-semibold">
+            <span className="text-[10px] tracking-[0.18em] uppercase text-[var(--admin-warning)] font-semibold">
               Under Review
             </span>
-            <Clock className="w-3.5 h-3.5 text-amber-400" />
+            <Clock className="w-3.5 h-3.5 text-[var(--admin-warning)]" />
           </div>
-          <div className="text-2xl sm:text-3xl font-display font-light text-amber-300 mt-2">
+          <div className="text-2xl sm:text-3xl font-serif-display font-medium text-[var(--admin-warning)] mt-2">
             {liveStats.underReview}
           </div>
-          <div className="text-[10px] text-ivory/40 uppercase tracking-wider mt-1">In Review</div>
+          <div className="text-[10px] text-[var(--admin-warning)] uppercase tracking-wider mt-1 font-medium">In Review</div>
         </button>
 
         {/* Shortlisted */}
         <button
           type="button"
-          onClick={() => setStatusFilter("Shortlisted")}
-          className={`p-4 rounded-[6px] border text-left transition-all ${
+          onClick={() => {
+            setStatusFilter("Shortlisted");
+            setCurrentPage(1);
+          }}
+          className={`p-4 rounded-lg border text-left transition-all cursor-pointer ${
             statusFilter === "Shortlisted"
-              ? "bg-emerald-500/20 border-emerald-400 ring-1 ring-emerald-400"
-              : "bg-charcoal border-emerald-500/25 hover:border-emerald-400"
+              ? "ring-2 ring-teal-500 border-teal-500 shadow-xs"
+              : ""
           }`}
+          style={{
+            backgroundColor: "rgba(20, 184, 166, 0.10)",
+            borderColor: "rgba(20, 184, 166, 0.28)",
+          }}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] tracking-[0.2em] uppercase text-emerald-400 font-semibold">
+            <span className="text-[10px] tracking-[0.18em] uppercase text-teal-600 dark:text-teal-300 font-semibold">
               Shortlisted
             </span>
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-teal-600 dark:text-teal-300" />
           </div>
-          <div className="text-2xl sm:text-3xl font-display font-light text-emerald-300 mt-2">
+          <div className="text-2xl sm:text-3xl font-serif-display font-medium text-teal-700 dark:text-teal-300 mt-2">
             {liveStats.shortlisted}
           </div>
-          <div className="text-[10px] text-ivory/40 uppercase tracking-wider mt-1">Approved</div>
+          <div className="text-[10px] text-teal-700 dark:text-teal-400 uppercase tracking-wider mt-1 font-medium">Approved</div>
         </button>
 
         {/* Interview Scheduled */}
         <button
           type="button"
-          onClick={() => setStatusFilter("Interview Scheduled")}
-          className={`p-4 rounded-[6px] border text-left transition-all ${
+          onClick={() => {
+            setStatusFilter("Interview Scheduled");
+            setCurrentPage(1);
+          }}
+          className={`p-4 rounded-lg border text-left transition-all cursor-pointer ${
             statusFilter === "Interview Scheduled"
-              ? "bg-purple-500/20 border-purple-400 ring-1 ring-purple-400"
-              : "bg-charcoal border-purple-500/25 hover:border-purple-400"
+              ? "ring-2 ring-purple-500 border-purple-500 shadow-xs"
+              : ""
           }`}
+          style={{
+            backgroundColor: "rgba(168, 85, 247, 0.10)",
+            borderColor: "rgba(168, 85, 247, 0.28)",
+          }}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] tracking-[0.2em] uppercase text-purple-400 font-semibold">
+            <span className="text-[10px] tracking-[0.18em] uppercase text-purple-600 dark:text-purple-300 font-semibold">
               Interview
             </span>
-            <Calendar className="w-3.5 h-3.5 text-purple-400" />
+            <Calendar className="w-3.5 h-3.5 text-purple-600 dark:text-purple-300" />
           </div>
-          <div className="text-2xl sm:text-3xl font-display font-light text-purple-300 mt-2">
+          <div className="text-2xl sm:text-3xl font-serif-display font-medium text-purple-700 dark:text-purple-300 mt-2">
             {liveStats.interviewScheduled}
           </div>
-          <div className="text-[10px] text-ivory/40 uppercase tracking-wider mt-1">Scheduled</div>
+          <div className="text-[10px] text-purple-700 dark:text-purple-400 uppercase tracking-wider mt-1 font-medium">Scheduled</div>
         </button>
 
         {/* Selected */}
         <button
           type="button"
-          onClick={() => setStatusFilter("Selected")}
-          className={`p-4 rounded-[6px] border text-left transition-all ${
+          onClick={() => {
+            setStatusFilter("Selected");
+            setCurrentPage(1);
+          }}
+          className={`p-4 rounded-lg border text-left transition-all cursor-pointer ${
             statusFilter === "Selected"
-              ? "bg-green-600/20 border-green-400 ring-1 ring-green-400"
-              : "bg-charcoal border-green-600/25 hover:border-green-400"
+              ? "ring-2 ring-[var(--admin-success)] border-[var(--admin-success)] shadow-xs"
+              : ""
           }`}
+          style={{
+            backgroundColor: "var(--admin-success-bg)",
+            borderColor: "var(--admin-success-border)",
+          }}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] tracking-[0.2em] uppercase text-green-400 font-semibold">
+            <span className="text-[10px] tracking-[0.18em] uppercase text-[var(--admin-success)] font-semibold">
               Selected
             </span>
-            <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
+            <CheckCircle2 className="w-3.5 h-3.5 text-[var(--admin-success)]" />
           </div>
-          <div className="text-2xl sm:text-3xl font-display font-light text-green-300 mt-2">
+          <div className="text-2xl sm:text-3xl font-serif-display font-medium text-[var(--admin-success)] mt-2">
             {liveStats.selected}
           </div>
-          <div className="text-[10px] text-ivory/40 uppercase tracking-wider mt-1">Hired</div>
+          <div className="text-[10px] text-[var(--admin-success)] uppercase tracking-wider mt-1 font-medium">Hired</div>
         </button>
 
         {/* Rejected */}
         <button
           type="button"
-          onClick={() => setStatusFilter("Rejected")}
-          className={`p-4 rounded-[6px] border text-left transition-all ${
+          onClick={() => {
+            setStatusFilter("Rejected");
+            setCurrentPage(1);
+          }}
+          className={`p-4 rounded-lg border text-left transition-all cursor-pointer ${
             statusFilter === "Rejected"
-              ? "bg-red-500/20 border-red-400 ring-1 ring-red-400"
-              : "bg-charcoal border-red-500/25 hover:border-red-400"
+              ? "ring-2 ring-[var(--admin-error)] border-[var(--admin-error)] shadow-xs"
+              : ""
           }`}
+          style={{
+            backgroundColor: "var(--admin-error-bg)",
+            borderColor: "var(--admin-error-border)",
+          }}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] tracking-[0.2em] uppercase text-red-400 font-semibold">
+            <span className="text-[10px] tracking-[0.18em] uppercase text-[var(--admin-error)] font-semibold">
               Rejected
             </span>
-            <X className="w-3.5 h-3.5 text-red-400" />
+            <X className="w-3.5 h-3.5 text-[var(--admin-error)]" />
           </div>
-          <div className="text-2xl sm:text-3xl font-display font-light text-red-300 mt-2">
+          <div className="text-2xl sm:text-3xl font-serif-display font-medium text-[var(--admin-error)] mt-2">
             {liveStats.rejected}
           </div>
-          <div className="text-[10px] text-ivory/40 uppercase tracking-wider mt-1">Closed</div>
+          <div className="text-[10px] text-[var(--admin-error)] uppercase tracking-wider mt-1 font-medium">Closed</div>
         </button>
       </div>
 
       {/* FILTER & SEARCH TOOLBAR */}
-      <div className="bg-charcoal-2/40 border border-copper/15 p-4 rounded-[6px] space-y-3">
-        <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
-          {/* Status Tabs */}
-          <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
-            {["ALL", ...CAREER_STATUSES].map((st) => (
-              <button
-                key={st}
-                onClick={() => setStatusFilter(st)}
-                className={`px-3 py-1.5 rounded-[4px] text-xs font-medium tracking-[0.08em] uppercase transition-all whitespace-nowrap ${
-                  statusFilter === st
-                    ? "bg-copper text-white font-semibold shadow-sm"
-                    : "bg-charcoal/60 text-ivory/70 hover:text-ivory hover:bg-charcoal"
-                }`}
-              >
-                {st}
-                {st === "ALL" ? ` (${applications.length})` : ""}
-              </button>
-            ))}
-          </div>
-
-          {/* Search and Sort Controls */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Sort Toggle */}
-            <button
-              type="button"
-              onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
-              className="h-9 px-3 bg-charcoal border border-copper/20 hover:border-copper/40 rounded-[4px] text-xs text-ivory/80 hover:text-white flex items-center gap-1.5 transition-colors"
-              title="Toggle date sorting"
-            >
-              <ArrowUpDown className="w-3.5 h-3.5 text-copper" />
-              <span>{sortOrder === "desc" ? "Newest First" : "Oldest First"}</span>
-            </button>
-
-            {/* Search Input */}
-            <div className="relative flex-1 sm:w-64">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ivory/40" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search name, email, phone, role..."
-                className="w-full h-9 pl-9 pr-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper"
-              />
-              {searchTerm && (
-                <button
-                  type="button"
-                  onClick={() => setSearchTerm("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ivory/40 hover:text-ivory"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      <AdminFilterBar
+        statusOptions={["ALL", ...CAREER_STATUSES]}
+        statusFilter={statusFilter}
+        onStatusChange={(st) => {
+          setStatusFilter(st);
+          setCurrentPage(1);
+        }}
+        searchValue={searchTerm}
+        onSearchChange={(val) => {
+          setSearchTerm(val);
+          setCurrentPage(1);
+        }}
+        searchPlaceholder="Search name, email, phone, role..."
+      >
+        <button
+          type="button"
+          onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
+          className="h-9 px-3 border border-[var(--admin-border)] hover:border-[var(--admin-accent)] rounded-md text-xs text-[var(--admin-text-primary)] bg-[var(--admin-surface)] flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs font-medium"
+          title="Toggle date sorting"
+        >
+          <ArrowUpDown className="w-3.5 h-3.5 text-[var(--admin-accent)]" />
+          <span>{sortOrder === "desc" ? "Newest First" : "Oldest First"}</span>
+        </button>
+      </AdminFilterBar>
 
       {/* APPLICANT TABLE */}
       {loading ? (
-        <div className="text-ivory/50 text-center py-20 tracking-[0.3em] uppercase text-xs flex flex-col items-center justify-center gap-3">
-          <RefreshCw className="w-5 h-5 text-copper animate-spin" />
+        <div className="text-[var(--admin-text-muted)] text-center py-20 tracking-[0.3em] uppercase text-xs flex flex-col items-center justify-center gap-3">
+          <RefreshCw className="w-5 h-5 text-[var(--admin-accent)] animate-spin" />
           <span>Loading Career Applications…</span>
         </div>
       ) : error ? (
-        <div className="text-center py-16 border border-copper/20 bg-charcoal-2/30 rounded-[8px] text-red-400 text-sm p-6">
-          <AlertTriangle className="w-8 h-8 text-red-400 mx-auto mb-2" />
-          <p className="font-medium">{error}</p>
+        <div className="text-center py-16 border border-rose-500/30 bg-rose-500/10 rounded-lg text-rose-500 text-sm p-6">
+          <p className="font-semibold">{error}</p>
           <button
             onClick={load}
-            className="mt-4 px-4 py-1.5 bg-copper text-white text-xs uppercase tracking-wider rounded-[4px]"
+            className="btn-admin-primary mt-4 inline-flex"
           >
             Retry
           </button>
         </div>
       ) : sortedApps.length === 0 ? (
-        <div className="text-center py-20 border border-copper/15 bg-charcoal-2/20 text-ivory/60 italic rounded-[6px] space-y-2">
-          <Users className="w-8 h-8 text-copper/40 mx-auto" />
-          <p className="text-sm font-normal">
-            {statusFilter === "ALL" && !searchTerm
-              ? "No career applications received in this collection yet."
-              : "No applications matched your search or filter criteria."}
-          </p>
-          {(statusFilter !== "ALL" || searchTerm) && (
-            <button
-              onClick={() => {
-                setStatusFilter("ALL");
-                setSearchTerm("");
-              }}
-              className="text-xs text-copper underline underline-offset-4 hover:text-copper-light"
-            >
-              Clear filters
-            </button>
-          )}
-        </div>
+        <AdminEmptyState
+          icon={Users}
+          title={statusFilter === "ALL" && !searchTerm ? "No career applications recorded yet." : "No applications matched your search."}
+          message="Candidate resumes and general applications submitted through the careers section will appear here."
+          onClearFilters={
+            statusFilter !== "ALL" || searchTerm
+              ? () => {
+                  setStatusFilter("ALL");
+                  setSearchTerm("");
+                }
+              : null
+          }
+        />
       ) : (
-        <div className="border border-copper/15 rounded-[6px] overflow-hidden bg-charcoal-2/20 shadow-lg">
+        <div className="admin-table-wrap">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-charcoal text-ivory/60 text-[10px] tracking-[0.22em] uppercase border-b border-copper/15">
+              <thead className="admin-thead">
                 <tr>
-                  <th className="text-left p-4 font-normal">Applicant Name</th>
-                  <th className="text-left p-4 font-normal">Job Title Applied For</th>
-                  <th className="text-left p-4 font-normal hidden md:table-cell">Contact</th>
-                  <th className="text-left p-4 font-normal hidden lg:table-cell">Experience / Location</th>
-                  <th className="text-left p-4 font-normal hidden sm:table-cell">Applied Date</th>
-                  <th className="text-left p-4 font-normal">Status</th>
-                  <th className="text-center p-4 font-normal">CV (PDF)</th>
-                  <th className="text-right p-4 font-normal">Actions</th>
+                  <th className="text-left p-4 font-semibold">Applicant Name</th>
+                  <th className="text-left p-4 font-semibold">Job Title Applied For</th>
+                  <th className="text-left p-4 font-semibold hidden md:table-cell">Contact</th>
+                  <th className="text-left p-4 font-semibold hidden lg:table-cell">Experience / Location</th>
+                  <th className="text-left p-4 font-semibold hidden sm:table-cell">Applied Date</th>
+                  <th className="text-left p-4 font-semibold">Status</th>
+                  <th className="text-center p-4 font-semibold">CV (PDF)</th>
+                  <th className="text-right p-4 font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -591,34 +553,34 @@ export default function AdminCareerApplicationsPage() {
                   <tr
                     key={app.id}
                     onClick={() => openDetails(app)}
-                    className="border-t border-copper/10 hover:bg-charcoal/50 transition-colors cursor-pointer group"
+                    className="admin-tr cursor-pointer group"
                   >
                     {/* Name */}
                     <td className="p-4">
-                      <div className="font-medium text-ivory text-sm group-hover:text-copper transition-colors">
+                      <div className="font-semibold text-[var(--admin-text-primary)] text-sm group-hover:text-[var(--admin-accent)] transition-colors">
                         {app.name}
                       </div>
-                      <div className="text-[10px] text-ivory/40 font-mono mt-0.5">
+                      <div className="text-[10px] text-[var(--admin-text-muted)] font-mono mt-0.5">
                         ID: {app.id.slice(-6)}
                       </div>
                     </td>
 
                     {/* Job Title & Department */}
                     <td className="p-4">
-                      <div className="text-xs text-ivory/90 font-medium truncate max-w-[180px]">
+                      <div className="text-xs font-semibold text-[var(--admin-text-primary)] truncate max-w-[180px]">
                         {app.jobTitle || "General Application"}
                       </div>
-                      <div className="text-[10px] text-copper/80 tracking-wider uppercase mt-0.5">
+                      <div className="text-[10px] text-[var(--admin-accent)] tracking-wider uppercase mt-0.5 font-medium">
                         {app.department || "General"}
                       </div>
                     </td>
 
                     {/* Contact */}
-                    <td className="p-4 text-xs text-ivory/70 hidden md:table-cell">
+                    <td className="p-4 text-xs text-[var(--admin-text-secondary)] hidden md:table-cell">
                       <a
                         href={`mailto:${app.email}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="hover:text-copper block truncate max-w-[160px]"
+                        className="hover:text-[var(--admin-accent)] block truncate max-w-[160px]"
                         title={app.email}
                       >
                         {app.email}
@@ -626,20 +588,20 @@ export default function AdminCareerApplicationsPage() {
                       <a
                         href={`tel:${app.phone}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="text-ivory/45 text-[11px] font-mono hover:text-copper block mt-0.5"
+                        className="text-[var(--admin-text-muted)] text-[11px] font-mono hover:text-[var(--admin-accent)] block mt-0.5"
                       >
                         {app.phone}
                       </a>
                     </td>
 
                     {/* Experience & Location */}
-                    <td className="p-4 text-xs text-ivory/70 hidden lg:table-cell">
-                      <div className="font-medium text-ivory/90">{app.experience || "—"}</div>
-                      <div className="text-[11px] text-ivory/45">{app.location || "Kolkata"}</div>
+                    <td className="p-4 text-xs text-[var(--admin-text-secondary)] hidden lg:table-cell">
+                      <div className="font-semibold text-[var(--admin-text-primary)]">{app.experience || "—"}</div>
+                      <div className="text-[11px] text-[var(--admin-text-muted)]">{app.location || "Kolkata"}</div>
                     </td>
 
                     {/* Application Date */}
-                    <td className="p-4 text-xs text-ivory/60 hidden sm:table-cell font-mono whitespace-nowrap">
+                    <td className="p-4 text-xs text-[var(--admin-text-secondary)] hidden sm:table-cell font-mono whitespace-nowrap">
                       {app.createdAt || app.created_at
                         ? new Date(app.createdAt || app.created_at).toLocaleDateString("en-IN", {
                             day: "2-digit",
@@ -651,13 +613,7 @@ export default function AdminCareerApplicationsPage() {
 
                     {/* Status Badge */}
                     <td className="p-4 whitespace-nowrap">
-                      <span
-                        className={`inline-block text-[10px] tracking-[0.15em] uppercase px-2.5 py-1 rounded-[3px] border font-medium ${
-                          STATUS_BADGE_CLASSES[app.status] || "border-copper/30 text-copper bg-copper/5"
-                        }`}
-                      >
-                        {app.status || "New"}
-                      </span>
+                      <StatusBadge status={app.status || "New"} />
                     </td>
 
                     {/* CV Download Action */}
@@ -667,7 +623,7 @@ export default function AdminCareerApplicationsPage() {
                           type="button"
                           onClick={() => downloadResume(app)}
                           disabled={downloadingId === app.id}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-copper hover:text-white bg-copper/15 hover:bg-copper rounded-[3px] border border-copper/35 transition-all shadow-sm disabled:opacity-50"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--admin-accent)] bg-[var(--admin-surface-2)] hover:bg-[var(--admin-surface-hover)] rounded-md border border-[var(--admin-border)] hover:border-[var(--admin-accent)] transition-all shadow-2xs disabled:opacity-50 cursor-pointer"
                           title={`Download ${app.name}'s CV as PDF`}
                         >
                           {downloadingId === app.id ? (
@@ -675,11 +631,11 @@ export default function AdminCareerApplicationsPage() {
                           ) : (
                             <Download className="w-3.5 h-3.5" />
                           )}
-                          <span>Download CV</span>
+                          <span>CV</span>
                         </button>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-ivory/30 text-[11px] italic">
-                          <FileX className="w-3.5 h-3.5" />
+                        <span className="inline-flex items-center gap-1 text-[var(--admin-text-muted)] text-[11px] italic">
+                          <FileX className="w-3.5 h-3.5 opacity-50" />
                           <span>No CV</span>
                         </span>
                       )}
@@ -691,7 +647,7 @@ export default function AdminCareerApplicationsPage() {
                         <button
                           type="button"
                           onClick={() => openDetails(app)}
-                          className="p-1.5 text-ivory/60 hover:text-copper hover:bg-copper/10 rounded transition-colors"
+                          className="p-1.5 text-[var(--admin-text-secondary)] hover:text-[var(--admin-accent)] hover:bg-[var(--admin-surface-2)] rounded-md transition-colors cursor-pointer"
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />
@@ -705,7 +661,7 @@ export default function AdminCareerApplicationsPage() {
                               jobTitle: app.jobTitle || "Career Applicant",
                             })
                           }
-                          className="p-1.5 text-ivory/40 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                          className="p-1.5 text-[var(--admin-error)] hover:bg-[var(--admin-error-bg)] rounded-md transition-colors cursor-pointer"
                           title="Permanently Delete Applicant"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -718,45 +674,14 @@ export default function AdminCareerApplicationsPage() {
             </table>
           </div>
 
-          {/* TABLE PAGINATION BAR */}
-          {sortedApps.length > pageSize && (
-            <div className="px-4 py-3 bg-charcoal border-t border-copper/15 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-ivory/60">
-              <div>
-                Showing{" "}
-                <strong className="text-ivory">
-                  {(currentPage - 1) * pageSize + 1}
-                </strong>{" "}
-                to{" "}
-                <strong className="text-ivory">
-                  {Math.min(currentPage * pageSize, sortedApps.length)}
-                </strong>{" "}
-                of <strong className="text-copper">{sortedApps.length}</strong> applicants
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="px-2.5 py-1 border border-copper/20 hover:border-copper rounded-[3px] disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5 inline mr-1" />
-                  Prev
-                </button>
-                <div className="font-mono text-xs px-2">
-                  Page <strong className="text-ivory">{currentPage}</strong> of {totalPages}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-2.5 py-1 border border-copper/20 hover:border-copper rounded-[3px] disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                >
-                  Next
-                  <ChevronRight className="w-3.5 h-3.5 inline ml-1" />
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Table Pagination */}
+          <AdminPagination
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+            totalItems={sortedApps.length}
+            pageSize={pageSize}
+            itemLabel="career applicants"
+          />
         </div>
       )}
 
@@ -767,7 +692,7 @@ export default function AdminCareerApplicationsPage() {
         onClose={() => setSelectedApp(null)}
         onDownloadCv={downloadResume}
         isDownloading={downloadingId === selectedApp?.id}
-        onUpdateStatus={(st) => updateStatus(selectedApp.id, st)}
+        onUpdateStatus={(st, reason) => updateStatus(selectedApp.id, st)}
         isUpdatingStatus={updatingStatus}
         availableStatuses={CAREER_STATUSES}
         onSaveNotes={saveNotes}

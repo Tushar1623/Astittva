@@ -105,11 +105,11 @@ export default function AboutPage({ scrollToContact = false }) {
         {/* Header Intro */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
           <div className="overline mb-4">{isContactRoute ? "Contact Astittva" : "About Astittva"}</div>
-          <h1 className="font-display font-light text-3xl sm:text-5xl lg:text-6xl text-ivory tracking-tight max-w-3xl leading-[1.1]">
+          <h1 className="font-serif-display font-medium text-3xl sm:text-5xl lg:text-6xl text-[#1C1C1C] tracking-tight max-w-3xl leading-[1.1]">
             {isContactRoute ? (
               <>
                 <span className="block">Contact Astittva Marketing</span>
-                <span className="block text-2xl sm:text-3xl text-ivory/80 font-normal mt-2">
+                <span className="block text-2xl sm:text-3xl text-[#5F5F5F] font-normal mt-2">
                   Connect with Kolkata&apos;s Luxury Real Estate Consultants
                 </span>
               </>
@@ -133,7 +133,7 @@ export default function AboutPage({ scrollToContact = false }) {
               </>
             )}
           </h1>
-          <p className="mt-6 text-ivory/70 font-light text-lg sm:text-xl max-w-3xl leading-relaxed">
+          <p className="mt-6 text-[#4A4A4A] font-light text-lg sm:text-xl max-w-3xl leading-relaxed">
             {isContactRoute
               ? "Schedule a private consultation with our Kolkata property advisory team. Whether inquiring about luxury residences in New Town, Rajarhat, or EM Bypass, we are here to guide your real estate journey."
               : "Astittva Marketing is Kolkata's premier luxury real estate advisory firm. We curate verified residential and investment opportunities across New Town, Rajarhat, EM Bypass, and South Kolkata with uncompromising diligence."}
@@ -144,20 +144,20 @@ export default function AboutPage({ scrollToContact = false }) {
         {/* Mission & Vision */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 mt-20">
           <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}>
-            <h2 className="font-display font-light text-2xl sm:text-3xl text-ivory mb-6">Our Mission</h2>
-            <p className="text-ivory/70 leading-relaxed font-light text-lg">
+            <h2 className="font-serif-display font-medium text-2xl sm:text-3xl text-[#1C1C1C] mb-6">Our Mission</h2>
+            <p className="text-[#4A4A4A] leading-relaxed font-light text-lg">
               At Astittva, our mission is to help buyers and investors make confident real estate decisions through verified properties, expert consultation, and trusted guidance.
             </p>
-            <p className="text-ivory/65 leading-relaxed font-light mt-4">
+            <p className="text-[#5F5F5F] leading-relaxed font-light mt-4">
               We believe a property purchase is far more than a transaction — it's the foundation of a family's future or a portfolio's resilience. Every relationship we build starts with that gravity in mind.
             </p>
           </motion.div>
           <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }}>
-            <h2 className="font-display font-light text-2xl sm:text-3xl text-ivory mb-6">Our Vision</h2>
-            <p className="text-ivory/70 leading-relaxed font-light text-lg">
+            <h2 className="font-serif-display font-medium text-2xl sm:text-3xl text-[#1C1C1C] mb-6">Our Vision</h2>
+            <p className="text-[#4A4A4A] leading-relaxed font-light text-lg">
               We are building a growing real estate network across Greater Kolkata, West Bengal, India, and global investment destinations — without ever diluting the personal trust that defines us.
             </p>
-            <p className="text-ivory/65 leading-relaxed font-light mt-4">
+            <p className="text-[#5F5F5F] leading-relaxed font-light mt-4">
               From a single advisory office in New Town to a transnational platform — our roadmap is deliberate, our standards uncompromising.
             </p>
           </motion.div>
@@ -167,7 +167,7 @@ export default function AboutPage({ scrollToContact = false }) {
         <section className="mt-20 sm:mt-32 relative">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.8 }} className="text-center max-w-2xl mx-auto mb-16">
             <div className="overline mb-4">Our Values</div>
-            <h2 className="font-display font-light text-3xl sm:text-4xl text-ivory">The four pillars of how we work.</h2>
+            <h2 className="font-serif-display font-medium text-3xl sm:text-4xl text-[#1C1C1C]">The four pillars of how we work.</h2>
           </motion.div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {[

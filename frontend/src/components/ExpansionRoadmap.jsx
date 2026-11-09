@@ -55,7 +55,7 @@ export default function ExpansionRoadmap({
                 <step.icon className="w-7 h-7 text-copper" strokeWidth={1} />
               </div>
               <div className="text-copper text-[10px] tracking-[0.4em] uppercase mb-3">{step.phase}</div>
-              <div className="font-serif-display text-ivory text-lg max-w-[180px]">{step.area}</div>
+              <div className="font-serif-display text-[#1C1C1C] text-lg max-w-[180px]">{step.area}</div>
             </motion.div>
           ))}
         </div>

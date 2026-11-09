@@ -2,7 +2,7 @@ import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 /**
- * Standardized Admin Table Pagination Bar
+ * Standardized Admin Table Pagination Bar (Theme Adaptive)
  */
 export default function AdminPagination({
   totalItems,
@@ -18,33 +18,40 @@ export default function AdminPagination({
   const endItem = Math.min(currentPage * pageSize, totalItems);
 
   return (
-    <div className="px-4 py-3 bg-charcoal border-t border-copper/15 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-ivory/60">
+    <div
+      className="px-4 py-3 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-xs transition-colors"
+      style={{
+        backgroundColor: "var(--admin-surface-2)",
+        borderColor: "var(--admin-border)",
+        color: "var(--admin-text-secondary)",
+      }}
+    >
       <div>
-        Showing <strong className="text-ivory">{startItem}</strong> to{" "}
-        <strong className="text-ivory">{endItem}</strong> of{" "}
-        <strong className="text-copper">{totalItems}</strong> {itemLabel}
+        Showing <strong className="text-[var(--admin-text-primary)] font-semibold">{startItem}</strong> to{" "}
+        <strong className="text-[var(--admin-text-primary)] font-semibold">{endItem}</strong> of{" "}
+        <strong className="text-[var(--admin-accent)] font-semibold">{totalItems}</strong> {itemLabel}
       </div>
       <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
-          className="px-2.5 py-1 border border-copper/20 hover:border-copper rounded-[3px] disabled:opacity-30 disabled:pointer-events-none transition-colors text-ivory/80 hover:text-white"
+          className="px-2.5 py-1 rounded-md border border-[var(--admin-border)] hover:border-[var(--admin-accent)] disabled:opacity-40 disabled:pointer-events-none transition-colors text-[var(--admin-text-primary)] bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-hover)] cursor-pointer shadow-2xs font-medium"
         >
-          <ChevronLeft className="w-3.5 h-3.5 inline mr-1" />
+          <ChevronLeft className="w-3.5 h-3.5 inline mr-1 text-[var(--admin-accent)]" />
           Prev
         </button>
-        <div className="font-mono text-xs px-2">
-          Page <strong className="text-ivory">{currentPage}</strong> of {totalPages}
+        <div className="font-mono text-xs px-2 text-[var(--admin-text-secondary)]">
+          Page <strong className="text-[var(--admin-text-primary)] font-semibold">{currentPage}</strong> of {totalPages}
         </div>
         <button
           type="button"
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
-          className="px-2.5 py-1 border border-copper/20 hover:border-copper rounded-[3px] disabled:opacity-30 disabled:pointer-events-none transition-colors text-ivory/80 hover:text-white"
+          className="px-2.5 py-1 rounded-md border border-[var(--admin-border)] hover:border-[var(--admin-accent)] disabled:opacity-40 disabled:pointer-events-none transition-colors text-[var(--admin-text-primary)] bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-hover)] cursor-pointer shadow-2xs font-medium"
         >
           Next
-          <ChevronRight className="w-3.5 h-3.5 inline ml-1" />
+          <ChevronRight className="w-3.5 h-3.5 inline ml-1 text-[var(--admin-accent)]" />
         </button>
       </div>
     </div>

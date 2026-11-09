@@ -57,7 +57,7 @@ const GLOBAL_JSON_LD = [
 
 export default function PublicLayout() {
   return (
-    <div className="relative bg-charcoal text-ivory min-h-screen overflow-x-hidden">
+    <div className="relative bg-[#FAF8F5] text-[#1C1C1C] min-h-screen overflow-x-hidden">
       <Helmet prioritizeSeoTags>
         <script type="application/ld+json">{JSON.stringify(GLOBAL_JSON_LD)}</script>
       </Helmet>

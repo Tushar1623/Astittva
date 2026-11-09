@@ -133,7 +133,7 @@ export default function SafeImage({
     return (
       <div
         data-testid={dataTestId || "safe-image-placeholder"}
-        className={`w-full h-full flex flex-col items-center justify-center bg-charcoal-2/80 text-copper/60 p-4 border border-copper/15 select-none ${className}`}
+        className={`w-full h-full flex flex-col items-center justify-center bg-[#F5F1EC] text-[#B87333]/60 p-4 border border-[#E8DED2] select-none ${className}`}
         style={combinedStyle}
         onClick={onClick}
         role="img"
@@ -144,7 +144,7 @@ export default function SafeImage({
         ) : (
           <ImageIcon className="w-8 h-8 mb-2 opacity-60 text-copper" />
         )}
-        <span className="text-[10px] tracking-[0.25em] uppercase font-light text-ivory/50 text-center">
+        <span className="text-[10px] tracking-[0.25em] uppercase font-light text-[#5F5F5F] text-center">
           Astittva Luxury Living
         </span>
       </div>

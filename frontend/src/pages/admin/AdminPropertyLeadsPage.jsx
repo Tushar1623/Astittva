@@ -8,15 +8,11 @@ import {
   Eye,
   Phone,
   Mail,
-  MapPin,
   Calendar,
-  UserCheck,
-  Search,
-  Filter,
   X,
-  ArrowLeft,
   RefreshCw,
   Inbox,
+  UserCheck,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import AdminHeader from "@/components/admin/AdminHeader";
@@ -53,7 +49,7 @@ export default function AdminPropertyLeadsPage() {
   const [savingDetails, setSavingDetails] = useState(false);
 
   // Delete Modal State
-  const [deleteTarget, setDeleteTarget] = useState(null); // { id, name, propertyName }
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const load = () => {
@@ -138,11 +134,9 @@ export default function AdminPropertyLeadsPage() {
   // Status Counts
   const statusCounts = useMemo(() => {
     const counts = {};
-    STATUSES.forEach((s) => (counts[s] = 0));
     leads.forEach((l) => {
-      const st = l.status || "New";
-      const match = STATUSES.find((s) => s.toLowerCase() === st.toLowerCase());
-      if (match) counts[match]++;
+      const s = l.status || "New";
+      counts[s] = (counts[s] || 0) + 1;
     });
     return counts;
   }, [leads]);
@@ -152,7 +146,8 @@ export default function AdminPropertyLeadsPage() {
     return leads.filter((l) => {
       const matchesStatus =
         statusFilter === "ALL" ||
-        (l.status && l.status.toLowerCase() === statusFilter.toLowerCase());
+        (l.status || "New").toLowerCase() === statusFilter.toLowerCase();
+
       const q = searchTerm.trim().toLowerCase();
       const matchesSearch =
         !q ||
@@ -160,13 +155,13 @@ export default function AdminPropertyLeadsPage() {
         (l.phone && l.phone.toLowerCase().includes(q)) ||
         (l.email && l.email.toLowerCase().includes(q)) ||
         (l.propertyName && l.propertyName.toLowerCase().includes(q)) ||
-        (l.location && l.location.toLowerCase().includes(q)) ||
-        (l.leadType && l.leadType.toLowerCase().includes(q));
+        (l.location && l.location.toLowerCase().includes(q));
+
       return matchesStatus && matchesSearch;
     });
   }, [leads, statusFilter, searchTerm]);
 
-  // Paginated Leads
+  // Paginated
   const paginatedLeads = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return filteredLeads.slice(start, start + pageSize);
@@ -174,18 +169,18 @@ export default function AdminPropertyLeadsPage() {
 
   return (
     <div data-testid="admin-property-leads-page" className="space-y-6">
-      {/* Unified Header */}
+      {/* Header */}
       <AdminHeader
-        category="LEAD MANAGEMENT"
-        subcategory="PORTFOLIO INQUIRIES"
-        title="Property Leads"
-        subtitle="Inquiries from luxury development listings, site inspection bookings, and private consultation requests."
+        category="Lead Management"
+        subcategory="Direct Consultations"
+        title="Property Inquiries"
+        subtitle="Manage client consultations, site-visit schedules, developer referrals, and sales assignments."
         onRefresh={load}
         refreshing={loading}
         actions={
           <Link
             to="/admin/leads/resale"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-copper/30 hover:border-copper text-xs font-semibold uppercase tracking-[0.12em] text-ivory/80 hover:text-white rounded-[4px] transition-colors"
+            className="btn-admin-secondary text-xs"
           >
             <span>Resale Leads</span>
             <span>→</span>
@@ -213,8 +208,9 @@ export default function AdminPropertyLeadsPage() {
 
       {/* Main Table */}
       {loading ? (
-        <div className="text-ivory/50 text-center py-20 tracking-[0.3em] uppercase text-xs">
-          Loading Property Leads…
+        <div className="text-[var(--admin-text-muted)] text-center py-20 tracking-[0.25em] uppercase text-xs flex flex-col items-center justify-center gap-3">
+          <RefreshCw className="w-5 h-5 text-[var(--admin-accent)] animate-spin" />
+          <span>Loading Property Leads…</span>
         </div>
       ) : filteredLeads.length === 0 ? (
         <AdminEmptyState
@@ -231,18 +227,18 @@ export default function AdminPropertyLeadsPage() {
           }
         />
       ) : (
-        <div className="border border-copper/15 rounded-[6px] overflow-hidden bg-charcoal-2/20 shadow-lg">
+        <div className="admin-table-wrap">
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[700px]">
-              <thead className="bg-charcoal text-ivory/60 text-[10px] tracking-[0.22em] uppercase border-b border-copper/15">
+              <thead className="admin-thead">
                 <tr>
-                  <th className="text-left p-4 font-normal">Client Name</th>
-                  <th className="text-left p-4 font-normal">Property Interest</th>
-                  <th className="text-left p-4 font-normal hidden md:table-cell">Contact</th>
-                  <th className="text-left p-4 font-normal hidden lg:table-cell">Received Date</th>
-                  <th className="text-left p-4 font-normal">Status</th>
-                  <th className="text-left p-4 font-normal hidden sm:table-cell">Assigned To</th>
-                  <th className="text-right p-4 font-normal">Actions</th>
+                  <th className="text-left p-4 font-semibold">Client Name</th>
+                  <th className="text-left p-4 font-semibold">Property Interest</th>
+                  <th className="text-left p-4 font-semibold hidden md:table-cell">Contact</th>
+                  <th className="text-left p-4 font-semibold hidden lg:table-cell">Received Date</th>
+                  <th className="text-left p-4 font-semibold">Status</th>
+                  <th className="text-left p-4 font-semibold hidden sm:table-cell">Assigned To</th>
+                  <th className="text-right p-4 font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -250,40 +246,40 @@ export default function AdminPropertyLeadsPage() {
                   <tr
                     key={l.id}
                     onClick={() => openDetails(l)}
-                    className="border-t border-copper/10 hover:bg-charcoal/50 transition-colors cursor-pointer group"
+                    className="admin-tr transition-colors cursor-pointer group"
                   >
                     {/* Client Name */}
                     <td className="p-4">
-                      <div className="font-medium text-ivory text-sm group-hover:text-copper transition-colors">
+                      <div className="font-semibold text-[var(--admin-text-primary)] text-sm group-hover:text-[var(--admin-accent)] transition-colors">
                         {l.name}
                       </div>
-                      <div className="text-[10px] text-ivory/40 font-mono mt-0.5">
+                      <div className="text-[10px] text-[var(--admin-text-muted)] font-mono mt-0.5">
                         {l.source || "Website Enquiry"}
                       </div>
                     </td>
 
                     {/* Property Interest */}
                     <td className="p-4">
-                      <div className="text-xs text-ivory font-medium truncate max-w-[200px]">
+                      <div className="text-xs font-semibold text-[var(--admin-text-primary)] truncate max-w-[200px]">
                         {l.propertyName || "General Inquiry"}
                       </div>
-                      <div className="text-[11px] text-ivory/45 truncate max-w-[180px]">
+                      <div className="text-[11px] text-[var(--admin-text-muted)] truncate max-w-[180px]">
                         {l.location || "Kolkata"}
                       </div>
                     </td>
 
                     {/* Contact */}
-                    <td className="p-4 text-xs text-ivory/70 hidden md:table-cell" onClick={(e) => e.stopPropagation()}>
-                      <a href={`tel:${l.phone}`} className="hover:text-copper block font-mono text-[11px]">
+                    <td className="p-4 text-xs text-[var(--admin-text-secondary)] hidden md:table-cell" onClick={(e) => e.stopPropagation()}>
+                      <a href={`tel:${l.phone}`} className="hover:text-[var(--admin-accent)] block font-mono text-[11px] font-semibold">
                         {l.phone || "—"}
                       </a>
-                      <a href={`mailto:${l.email}`} className="text-ivory/45 hover:text-copper block truncate max-w-[160px] text-[11px] mt-0.5">
+                      <a href={`mailto:${l.email}`} className="text-[var(--admin-text-muted)] hover:text-[var(--admin-accent)] block truncate max-w-[160px] text-[11px] mt-0.5">
                         {l.email || "—"}
                       </a>
                     </td>
 
                     {/* Received Date */}
-                    <td className="p-4 text-xs text-ivory/60 hidden lg:table-cell font-mono whitespace-nowrap">
+                    <td className="p-4 text-xs text-[var(--admin-text-secondary)] hidden lg:table-cell font-mono whitespace-nowrap">
                       {l.createdAt || l.created_at
                         ? new Date(l.createdAt || l.created_at).toLocaleDateString("en-IN", {
                             day: "2-digit",
@@ -299,11 +295,11 @@ export default function AdminPropertyLeadsPage() {
                     </td>
 
                     {/* Assigned To */}
-                    <td className="p-4 text-xs text-ivory/70 hidden sm:table-cell whitespace-nowrap">
+                    <td className="p-4 text-xs text-[var(--admin-text-secondary)] hidden sm:table-cell whitespace-nowrap">
                       {l.assignedTo && l.assignedTo !== "Unassigned" ? (
-                        <span className="text-ivory font-medium">{l.assignedTo}</span>
+                        <span className="text-[var(--admin-text-primary)] font-semibold">{l.assignedTo}</span>
                       ) : (
-                        <span className="text-ivory/40 italic">Unassigned</span>
+                        <span className="text-[var(--admin-text-muted)] italic">Unassigned</span>
                       )}
                     </td>
 
@@ -314,7 +310,7 @@ export default function AdminPropertyLeadsPage() {
                           type="button"
                           onClick={() => openDetails(l)}
                           title="View Lead Profile"
-                          className="p-1.5 text-ivory/60 hover:text-copper hover:bg-copper/10 rounded transition-colors"
+                          className="p-1.5 text-[var(--admin-text-secondary)] hover:text-[var(--admin-accent)] hover:bg-[var(--admin-surface-2)] rounded-md transition-colors cursor-pointer"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
@@ -329,7 +325,7 @@ export default function AdminPropertyLeadsPage() {
                               })
                             }
                             title="Delete Lead"
-                            className="p-1.5 text-ivory/40 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                            className="p-1.5 text-[var(--admin-error)] hover:bg-[var(--admin-error-bg)] rounded-md transition-colors cursor-pointer"
                             data-testid={`delete-lead-${l.id}`}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -343,33 +339,46 @@ export default function AdminPropertyLeadsPage() {
             </table>
           </div>
 
-          {/* Unified Pagination */}
+          {/* Pagination */}
           <AdminPagination
             totalItems={filteredLeads.length}
             currentPage={currentPage}
             pageSize={pageSize}
             onPageChange={setCurrentPage}
-            itemLabel="leads"
+            itemLabel="inquiries"
           />
         </div>
       )}
 
-      {/* LEAD DETAILS SLIDE-OVER SIDE PANEL / MODAL */}
+      {/* LEAD DETAILS SLIDE-OVER MODAL */}
       {selectedLead && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#FAF8F5] border border-copper/30 rounded-[10px] max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl p-6 sm:p-8 text-[#1C1C1C]">
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-xs animate-fadeIn"
+        >
+          <div
+            className="rounded-xl border max-w-2xl w-full max-h-[92vh] overflow-y-auto shadow-2xl p-6 sm:p-8 space-y-6 transition-colors"
+            style={{
+              backgroundColor: "var(--admin-surface)",
+              borderColor: "var(--admin-border)",
+              color: "var(--admin-text-primary)",
+            }}
+          >
             {/* Header */}
-            <div className="flex items-start justify-between border-b border-copper/15 pb-5 mb-6">
+            <div className="flex items-start justify-between border-b pb-5" style={{ borderColor: "var(--admin-border)" }}>
               <div>
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-copper">
+                  <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[var(--admin-accent)]">
                     LEAD DOSSIER
                   </span>
-                  <span className="text-[#1C1C1C]/30">•</span>
+                  <span className="opacity-40">•</span>
                   <StatusBadge status={selectedLead.status || "New"} />
                 </div>
-                <h2 className="font-display text-2xl text-[#1C1C1C] mt-1 font-medium">{selectedLead.name}</h2>
-                <div className="flex items-center gap-3 text-xs text-[#1C1C1C]/60 mt-1">
+                <h2 className="font-serif-display text-2xl font-medium text-[var(--admin-text-primary)] mt-1">
+                  {selectedLead.name}
+                </h2>
+                <div className="flex items-center gap-3 text-xs text-[var(--admin-text-secondary)] mt-1">
                   <span>
                     Received:{" "}
                     {new Date(selectedLead.createdAt || selectedLead.created_at).toLocaleString("en-IN")}
@@ -381,7 +390,7 @@ export default function AdminPropertyLeadsPage() {
               <button
                 type="button"
                 onClick={() => setSelectedLead(null)}
-                className="w-8 h-8 rounded-full border border-copper/20 hover:border-copper flex items-center justify-center text-[#1C1C1C]/60 hover:text-copper bg-white hover:bg-[#FAF8F5] transition-colors shrink-0 cursor-pointer"
+                className="w-8 h-8 rounded-full border border-[var(--admin-border)] hover:border-[var(--admin-accent)] flex items-center justify-center text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] bg-[var(--admin-surface-2)] transition-colors shrink-0 cursor-pointer"
                 title="Close"
               >
                 <X className="w-4 h-4" />
@@ -391,61 +400,73 @@ export default function AdminPropertyLeadsPage() {
             {/* Grid Sections */}
             <div className="space-y-6">
               {/* Property & Lead Info */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 rounded-[6px] bg-white border border-copper/20 shadow-sm text-xs">
+              <div
+                className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 rounded-lg border shadow-2xs text-xs"
+                style={{
+                  backgroundColor: "var(--admin-surface-2)",
+                  borderColor: "var(--admin-border-subtle)",
+                }}
+              >
                 <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
+                  <span className="text-[10px] tracking-[0.16em] uppercase text-[var(--admin-accent)] block mb-1 font-semibold">
                     Property of Interest
                   </span>
-                  <p className="text-[#1C1C1C] font-semibold text-sm">
+                  <p className="font-semibold text-sm text-[var(--admin-text-primary)]">
                     {selectedLead.propertyName || "General Inquiry"}
                   </p>
                 </div>
                 <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
+                  <span className="text-[10px] tracking-[0.16em] uppercase text-[var(--admin-accent)] block mb-1 font-semibold">
                     Target Locality / Location
                   </span>
-                  <p className="text-[#1C1C1C] font-medium">
+                  <p className="font-medium text-[var(--admin-text-primary)]">
                     {selectedLead.location || "Kolkata, West Bengal"}
                   </p>
                 </div>
                 <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
+                  <span className="text-[10px] tracking-[0.16em] uppercase text-[var(--admin-accent)] block mb-1 font-semibold">
                     Inquiry Type
                   </span>
-                  <p className="text-copper font-semibold">
+                  <p className="text-[var(--admin-accent)] font-semibold">
                     {selectedLead.leadType || "Property Enquiry"}
                   </p>
                 </div>
                 <div>
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper block mb-1">
+                  <span className="text-[10px] tracking-[0.16em] uppercase text-[var(--admin-accent)] block mb-1 font-semibold">
                     Property ID Reference
                   </span>
-                  <p className="text-[#1C1C1C]/60 font-mono">
+                  <p className="text-[var(--admin-text-muted)] font-mono">
                     {selectedLead.propertyId || "—"}
                   </p>
                 </div>
               </div>
 
               {/* Contact Information */}
-              <div className="p-5 rounded-[6px] bg-white border border-copper/20 shadow-sm space-y-3">
-                <span className="text-[10px] tracking-[0.2em] uppercase text-copper font-semibold block">
+              <div
+                className="p-5 rounded-lg border shadow-2xs space-y-3"
+                style={{
+                  backgroundColor: "var(--admin-surface-2)",
+                  borderColor: "var(--admin-border-subtle)",
+                }}
+              >
+                <span className="text-[10px] tracking-[0.16em] uppercase text-[var(--admin-accent)] font-semibold block">
                   Contact Information
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div className="flex items-center gap-2.5">
-                    <Phone className="w-4 h-4 text-copper shrink-0" />
+                    <Phone className="w-4 h-4 text-[var(--admin-accent)] shrink-0" />
                     <a
                       href={`tel:${selectedLead.phone}`}
-                      className="text-[#1C1C1C] hover:text-copper font-mono font-medium"
+                      className="hover:text-[var(--admin-accent)] font-mono font-semibold text-[var(--admin-text-primary)]"
                     >
                       {selectedLead.phone || "No phone provided"}
                     </a>
                   </div>
                   <div className="flex items-center gap-2.5">
-                    <Mail className="w-4 h-4 text-copper shrink-0" />
+                    <Mail className="w-4 h-4 text-[var(--admin-accent)] shrink-0" />
                     <a
                       href={`mailto:${selectedLead.email}`}
-                      className="text-[#1C1C1C] hover:text-copper truncate font-medium"
+                      className="hover:text-[var(--admin-accent)] font-medium text-[var(--admin-text-primary)] truncate"
                     >
                       {selectedLead.email || "No email provided"}
                     </a>
@@ -455,30 +476,55 @@ export default function AdminPropertyLeadsPage() {
 
               {/* Client Message */}
               {selectedLead.message && (
-                <div className="p-5 rounded-[6px] bg-white border border-copper/20 shadow-sm text-xs">
-                  <span className="text-[10px] tracking-[0.2em] uppercase text-copper font-semibold block mb-2">
+                <div
+                  className="p-5 rounded-lg border shadow-2xs text-xs space-y-2"
+                  style={{
+                    backgroundColor: "var(--admin-surface-2)",
+                    borderColor: "var(--admin-border-subtle)",
+                  }}
+                >
+                  <span className="text-[10px] tracking-[0.16em] uppercase text-[var(--admin-accent)] font-semibold block">
                     Client Message / Inquiry Details
                   </span>
-                  <p className="text-[#1C1C1C]/85 leading-relaxed whitespace-pre-wrap bg-[#FAF8F5] p-3 rounded border border-copper/15 font-sans">
+                  <p
+                    className="leading-relaxed whitespace-pre-wrap p-3.5 rounded-md border font-sans"
+                    style={{
+                      backgroundColor: "var(--admin-surface)",
+                      borderColor: "var(--admin-border-subtle)",
+                      color: "var(--admin-text-primary)",
+                    }}
+                  >
                     {selectedLead.message}
                   </p>
                 </div>
               )}
 
               {/* Management: Status & Assignment */}
-              <div className="p-5 rounded-[6px] bg-white border border-copper/20 shadow-sm space-y-4">
-                <span className="text-[10px] tracking-[0.2em] uppercase text-copper font-semibold block">
+              <div
+                className="p-5 rounded-lg border shadow-2xs space-y-4"
+                style={{
+                  backgroundColor: "var(--admin-surface-2)",
+                  borderColor: "var(--admin-border-subtle)",
+                }}
+              >
+                <span className="text-[10px] tracking-[0.16em] uppercase text-[var(--admin-accent)] font-semibold block">
                   Lead Status &amp; Sales Representative
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
-                    <label className="text-[10px] uppercase tracking-[0.15em] text-copper block mb-1.5 font-semibold">
+                    <label className="text-[10px] uppercase tracking-[0.14em] text-[var(--admin-text-secondary)] block mb-1.5 font-semibold">
                       Pipeline Status
                     </label>
                     <select
                       value={selectedLead.status || "New"}
                       onChange={(e) => updateStatus(selectedLead.id, e.target.value)}
-                      className="w-full h-10 px-3 bg-[#FAF8F5] border border-copper/25 rounded-[4px] text-xs text-[#1C1C1C] font-medium focus:outline-none focus:border-copper cursor-pointer"
+                      className="w-full h-10 px-3 rounded-md text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-[var(--admin-accent)] cursor-pointer"
+                      style={{
+                        backgroundColor: "var(--admin-input-bg)",
+                        borderColor: "var(--admin-input-border)",
+                        borderWidth: "1px",
+                        color: "var(--admin-input-text)",
+                      }}
                     >
                       {STATUSES.map((s) => (
                         <option key={s} value={s}>
@@ -489,7 +535,7 @@ export default function AdminPropertyLeadsPage() {
                   </div>
 
                   <div>
-                    <label className="text-[10px] uppercase tracking-[0.15em] text-copper block mb-1.5 font-semibold">
+                    <label className="text-[10px] uppercase tracking-[0.14em] text-[var(--admin-text-secondary)] block mb-1.5 font-semibold">
                       Assigned Sales Advisory
                     </label>
                     <input
@@ -497,13 +543,19 @@ export default function AdminPropertyLeadsPage() {
                       value={editingAssignee}
                       onChange={(e) => setEditingAssignee(e.target.value)}
                       placeholder="e.g. Rahul Sharma"
-                      className="w-full h-10 px-3 bg-[#FAF8F5] border border-copper/20 rounded-[4px] text-xs text-[#1C1C1C] placeholder-[#1C1C1C]/40 focus:outline-none focus:border-copper"
+                      className="w-full h-10 px-3 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-[var(--admin-accent)]"
+                      style={{
+                        backgroundColor: "var(--admin-input-bg)",
+                        borderColor: "var(--admin-input-border)",
+                        borderWidth: "1px",
+                        color: "var(--admin-input-text)",
+                      }}
                     />
                   </div>
                 </div>
 
                 <div className="pt-2">
-                  <label className="text-[10px] uppercase tracking-[0.15em] text-copper block mb-1.5 font-semibold">
+                  <label className="text-[10px] uppercase tracking-[0.14em] text-[var(--admin-text-secondary)] block mb-1.5 font-semibold">
                     Internal Sales &amp; Follow-up Notes
                   </label>
                   <textarea
@@ -511,7 +563,13 @@ export default function AdminPropertyLeadsPage() {
                     value={editingNotes}
                     onChange={(e) => setEditingNotes(e.target.value)}
                     placeholder="Log site visit scheduling, client budget, preferences, or consultation outcome..."
-                    className="w-full p-3 bg-[#FAF8F5] border border-copper/20 rounded-[4px] text-xs text-[#1C1C1C] placeholder-[#1C1C1C]/40 focus:outline-none focus:border-copper"
+                    className="w-full p-3 rounded-md text-xs leading-relaxed focus:outline-none focus:ring-1 focus:ring-[var(--admin-accent)]"
+                    style={{
+                      backgroundColor: "var(--admin-input-bg)",
+                      borderColor: "var(--admin-input-border)",
+                      borderWidth: "1px",
+                      color: "var(--admin-input-text)",
+                    }}
                   />
                 </div>
 
@@ -520,7 +578,7 @@ export default function AdminPropertyLeadsPage() {
                     type="button"
                     disabled={savingDetails}
                     onClick={saveLeadDetails}
-                    className="px-4 py-2 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.12em] rounded-[4px] transition-colors disabled:opacity-50 shadow-sm cursor-pointer"
+                    className="btn-admin-primary"
                   >
                     {savingDetails ? "Saving Details…" : "Save Lead Details"}
                   </button>
@@ -529,11 +587,16 @@ export default function AdminPropertyLeadsPage() {
             </div>
 
             {/* Footer */}
-            <div className="mt-6 pt-4 border-t border-copper/15 flex items-center justify-between">
+            <div className="pt-4 border-t flex items-center justify-between" style={{ borderColor: "var(--admin-border)" }}>
               <button
                 type="button"
                 onClick={() => setSelectedLead(null)}
-                className="px-5 py-2 border border-copper/30 hover:border-copper text-[#1C1C1C] hover:bg-white text-xs uppercase tracking-[0.1em] rounded-[4px] transition-colors cursor-pointer font-medium"
+                className="px-5 py-2 border rounded-md text-xs uppercase tracking-wider font-semibold transition-colors cursor-pointer"
+                style={{
+                  backgroundColor: "var(--admin-surface-2)",
+                  borderColor: "var(--admin-border)",
+                  color: "var(--admin-text-primary)",
+                }}
               >
                 Close
               </button>
@@ -547,7 +610,7 @@ export default function AdminPropertyLeadsPage() {
                       propertyName: selectedLead.propertyName,
                     })
                   }
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 hover:text-rose-700 text-xs uppercase tracking-[0.1em] rounded-[4px] transition-colors font-semibold cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-[var(--admin-error)] bg-[var(--admin-error-bg)] border border-[var(--admin-error-border)] rounded-md text-xs uppercase tracking-[0.1em] font-semibold transition-colors cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   <span>Delete Lead</span>

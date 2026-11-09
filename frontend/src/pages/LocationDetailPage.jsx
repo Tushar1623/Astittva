@@ -239,7 +239,7 @@ export default function LocationDetailPage({ locationKey }) {
             {/* Side Card: Market Outlook */}
             <motion.div
               {...fadeUp}
-              className="lg:col-span-5 bg-white border border-[#E8DED2] p-8 sm:p-10 shadow-sm"
+              className="lg:col-span-5 bg-white rounded-xl border border-[#E8DED2] p-8 sm:p-10 shadow-xs"
             >
               <div className="text-[10px] tracking-[0.35em] uppercase text-copper font-semibold mb-2">
                 2026 Micro-Market Matrix
@@ -270,7 +270,7 @@ export default function LocationDetailPage({ locationKey }) {
               <div className="mt-8 pt-6 border-t border-[#E8DED2]">
                 <a
                   href="#advisory-contact"
-                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-[#1C1C1C] hover:bg-copper text-white text-xs tracking-[0.25em] uppercase font-semibold transition-colors duration-300"
+                  className="btn-primary w-full inline-flex items-center justify-center gap-2"
                 >
                   Request Locality Price Report <ArrowRight className="w-3.5 h-3.5" />
                 </a>
@@ -305,7 +305,7 @@ export default function LocationDetailPage({ locationKey }) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6, delay: i * 0.1 }}
-                className="bg-white border border-[#E8DED2] p-7 sm:p-8 hover:border-copper transition-colors duration-300 shadow-sm"
+                className="bg-white rounded-xl border border-[#E8DED2] p-7 sm:p-8 hover:border-copper transition-all shadow-xs"
               >
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-full bg-copper/10 border border-copper/30 flex items-center justify-center shrink-0">
@@ -380,7 +380,7 @@ export default function LocationDetailPage({ locationKey }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Healthcare */}
-            <div className="bg-white border border-[#E8DED2] p-7 shadow-sm">
+            <div className="bg-white rounded-xl border border-[#E8DED2] p-7 shadow-xs">
               <div className="flex items-center gap-3 mb-4">
                 <Stethoscope className="w-5 h-5 text-copper" />
                 <h3 className="font-serif-display text-lg text-[#1C1C1C] font-semibold">Super-Specialty Care</h3>
@@ -396,7 +396,7 @@ export default function LocationDetailPage({ locationKey }) {
             </div>
 
             {/* Education */}
-            <div className="bg-white border border-[#E8DED2] p-7 shadow-sm">
+            <div className="bg-white rounded-xl border border-[#E8DED2] p-7 shadow-xs">
               <div className="flex items-center gap-3 mb-4">
                 <GraduationCap className="w-5 h-5 text-copper" />
                 <h3 className="font-serif-display text-lg text-[#1C1C1C] font-semibold">Schools &amp; Campuses</h3>
@@ -412,7 +412,7 @@ export default function LocationDetailPage({ locationKey }) {
             </div>
 
             {/* Hospitality */}
-            <div className="bg-white border border-[#E8DED2] p-7 shadow-sm">
+            <div className="bg-white rounded-xl border border-[#E8DED2] p-7 shadow-xs">
               <div className="flex items-center gap-3 mb-4">
                 <Hotel className="w-5 h-5 text-copper" />
                 <h3 className="font-serif-display text-lg text-[#1C1C1C] font-semibold">Luxury Hotels &amp; Dining</h3>
@@ -428,7 +428,7 @@ export default function LocationDetailPage({ locationKey }) {
             </div>
 
             {/* Retail */}
-            <div className="bg-white border border-[#E8DED2] p-7 shadow-sm">
+            <div className="bg-white rounded-xl border border-[#E8DED2] p-7 shadow-xs">
               <div className="flex items-center gap-3 mb-4">
                 <ShoppingBag className="w-5 h-5 text-copper" />
                 <h3 className="font-serif-display text-lg text-[#1C1C1C] font-semibold">Retail &amp; Leisure</h3>
@@ -523,7 +523,7 @@ export default function LocationDetailPage({ locationKey }) {
               return (
                 <div
                   key={idx}
-                  className="bg-white border border-[#E8DED2] transition-colors"
+                  className="bg-white rounded-xl border border-[#E8DED2] overflow-hidden shadow-xs transition-colors"
                 >
                   <button
                     onClick={() => setOpenFaq(isOpen ? -1 : idx)}
@@ -577,7 +577,7 @@ export default function LocationDetailPage({ locationKey }) {
               <Link
                 key={i}
                 to={link.to}
-                className="p-3.5 bg-[#FAF8F5] border border-[#E8DED2] hover:border-copper text-xs text-[#2A2A2A] hover:text-copper transition flex items-center justify-between group"
+                className="p-3.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-lg hover:border-copper text-xs text-[#2A2A2A] hover:text-copper transition flex items-center justify-between group"
               >
                 <span className="truncate">{link.label}</span>
                 <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-1" />
@@ -610,7 +610,7 @@ export default function LocationDetailPage({ locationKey }) {
             </Link>
             <a
               href={`tel:${PHONE_DISPLAY.replace(/\s/g, "")}`}
-              className="inline-flex items-center gap-2 px-8 py-3.5 text-xs tracking-wider uppercase font-semibold text-[#1C1C1C] bg-white border border-[#1C1C1C] hover:bg-[#1C1C1C] hover:text-white transition"
+              className="btn-outline inline-flex items-center gap-2 px-8 py-3.5"
             >
               <Phone className="w-3.5 h-3.5" /> {PHONE_DISPLAY}
             </a>

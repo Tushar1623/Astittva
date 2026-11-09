@@ -176,12 +176,12 @@ export default function PropertyDetailPage() {
     }
   };
 
-  if (loading) return <div className="pt-40 text-center text-ivory/50 tracking-[0.3em] uppercase">Loading...</div>;
+  if (loading) return <div className="pt-40 text-center text-[#5F5F5F] tracking-[0.3em] uppercase">Loading...</div>;
   if (!property) {
     return (
       <div className="pt-40 max-w-3xl mx-auto px-6 text-center">
         <Seo title="Property Not Found | Astittva Marketing" noIndex={true} />
-        <h2 className="font-display text-3xl text-ivory mb-4">Property not found</h2>
+        <h2 className="font-display text-3xl text-[#1C1C1C] mb-4">Property not found</h2>
         <Link to="/properties" className="btn-outline mt-4">Back to Properties</Link>
       </div>
     );
@@ -212,7 +212,7 @@ export default function PropertyDetailPage() {
       <PropertySeo property={property} id={id} />
       <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
         {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-xs text-ivory/50 mb-6">
+        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-2 text-xs text-[#5F5F5F] mb-6">
           <Link to="/" className="hover:text-copper transition-colors">Home</Link>
           <span>/</span>
           <Link to="/properties" className="hover:text-copper transition-colors">Properties</Link>
@@ -263,9 +263,9 @@ export default function PropertyDetailPage() {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-ivory/40 p-8 text-center bg-charcoal/50">
+              <div className="w-full h-full flex flex-col items-center justify-center text-[#8C827A] p-8 text-center bg-[#FAF8F5]">
                 <span className="font-display text-lg tracking-widest uppercase text-copper/70 mb-2">No Image Available</span>
-                <span className="text-xs text-ivory/40">Images will be updated shortly</span>
+                <span className="text-xs text-[#8C827A]">Images will be updated shortly</span>
               </div>
             )}
           </div>
@@ -296,8 +296,8 @@ export default function PropertyDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2">
             <div className="overline mb-3">{property.property_category || property.property_type}</div>
-            <h1 className="font-display font-light text-4xl sm:text-5xl text-ivory">{property.project_name}</h1>
-            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-ivory/60 text-sm">
+            <h1 className="font-serif-display font-medium text-4xl sm:text-5xl text-[#1C1C1C]">{property.project_name}</h1>
+            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-[#5F5F5F] text-sm">
               <span className="flex items-center gap-2"><MapPin className="w-4 h-4 text-copper" /> {property.location}, {property.city}</span>
               {property.builder && <span className="flex items-center gap-2"><Building2 className="w-4 h-4 text-copper" /> {property.builder}</span>}
               {property.rera_number && <span className="flex items-center gap-2"><BadgeCheck className="w-4 h-4 text-copper" /> RERA: {property.rera_number}</span>}
@@ -312,7 +312,7 @@ export default function PropertyDetailPage() {
             </div>
             <div className="copper-divider mt-8 mb-8" />
 
-            <p className="text-ivory/75 leading-relaxed font-light whitespace-pre-line text-base">{property.description}</p>
+            <p className="text-[#4A4A4A] leading-relaxed font-light whitespace-pre-line text-base">{property.description}</p>
 
             <div className="mt-12 grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[
@@ -325,7 +325,7 @@ export default function PropertyDetailPage() {
               ].map(([k, v]) => (
                 <div key={k} className="bg-white border border-[#E8DED2] rounded-xl p-5 shadow-2xs">
                   <div className="text-[10px] text-[#737373] tracking-[0.25em] uppercase mb-2">{k}</div>
-                  <div className="text-ivory font-display text-sm font-light">{v}</div>
+                  <div className="text-[#1C1C1C] font-serif-display text-base font-medium">{v}</div>
                 </div>
               ))}
             </div>
@@ -366,7 +366,7 @@ export default function PropertyDetailPage() {
                   <div className="text-copper text-xs tracking-widest uppercase font-medium mb-1 group-hover:text-rose-gold">
                     Home Loan EMI Calculator &rarr;
                   </div>
-                  <p className="text-ivory/60 text-xs">
+                  <p className="text-[#5F5F5F] text-xs font-light">
                     Calculate monthly EMI, interest, and repayment schedule for {property.project_name}.
                   </p>
                 </Link>
@@ -377,13 +377,13 @@ export default function PropertyDetailPage() {
                   <div className="text-copper text-xs tracking-widest uppercase font-medium mb-1 group-hover:text-rose-gold">
                     West Bengal Stamp Duty Calculator &rarr;
                   </div>
-                  <p className="text-ivory/60 text-xs">
+                  <p className="text-[#5F5F5F] text-xs font-light">
                     Estimate registration fees and West Bengal stamp duty costs.
                   </p>
                 </Link>
               </div>
               {property.location && (
-                <div className="mt-4 text-xs text-ivory/50">
+                <div className="mt-4 text-xs text-[#5F5F5F]">
                   <span>Looking for other projects nearby? </span>
                   <Link
                     to={`/properties?location=${encodeURIComponent(property.location)}`}
@@ -450,7 +450,7 @@ export default function PropertyDetailPage() {
                 Buyer Resources &amp; Advisory
               </div>
               <h4 className="font-serif-display text-xl text-[#1C1C1C] font-medium">Financial Planning Tools</h4>
-              <p className="text-xs text-ivory/70 leading-relaxed">
+              <p className="text-xs text-[#5F5F5F] leading-relaxed font-light">
                 Plan your acquisition of {property.project_name} with verified calculators and regional market intelligence:
               </p>
               <ul className="space-y-2 text-xs">

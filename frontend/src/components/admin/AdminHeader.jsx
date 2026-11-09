@@ -4,23 +4,18 @@ import { RefreshCw } from "lucide-react";
 
 /**
  * Render an individual action configuration object or passthrough React node.
- * This ensures that configuration objects with { label, icon, variant, onClick, to }
- * are rendered as valid interactive React elements (buttons/links) and never as raw child objects.
  */
 function renderAction(action, index) {
   if (!action) return null;
 
-  // If already a valid React element (e.g. <Link ...>, <button ...>, or custom JSX), render directly
   if (isValidElement(action)) {
     return React.cloneElement(action, { key: action.key || index });
   }
 
-  // If primitive (string, number), render in span
   if (typeof action !== "object") {
     return <span key={index}>{action}</span>;
   }
 
-  // Destructure configuration properties
   const {
     label,
     icon: Icon,
@@ -35,25 +30,23 @@ function renderAction(action, index) {
     title,
   } = action;
 
-  // Determine styling based on semantic variant
   let variantClasses =
-    "border border-[#D4A359]/30 hover:border-[#D4A359] text-white/90 hover:text-white bg-[#180509]";
+    "border border-[var(--admin-border)] hover:border-[var(--admin-accent)] text-[var(--admin-text-primary)] bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-hover)]";
   if (variant === "primary") {
     variantClasses =
       "bg-gradient-to-r from-[#B87333] to-[#D4A359] hover:from-[#A06028] hover:to-[#B87333] text-white font-semibold shadow-xs border-0";
   } else if (variant === "destructive") {
     variantClasses =
-      "bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-medium";
+      "bg-[var(--admin-error-bg)] hover:bg-rose-500/20 text-[var(--admin-error)] border border-[var(--admin-error-border)] font-medium";
   } else if (variant === "secondary") {
     variantClasses =
-      "bg-[#22070D] hover:bg-[#2F0A12] text-white border border-[#D4A359]/20 font-medium";
+      "bg-[var(--admin-surface-2)] hover:bg-[var(--admin-surface-hover)] text-[var(--admin-text-primary)] border border-[var(--admin-border)] font-medium";
   }
 
   const baseClasses =
-    "inline-flex items-center justify-center gap-2 px-4 py-2 text-xs uppercase tracking-[0.14em] rounded-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs font-semibold";
+    "inline-flex items-center justify-center gap-2 px-3.5 py-2 text-xs uppercase tracking-[0.1em] rounded-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-2xs font-semibold";
   const finalClass = `${baseClasses} ${variantClasses} ${className}`.trim();
 
-  // Safely render icon: could be a Lucide component, a function, or a pre-instantiated element
   let iconElement = null;
   if (Icon) {
     if (isValidElement(Icon)) {
@@ -72,9 +65,10 @@ function renderAction(action, index) {
 
   const key = action.key || (label ? `admin-action-${label}-${index}` : `action-${index}`);
 
-  // If `to` is provided, render as React Router <Link> or external <a>
   if (to) {
-    const isExternal = typeof to === "string" && (to.startsWith("http://") || to.startsWith("https://") || target === "_blank");
+    const isExternal =
+      typeof to === "string" &&
+      (to.startsWith("http://") || to.startsWith("https://") || target === "_blank");
     if (isExternal) {
       return (
         <a
@@ -105,7 +99,6 @@ function renderAction(action, index) {
     );
   }
 
-  // Otherwise, render as a button
   return (
     <button
       key={key}
@@ -122,7 +115,7 @@ function renderAction(action, index) {
 }
 
 /**
- * Standardized Admin Page Header Component
+ * Standardized Admin Page Header Component (Theme Adaptive)
  */
 export default function AdminHeader({
   category,
@@ -143,34 +136,43 @@ export default function AdminHeader({
   }
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#D4A359]/20">
+    <div
+      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b transition-colors"
+      style={{ borderColor: "var(--admin-border)" }}
+    >
       <div>
         <div className="flex items-center gap-2 mb-2">
           {category && (
-            <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[#D4A359]">
+            <span className="text-[11px] font-semibold tracking-[0.22em] uppercase text-[var(--admin-accent)]">
               {category}
             </span>
           )}
           {subcategory && (
             <>
-              <span className="text-white/30">•</span>
-              <span className="text-[10px] tracking-[0.2em] uppercase text-white/60">
+              <span className="text-[var(--admin-text-muted)] opacity-40">•</span>
+              <span className="text-[11px] tracking-[0.18em] uppercase text-[var(--admin-text-muted)] font-medium">
                 {subcategory}
               </span>
             </>
           )}
         </div>
-        <h1 className="font-serif-display font-medium text-3xl sm:text-4xl text-white tracking-tight">
+        <h1
+          className="font-serif-display font-medium text-2xl sm:text-3xl lg:text-4xl tracking-tight transition-colors"
+          style={{ color: "var(--admin-text-primary)" }}
+        >
           {title}
         </h1>
         {subtitle && (
-          <p className="text-white/60 text-sm mt-1 max-w-3xl leading-relaxed">
+          <p
+            className="text-sm mt-1 max-w-3xl leading-relaxed transition-colors"
+            style={{ color: "var(--admin-text-secondary)" }}
+          >
             {subtitle}
           </p>
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 shrink-0">
+      <div className="flex flex-wrap items-center gap-2.5 shrink-0">
         {renderedActions}
         {onRefresh && (
           <button
@@ -178,7 +180,8 @@ export default function AdminHeader({
             onClick={onRefresh}
             disabled={refreshing}
             title="Refresh data"
-            className="p-2.5 border border-[#D4A359]/25 hover:border-[#D4A359] text-white/70 hover:text-[#D4A359] rounded-lg transition-colors disabled:opacity-50 cursor-pointer bg-[#180509]"
+            aria-label="Refresh data"
+            className="p-2 border border-[var(--admin-border)] hover:border-[var(--admin-accent)] text-[var(--admin-text-secondary)] hover:text-[var(--admin-text-primary)] rounded-md transition-colors disabled:opacity-50 cursor-pointer bg-[var(--admin-surface)] hover:bg-[var(--admin-surface-hover)] shadow-2xs"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
           </button>

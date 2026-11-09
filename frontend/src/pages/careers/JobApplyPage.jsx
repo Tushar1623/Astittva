@@ -234,23 +234,23 @@ export default function JobApplyPage() {
 
   if (jobLoading) {
     return (
-      <div className="min-h-screen bg-charcoal text-ivory pt-32 pb-20 flex flex-col items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-copper border-t-transparent mb-4" />
-        <p className="text-xs font-mono uppercase tracking-widest text-copper/60">Loading Role Details…</p>
+      <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-32 pb-20 flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#B87333] border-t-transparent mb-4" />
+        <p className="text-xs font-mono uppercase tracking-widest text-[#B87333]">Loading Role Details…</p>
       </div>
     );
   }
 
   if (jobError || !job) {
     return (
-      <div className="min-h-screen bg-charcoal text-ivory pt-32 pb-20 px-4 max-w-xl mx-auto text-center">
-        <div className="luxury-card rounded-[8px] p-8 shadow-sm">
-          <Briefcase className="w-10 h-10 text-copper/40 mx-auto mb-3" />
-          <h1 className="text-xl font-display text-ivory mb-2">Position Unavailable</h1>
-          <p className="text-sm text-ivory/60 mb-6 font-sans">{jobError || "This opening is no longer accessible."}</p>
+      <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-32 pb-20 px-4 max-w-xl mx-auto text-center">
+        <div className="bg-white border border-[#E8DED2] rounded-xl p-8 shadow-xs">
+          <Briefcase className="w-10 h-10 text-[#B87333]/40 mx-auto mb-3" />
+          <h1 className="text-xl font-serif-display text-[#1C1C1C] mb-2 font-medium">Position Unavailable</h1>
+          <p className="text-sm text-[#5F5F5F] mb-6 font-light">{jobError || "This opening is no longer accessible."}</p>
           <Link
             to="/careers/jobs"
-            className="px-5 py-2.5 text-xs uppercase tracking-[0.12em] text-white font-semibold bg-copper hover:bg-copper-light rounded-[4px] transition-colors inline-block shadow-sm"
+            className="btn-primary text-xs"
           >
             Explore Other Positions
           </Link>
@@ -260,7 +260,7 @@ export default function JobApplyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-charcoal text-ivory pt-24 pb-20">
+    <div className="min-h-screen bg-[#FAF8F5] text-[#1C1C1C] pt-28 pb-20">
       <Seo
         title={`Apply for ${job.title} | Astittva Careers`}
         description={`Submit your application for ${job.title} at Astittva Marketing in Kolkata.`}
@@ -272,15 +272,15 @@ export default function JobApplyPage() {
         <div className="mb-6">
           <Link
             to={`/careers/jobs/${job.slug}`}
-            className="inline-flex items-center gap-2 text-xs text-copper hover:underline font-semibold uppercase tracking-[0.12em] transition-colors"
+            className="inline-flex items-center gap-2 text-xs text-[#B87333] hover:text-[#5E1F28] font-semibold uppercase tracking-[0.12em] transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Back to Role Details
           </Link>
         </div>
 
         {/* Application Header Card */}
-        <div className="luxury-card rounded-[8px] p-6 sm:p-8 mb-8 shadow-sm">
-          <div className="flex flex-wrap items-center gap-2 mb-2 text-xs font-mono text-copper uppercase tracking-wider">
+        <div className="bg-white border border-[#E8DED2] rounded-xl p-6 sm:p-8 mb-8 shadow-xs">
+          <div className="flex flex-wrap items-center gap-2 mb-2 text-xs font-mono text-[#B87333] uppercase tracking-wider font-semibold">
             <span>{job.department}</span>
             <span>•</span>
             <span>{job.location}</span>
@@ -288,18 +288,18 @@ export default function JobApplyPage() {
             <span>{job.employmentType}</span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-display font-medium text-ivory mb-2">
-            Apply for <span className="text-copper">{job.title}</span>
+          <h1 className="text-2xl sm:text-4xl font-serif-display font-medium text-[#1C1C1C] mb-3">
+            Apply for <span className="text-[#B87333]">{job.title}</span>
           </h1>
 
-          <p className="text-xs sm:text-sm text-ivory/60 font-sans leading-relaxed">
+          <p className="text-xs sm:text-sm text-[#5F5F5F] font-light leading-relaxed">
             Please complete the candidate profile form below and attach your resume. All submissions are directly reviewed by our leadership and executive hiring team in Kolkata.
           </p>
         </div>
 
         {/* Duplicate Warning Box */}
         {duplicateWarning && (
-          <div className="mb-8 p-6 rounded-[8px] bg-amber-500/10 border border-amber-500/30 text-amber-900">
+          <div className="mb-8 p-6 rounded-xl bg-amber-50 border border-amber-200 text-amber-900">
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
               <div>
@@ -315,7 +315,7 @@ export default function JobApplyPage() {
                 <div className="mt-4 flex gap-3">
                   <Link
                     to="/careers/jobs"
-                    className="px-4 py-1.5 text-xs font-semibold uppercase tracking-wider bg-amber-600 text-white rounded-[4px] shadow-sm hover:bg-amber-700 transition-colors"
+                    className="btn-primary text-xs"
                   >
                     Browse Other Openings
                   </Link>
@@ -326,24 +326,24 @@ export default function JobApplyPage() {
         )}
 
         {serverError && (
-          <div className="mb-8 p-4 rounded-[8px] bg-red-950/10 border border-red-500/20 text-red-600 text-xs sm:text-sm flex items-center gap-3">
-            <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+          <div className="mb-8 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs sm:text-sm flex items-center gap-3">
+            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
             <span>{serverError}</span>
           </div>
         )}
 
         {/* Application Form */}
-        <form onSubmit={handleSubmit} className="space-y-8 font-sans">
+        <form onSubmit={handleSubmit} className="space-y-8">
           {/* Section 1: Candidate Identity */}
-          <div className="luxury-card rounded-[8px] p-6 sm:p-8 space-y-6 shadow-sm">
-            <h2 className="text-lg font-display text-ivory flex items-center gap-2 border-b border-copper/15 pb-3">
-              <User className="w-4 h-4 text-copper" /> 1. Personal &amp; Contact Information
+          <div className="bg-white border border-[#E8DED2] rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
+            <h2 className="text-lg font-serif-display text-[#1C1C1C] flex items-center gap-2 border-b border-[#E8DED2] pb-3 font-semibold">
+              <User className="w-4 h-4 text-[#B87333]" /> 1. Personal &amp; Contact Information
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
-                  Full Name <span className="text-copper">*</span>
+                <label className="form-label">
+                  Full Name <span className="text-[#B87333]">*</span>
                 </label>
                 <input
                   type="text"
@@ -352,13 +352,13 @@ export default function JobApplyPage() {
                   onChange={handleInputChange}
                   required
                   placeholder="e.g. Arjun Banerjee"
-                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-lg text-xs text-[#1C1C1C] placeholder:text-[#8C827A] focus:outline-none focus:border-[#B87333] transition-colors"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
-                  Email Address <span className="text-copper">*</span>
+                <label className="form-label">
+                  Email Address <span className="text-[#B87333]">*</span>
                 </label>
                 <input
                   type="email"
@@ -367,13 +367,13 @@ export default function JobApplyPage() {
                   onChange={handleInputChange}
                   required
                   placeholder="e.g. arjun@example.com"
-                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-lg text-xs text-[#1C1C1C] placeholder:text-[#8C827A] focus:outline-none focus:border-[#B87333] transition-colors"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
-                  Phone Number <span className="text-copper">*</span>
+                <label className="form-label">
+                  Phone Number <span className="text-[#B87333]">*</span>
                 </label>
                 <input
                   type="tel"
@@ -382,12 +382,12 @@ export default function JobApplyPage() {
                   onChange={handleInputChange}
                   required
                   placeholder="e.g. +91 98301 23456"
-                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-lg text-xs text-[#1C1C1C] placeholder:text-[#8C827A] focus:outline-none focus:border-[#B87333] transition-colors"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                <label className="form-label">
                   LinkedIn Profile URL
                 </label>
                 <input
@@ -396,21 +396,21 @@ export default function JobApplyPage() {
                   value={formData.linkedin}
                   onChange={handleInputChange}
                   placeholder="https://linkedin.com/in/username"
-                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-lg text-xs text-[#1C1C1C] placeholder:text-[#8C827A] focus:outline-none focus:border-[#B87333] transition-colors"
                 />
               </div>
             </div>
           </div>
 
           {/* Section 2: Experience & Compensation */}
-          <div className="luxury-card rounded-[8px] p-6 sm:p-8 space-y-6 shadow-sm">
-            <h2 className="text-lg font-display text-ivory flex items-center gap-2 border-b border-copper/15 pb-3">
-              <Briefcase className="w-4 h-4 text-copper" /> 2. Professional Experience &amp; Notice
+          <div className="bg-white border border-[#E8DED2] rounded-xl p-6 sm:p-8 space-y-6 shadow-xs">
+            <h2 className="text-lg font-serif-display text-[#1C1C1C] flex items-center gap-2 border-b border-[#E8DED2] pb-3 font-semibold">
+              <Briefcase className="w-4 h-4 text-[#B87333]" /> 2. Professional Experience &amp; Notice
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                <label className="form-label">
                   Total Experience (Years)
                 </label>
                 <input
@@ -421,12 +421,12 @@ export default function JobApplyPage() {
                   value={formData.experienceYears}
                   onChange={handleInputChange}
                   placeholder="e.g. 4.5"
-                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-lg text-xs text-[#1C1C1C] focus:outline-none focus:border-[#B87333] transition-colors"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                <label className="form-label">
                   Current Organization
                 </label>
                 <input
@@ -435,12 +435,12 @@ export default function JobApplyPage() {
                   value={formData.currentCompany}
                   onChange={handleInputChange}
                   placeholder="e.g. Kolkata Realty Pvt Ltd"
-                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-lg text-xs text-[#1C1C1C] focus:outline-none focus:border-[#B87333] transition-colors"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                <label className="form-label">
                   Notice Period (Days)
                 </label>
                 <input
@@ -450,12 +450,12 @@ export default function JobApplyPage() {
                   value={formData.noticePeriodDays}
                   onChange={handleInputChange}
                   placeholder="30"
-                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-lg text-xs text-[#1C1C1C] focus:outline-none focus:border-[#B87333] transition-colors"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                <label className="form-label">
                   Current Annual CTC
                 </label>
                 <input
@@ -464,12 +464,12 @@ export default function JobApplyPage() {
                   value={formData.currentCtc}
                   onChange={handleInputChange}
                   placeholder="e.g. 6 LPA"
-                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-lg text-xs text-[#1C1C1C] focus:outline-none focus:border-[#B87333] transition-colors"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                <label className="form-label">
                   Expected Annual CTC
                 </label>
                 <input
@@ -478,12 +478,12 @@ export default function JobApplyPage() {
                   value={formData.expectedCtc}
                   onChange={handleInputChange}
                   placeholder="e.g. 8.5 LPA"
-                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-lg text-xs text-[#1C1C1C] focus:outline-none focus:border-[#B87333] transition-colors"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+                <label className="form-label">
                   Portfolio / Website URL
                 </label>
                 <input
@@ -492,35 +492,35 @@ export default function JobApplyPage() {
                   value={formData.portfolioUrl}
                   onChange={handleInputChange}
                   placeholder="https://mywork.dev"
-                  className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-lg text-xs text-[#1C1C1C] focus:outline-none focus:border-[#B87333] transition-colors"
                 />
               </div>
             </div>
           </div>
 
           {/* Section 3: Resume Upload */}
-          <div className="luxury-card rounded-[8px] p-6 sm:p-8 space-y-4 shadow-sm">
-            <h2 className="text-lg font-display text-ivory flex items-center gap-2 border-b border-copper/15 pb-3">
-              <UploadCloud className="w-4 h-4 text-copper" /> 3. Upload Resume / Curriculum Vitae <span className="text-copper">*</span>
+          <div className="bg-white border border-[#E8DED2] rounded-xl p-6 sm:p-8 space-y-4 shadow-xs">
+            <h2 className="text-lg font-serif-display text-[#1C1C1C] flex items-center gap-2 border-b border-[#E8DED2] pb-3 font-semibold">
+              <UploadCloud className="w-4 h-4 text-[#B87333]" /> 3. Upload Resume / Curriculum Vitae <span className="text-[#B87333]">*</span>
             </h2>
 
-            <p className="text-xs text-ivory/60">
-              Accepted formats: <strong className="text-ivory">PDF, DOC, DOCX</strong> up to 10MB. Stored securely in our encrypted MongoDB storage.
+            <p className="text-xs text-[#5F5F5F]">
+              Accepted formats: <strong className="text-[#1C1C1C]">PDF, DOC, DOCX</strong> up to 10MB. Stored securely in our encrypted MongoDB storage.
             </p>
 
             {resumeFile ? (
-              <div className="flex items-center justify-between p-4 bg-charcoal border border-copper/50 rounded-[4px]">
+              <div className="flex items-center justify-between p-4 bg-[#FAF8F5] border border-[#B87333]/50 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <FileText className="w-8 h-8 text-copper shrink-0" />
+                  <FileText className="w-8 h-8 text-[#B87333] shrink-0" />
                   <div>
-                    <p className="text-sm font-medium text-ivory">{resumeFile.filename}</p>
-                    <p className="text-xs text-ivory/50 font-mono">{resumeFile.sizeMb} MB</p>
+                    <p className="text-sm font-medium text-[#1C1C1C]">{resumeFile.filename}</p>
+                    <p className="text-xs text-[#5F5F5F] font-mono">{resumeFile.sizeMb} MB</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={removeResume}
-                  className="p-1.5 rounded text-ivory/50 hover:text-red-500 transition-colors"
+                  className="p-1.5 rounded text-[#5F5F5F] hover:text-rose-600 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -529,7 +529,7 @@ export default function JobApplyPage() {
               <div
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
-                className="border-2 border-dashed border-copper/30 hover:border-copper/70 rounded-[6px] p-8 text-center transition-colors bg-charcoal/50 cursor-pointer"
+                className="border-2 border-dashed border-[#B87333]/30 hover:border-[#B87333] rounded-xl p-8 text-center transition-colors bg-[#FAF8F5]/60 cursor-pointer"
                 onClick={() => document.getElementById("resume-input")?.click()}
               >
                 <input
@@ -539,21 +539,21 @@ export default function JobApplyPage() {
                   onChange={handleFileChange}
                   className="hidden"
                 />
-                <UploadCloud className="w-10 h-10 text-copper/60 mx-auto mb-3" />
-                <p className="text-sm font-medium text-ivory mb-1">
-                  Drag and drop your resume file here, or <span className="text-copper underline">browse</span>
+                <UploadCloud className="w-10 h-10 text-[#B87333]/60 mx-auto mb-3" />
+                <p className="text-sm font-medium text-[#1C1C1C] mb-1">
+                  Drag and drop your resume file here, or <span className="text-[#B87333] underline">browse</span>
                 </p>
-                <p className="text-xs text-ivory/40 font-mono">PDF, DOC, DOCX up to 10MB</p>
+                <p className="text-xs text-[#8C827A] font-mono">PDF, DOC, DOCX up to 10MB</p>
               </div>
             )}
 
-            {fileError && <p className="text-xs text-red-600 mt-2">{fileError}</p>}
+            {fileError && <p className="text-xs text-rose-600 mt-2 font-medium">{fileError}</p>}
           </div>
 
           {/* Section 4: Candidate Note */}
-          <div className="luxury-card rounded-[8px] p-6 sm:p-8 space-y-4 shadow-sm">
-            <h2 className="text-lg font-display text-ivory flex items-center gap-2 border-b border-copper/15 pb-3">
-              <Sparkles className="w-4 h-4 text-copper" /> 4. Candidate Note (Optional)
+          <div className="bg-white border border-[#E8DED2] rounded-xl p-6 sm:p-8 space-y-4 shadow-xs">
+            <h2 className="text-lg font-serif-display text-[#1C1C1C] flex items-center gap-2 border-b border-[#E8DED2] pb-3 font-semibold">
+              <Sparkles className="w-4 h-4 text-[#B87333]" /> 4. Candidate Note (Optional)
             </h2>
 
             <textarea
@@ -562,20 +562,20 @@ export default function JobApplyPage() {
               value={formData.coverNote}
               onChange={handleInputChange}
               placeholder="Tell us briefly why you would like to join Astittva Marketing in Kolkata, your experience in New Town/Rajarhat real estate, or any key achievements..."
-              className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/25 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper transition-colors leading-relaxed"
+              className="w-full px-3.5 py-2.5 bg-[#FAF8F5] border border-[#E8DED2] rounded-lg text-xs text-[#1C1C1C] placeholder:text-[#8C827A] focus:outline-none focus:border-[#B87333] transition-colors leading-relaxed"
             />
           </div>
 
           {/* Submit CTA */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
-            <p className="text-xs text-ivory/50 font-sans">
+            <p className="text-xs text-[#5F5F5F] font-light">
               By submitting, you agree to our privacy policy and consent to our recruitment team contacting you regarding this vacancy.
             </p>
 
             <button
               type="submit"
               disabled={submitting || readingFile}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-[4px] bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.15em] shadow-sm transition-all disabled:opacity-50 shrink-0"
+              className="btn-primary w-full sm:w-auto shrink-0"
             >
               {submitting ? (
                 <>

@@ -194,7 +194,7 @@ export default function AdminRecruitmentJobFormPage() {
 
   if (loading) {
     return (
-      <div className="text-ivory/50 text-center py-20 tracking-[0.3em] uppercase text-xs">
+      <div className="text-[var(--admin-text-muted)] text-center py-20 tracking-[0.3em] uppercase text-xs">
         Loading Vacancy Details…
       </div>
     );
@@ -224,7 +224,7 @@ export default function AdminRecruitmentJobFormPage() {
       />
 
       {serverError && (
-        <div className="bg-red-950/20 border border-red-500/30 rounded-[6px] p-4 text-red-600 text-xs sm:text-sm flex items-center gap-3">
+        <div className="bg-red-500/10 border border-red-500/30 rounded-[6px] p-4 text-rose-500 text-xs sm:text-sm flex items-center gap-3">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{serverError}</span>
         </div>
@@ -233,15 +233,15 @@ export default function AdminRecruitmentJobFormPage() {
       {/* Main Form Sections */}
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* SECTION 1: Core Details */}
-        <div className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-6">
-          <h2 className="font-display font-light text-xl text-ivory border-b border-copper/15 pb-3">
+        <div className="admin-card rounded-[8px] p-6 sm:p-8 space-y-6">
+          <h2 className="font-display font-light text-xl text-[var(--admin-text-primary)] border-b border-[var(--admin-border-subtle)] pb-3">
             1. Role Title &amp; Publishing Status
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="sm:col-span-2">
-              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
-                Job Title <span className="text-copper">*</span>
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block mb-2">
+                Job Title <span className="text-[var(--admin-accent)]">*</span>
               </label>
               <input
                 type="text"
@@ -250,12 +250,12 @@ export default function AdminRecruitmentJobFormPage() {
                 onChange={handleChange}
                 required
                 placeholder="e.g. Senior Luxury Real Estate Consultant"
-                className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] placeholder:[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
 
             <div>
-              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block mb-2">
                 Custom URL Slug (Optional)
               </label>
               <input
@@ -264,22 +264,22 @@ export default function AdminRecruitmentJobFormPage() {
                 value={form.slug}
                 onChange={handleChange}
                 placeholder="auto-generated-from-title"
-                className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/20 rounded-[4px] text-xs font-mono text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper"
+                className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs font-mono text-[var(--admin-text-primary)] placeholder:[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
-              <p className="text-[11px] text-ivory/40 mt-1 font-mono">
-                Live URL: <span className="text-copper">/careers/jobs/{form.slug || "…"}</span>
+              <p className="text-[11px] text-[var(--admin-text-muted)] mt-1 font-mono">
+                Live URL: <span className="text-[var(--admin-accent)]">/careers/jobs/{form.slug || "…"}</span>
               </p>
             </div>
 
             <div>
-              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block mb-2">
                 Publishing Status
               </label>
               <select
                 name="status"
                 value={form.status}
                 onChange={handleChange}
-                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               >
                 <option value="published">Published (Visible on public board)</option>
                 <option value="draft">Draft (Internal preparation)</option>
@@ -295,31 +295,31 @@ export default function AdminRecruitmentJobFormPage() {
                 name="isFeatured"
                 checked={form.isFeatured}
                 onChange={handleChange}
-                className="w-4 h-4 accent-[#B87333] rounded"
+                className="w-4 h-4 accent-[var(--admin-accent)] rounded"
               />
-              <label htmlFor="isFeatured" className="text-xs text-ivory cursor-pointer select-none">
-                Mark as <strong className="text-copper">Featured Opportunity</strong> (highlighted on job board)
+              <label htmlFor="isFeatured" className="text-xs text-[var(--admin-text-primary)] cursor-pointer select-none">
+                Mark as <strong className="text-[var(--admin-accent)]">Featured Opportunity</strong> (highlighted on job board)
               </label>
             </div>
           </div>
         </div>
 
         {/* SECTION 2: Role Specifications */}
-        <div className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-6">
-          <h2 className="font-display font-light text-xl text-ivory border-b border-copper/15 pb-3">
+        <div className="admin-card rounded-[8px] p-6 sm:p-8 space-y-6">
+          <h2 className="font-display font-light text-xl text-[var(--admin-text-primary)] border-b border-[var(--admin-border-subtle)] pb-3">
             2. Department, Location &amp; Employment Type
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
-              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block mb-2">
                 Department
               </label>
               <select
                 name="department"
                 value={form.department}
                 onChange={handleChange}
-                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               >
                 <option value="Sales & Advisory">Sales &amp; Advisory</option>
                 <option value="Marketing">Marketing</option>
@@ -330,7 +330,7 @@ export default function AdminRecruitmentJobFormPage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block mb-2">
                 Location
               </label>
               <input
@@ -339,19 +339,19 @@ export default function AdminRecruitmentJobFormPage() {
                 value={form.location}
                 onChange={handleChange}
                 placeholder="e.g. New Town, Kolkata"
-                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
 
             <div>
-              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block mb-2">
                 Workplace Type
               </label>
               <select
                 name="workplaceType"
                 value={form.workplaceType}
                 onChange={handleChange}
-                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               >
                 <option value="On-site">On-site</option>
                 <option value="Hybrid">Hybrid</option>
@@ -360,14 +360,14 @@ export default function AdminRecruitmentJobFormPage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block mb-2">
                 Employment Type
               </label>
               <select
                 name="employmentType"
                 value={form.employmentType}
                 onChange={handleChange}
-                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               >
                 <option value="Full-time">Full-time</option>
                 <option value="Part-time">Part-time</option>
@@ -379,14 +379,14 @@ export default function AdminRecruitmentJobFormPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-2">
             <div>
-              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block mb-2">
                 Seniority / Level
               </label>
               <select
                 name="experienceLevel"
                 value={form.experienceLevel}
                 onChange={handleChange}
-                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               >
                 <option value="Entry Level">Entry Level</option>
                 <option value="Associate">Associate</option>
@@ -396,7 +396,7 @@ export default function AdminRecruitmentJobFormPage() {
             </div>
 
             <div>
-              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block mb-2">
                 Min Experience (Years)
               </label>
               <input
@@ -405,12 +405,12 @@ export default function AdminRecruitmentJobFormPage() {
                 min="0"
                 value={form.experienceMinYears}
                 onChange={handleChange}
-                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
 
             <div>
-              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block mb-2">
                 Max Experience (Years)
               </label>
               <input
@@ -419,21 +419,21 @@ export default function AdminRecruitmentJobFormPage() {
                 min="0"
                 value={form.experienceMaxYears}
                 onChange={handleChange}
-                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
           </div>
         </div>
 
         {/* SECTION 3: Compensation & Schema.org Salary */}
-        <div className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-6">
-          <h2 className="font-display font-light text-xl text-ivory border-b border-copper/15 pb-3">
+        <div className="admin-card rounded-[8px] p-6 sm:p-8 space-y-6">
+          <h2 className="font-display font-light text-xl text-[var(--admin-text-primary)] border-b border-[var(--admin-border-subtle)] pb-3">
             3. Compensation &amp; Salary Structure
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div>
-              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block mb-2">
                 Min Annual CTC (₹)
               </label>
               <input
@@ -441,12 +441,12 @@ export default function AdminRecruitmentJobFormPage() {
                 value={form.salaryRange.min}
                 onChange={(e) => handleSalaryChange("min", e.target.value)}
                 placeholder="600000"
-                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
 
             <div>
-              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block mb-2">
                 Max Annual CTC (₹)
               </label>
               <input
@@ -454,19 +454,19 @@ export default function AdminRecruitmentJobFormPage() {
                 value={form.salaryRange.max}
                 onChange={(e) => handleSalaryChange("max", e.target.value)}
                 placeholder="1200000"
-                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
 
             <div>
-              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block mb-2">
                 Currency
               </label>
               <input
                 type="text"
                 value={form.salaryRange.currency}
                 onChange={(e) => handleSalaryChange("currency", e.target.value)}
-                className="w-full h-10 px-3 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+                className="w-full h-10 px-3 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
               />
             </div>
           </div>
@@ -477,22 +477,22 @@ export default function AdminRecruitmentJobFormPage() {
               id="isDisclosed"
               checked={form.salaryRange.isDisclosed}
               onChange={(e) => handleSalaryChange("isDisclosed", e.target.checked)}
-              className="w-4 h-4 accent-[#B87333] rounded"
+              className="w-4 h-4 accent-[var(--admin-accent)] rounded"
             />
-            <label htmlFor="isDisclosed" className="text-xs text-ivory cursor-pointer select-none">
+            <label htmlFor="isDisclosed" className="text-xs text-[var(--admin-text-primary)] cursor-pointer select-none">
               Disclose compensation publicly (enables Google Jobs structured salary indexing)
             </label>
           </div>
         </div>
 
         {/* SECTION 4: Role Overview & Markdown */}
-        <div className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-6">
-          <h2 className="font-display font-light text-xl text-ivory border-b border-copper/15 pb-3">
+        <div className="admin-card rounded-[8px] p-6 sm:p-8 space-y-6">
+          <h2 className="font-display font-light text-xl text-[var(--admin-text-primary)] border-b border-[var(--admin-border-subtle)] pb-3">
             4. Role Overview &amp; Description
           </h2>
 
           <div>
-            <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+            <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block mb-2">
               Role Summary &amp; Overview
             </label>
             <textarea
@@ -501,27 +501,27 @@ export default function AdminRecruitmentJobFormPage() {
               value={form.description}
               onChange={handleChange}
               placeholder="Describe the opportunity, core missions, and daily mandate for this position..."
-              className="w-full p-3.5 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory placeholder:text-ivory/40 focus:outline-none focus:border-copper"
+              className="w-full p-3.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] placeholder:[var(--admin-text-muted)] focus:outline-none focus:border-[var(--admin-accent)]"
             />
           </div>
         </div>
 
         {/* SECTION 5: Responsibilities, Requirements & Benefits */}
-        <div className="bg-charcoal-2/30 border border-copper/20 rounded-[8px] p-6 sm:p-8 space-y-8">
-          <h2 className="font-display font-light text-xl text-ivory border-b border-copper/15 pb-3">
+        <div className="admin-card rounded-[8px] p-6 sm:p-8 space-y-8">
+          <h2 className="font-display font-light text-xl text-[var(--admin-text-primary)] border-b border-[var(--admin-border-subtle)] pb-3">
             5. Detailed Specifications &amp; Benefits
           </h2>
 
           {/* Key Responsibilities */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block">
                 Key Responsibilities
               </label>
               <button
                 type="button"
                 onClick={() => handleAddArrayItem("responsibilities")}
-                className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-copper hover:text-white transition-colors"
+                className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" /> Add Bullet
               </button>
@@ -534,13 +534,13 @@ export default function AdminRecruitmentJobFormPage() {
                   value={item}
                   onChange={(e) => handleArrayChange("responsibilities", idx, e.target.value)}
                   placeholder={`Responsibility #${idx + 1}`}
-                  className="flex-1 px-3.5 py-2.5 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+                  className="flex-1 px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
                 />
                 {form.responsibilities.length > 1 && (
                   <button
                     type="button"
                     onClick={() => handleRemoveArrayItem("responsibilities", idx)}
-                    className="p-2 text-ivory/40 hover:text-red-500 rounded hover:bg-red-500/10 transition-colors"
+                    className="p-2 text-[var(--admin-text-muted)] hover:text-rose-500 rounded hover:bg-rose-500/10 transition-colors"
                     title="Remove item"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -551,15 +551,15 @@ export default function AdminRecruitmentJobFormPage() {
           </div>
 
           {/* Candidate Requirements */}
-          <div className="space-y-3 pt-4 border-t border-copper/15">
+          <div className="space-y-3 pt-4 border-t border-[var(--admin-border-subtle)]">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block">
                 Required Qualifications &amp; Skills
               </label>
               <button
                 type="button"
                 onClick={() => handleAddArrayItem("requirements")}
-                className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-copper hover:text-white transition-colors"
+                className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" /> Add Bullet
               </button>
@@ -572,13 +572,13 @@ export default function AdminRecruitmentJobFormPage() {
                   value={item}
                   onChange={(e) => handleArrayChange("requirements", idx, e.target.value)}
                   placeholder={`Requirement #${idx + 1}`}
-                  className="flex-1 px-3.5 py-2.5 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+                  className="flex-1 px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
                 />
                 {form.requirements.length > 1 && (
                   <button
                     type="button"
                     onClick={() => handleRemoveArrayItem("requirements", idx)}
-                    className="p-2 text-ivory/40 hover:text-red-500 rounded hover:bg-red-500/10 transition-colors"
+                    className="p-2 text-[var(--admin-text-muted)] hover:text-rose-500 rounded hover:bg-rose-500/10 transition-colors"
                     title="Remove item"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -589,15 +589,15 @@ export default function AdminRecruitmentJobFormPage() {
           </div>
 
           {/* Benefits */}
-          <div className="space-y-3 pt-4 border-t border-copper/15">
+          <div className="space-y-3 pt-4 border-t border-[var(--admin-border-subtle)]">
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block">
+              <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block">
                 Perks &amp; Benefits
               </label>
               <button
                 type="button"
                 onClick={() => handleAddArrayItem("benefits")}
-                className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-copper hover:text-white transition-colors"
+                className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--admin-accent)] hover:text-[var(--admin-accent-hover)] transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" /> Add Bullet
               </button>
@@ -610,13 +610,13 @@ export default function AdminRecruitmentJobFormPage() {
                   value={item}
                   onChange={(e) => handleArrayChange("benefits", idx, e.target.value)}
                   placeholder={`Benefit #${idx + 1}`}
-                  className="flex-1 px-3.5 py-2.5 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+                  className="flex-1 px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
                 />
                 {form.benefits.length > 1 && (
                   <button
                     type="button"
                     onClick={() => handleRemoveArrayItem("benefits", idx)}
-                    className="p-2 text-ivory/40 hover:text-red-500 rounded hover:bg-red-500/10 transition-colors"
+                    className="p-2 text-[var(--admin-text-muted)] hover:text-rose-500 rounded hover:bg-rose-500/10 transition-colors"
                     title="Remove item"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -627,8 +627,8 @@ export default function AdminRecruitmentJobFormPage() {
           </div>
 
           {/* Tags */}
-          <div className="pt-4 border-t border-copper/15">
-            <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-ivory/60 block mb-2">
+          <div className="pt-4 border-t border-[var(--admin-border-subtle)]">
+            <label className="text-[10px] font-semibold tracking-[0.25em] uppercase text-[var(--admin-text-secondary)] block mb-2">
               Tags / Keywords (comma separated)
             </label>
             <input
@@ -637,23 +637,23 @@ export default function AdminRecruitmentJobFormPage() {
               value={form.tags}
               onChange={handleChange}
               placeholder="e.g. Luxury Advisory, New Town, High Net Worth, Sales"
-              className="w-full px-3.5 py-2.5 bg-charcoal border border-copper/20 rounded-[4px] text-xs text-ivory focus:outline-none focus:border-copper"
+              className="w-full px-3.5 py-2.5 bg-[var(--admin-surface)] border border-[var(--admin-border)] rounded-[4px] text-xs text-[var(--admin-text-primary)] focus:outline-none focus:border-[var(--admin-accent)]"
             />
           </div>
         </div>
 
         {/* Bottom Form Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-copper/15">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--admin-border-subtle)]">
           <Link
             to="/admin/recruitment/jobs"
-            className="px-5 py-2.5 border border-copper/30 hover:border-copper text-xs font-semibold uppercase tracking-[0.15em] text-ivory/80 hover:text-white rounded-[4px] transition-colors"
+            className="btn-admin-secondary"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-copper hover:bg-copper-light text-white font-semibold text-xs uppercase tracking-[0.15em] rounded-[4px] transition-colors shadow-sm disabled:opacity-50"
+            className="btn-admin-primary"
           >
             {saving ? (
               <>
